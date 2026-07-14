@@ -229,7 +229,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, watch, onMounted } from 'vue'
+import { ref, reactive, watch} from 'vue'
 import loginBackground from '@/assets/login_background.png'
 
 const props = defineProps({
