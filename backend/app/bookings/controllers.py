@@ -1,6 +1,6 @@
 from app.auth.decorators import role_required
 from flask import Blueprint, request, jsonify
-from app.bookings.services import BookingService
+from app.bookings.services import BookingService, AuthorizationService
 from flask_jwt_extended import get_jwt_identity
 
 # Define the blueprint and the base URL
@@ -39,3 +39,25 @@ def create_booking():
         "message": "Booking successful",
         "booking_id": booking.id
     }), 201
+
+@bookings_bp.route('/admin/blocks', methods=['POST'])
+@role_required('owner')
+def block_court():
+    data = request.get_json()
+    current_admin_id = get_jwt_identity()
+    court_id = data.get('court_id')
+
+    # 1. Enforce Multi-Tenant Isolation
+    is_authorized = AuthorizationService.verify_court_ownership(court_id, current_admin_id)
+    if not is_authorized:
+        return jsonify({
+            "code": "FORBIDDEN",
+            "message": "You do not own the facility housing this court."
+        }), 403
+
+    # TODO Proceed with blocking logic...
+    return jsonify({"message": "Court blocked successfully"}), 201
+
+# TODO Enable owners/admins to create their clubs and add courts
+# TODO Get all the available clubs/courts (for the players)
+# TODO Owners/admins should be able to customize the court availablity/ slots or even the club availability

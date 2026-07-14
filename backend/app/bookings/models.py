@@ -22,6 +22,20 @@ class User(db.Model):
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
 
+class Club(db.Model):
+    __tablename__ = 'clubs'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    address = db.Column(db.String(255))
+
+    # Scoped Ownership: The Club belongs to a specific owner
+    owner_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+
+    # Relationships
+    owner = db.relationship('User', backref='clubs')
+    courts = db.relationship('Court', backref='club', cascade="all, delete-orphan", lazy=True)
+
 class Court(db.Model):
     __tablename__ = 'courts'
 
@@ -29,6 +43,10 @@ class Court(db.Model):
     name = db.Column(db.String(50), nullable=False)
     is_active = db.Column(db.Boolean, default=True)
 
+    # The Court belongs to a Club, not directly to the Owner
+    club_id = db.Column(db.Integer, db.ForeignKey('clubs.id'), nullable=False)
+
+    # Relationships
     bookings = db.relationship('Booking', backref='court', lazy=True)
 
 class Booking(db.Model):
