@@ -1,6 +1,6 @@
 <template>
   <div class="landing-view" id="top">
-    <Navbar />
+    <NavBar />
 
     <main>
       <HeroSection />
@@ -14,7 +14,7 @@
 </template>
 
 <script setup>
-import Navbar from '@/components/Navbar.vue'
+import NavBar from '@/components/NavBar.vue'
 import HeroSection from '@/components/HeroSection.vue'
 import EventsSection from '@/components/EventsSection.vue'
 import FacilitiesSection from '@/components/FacilitiesSection.vue'
