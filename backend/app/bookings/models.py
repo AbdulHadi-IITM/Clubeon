@@ -1,6 +1,7 @@
 from app.extensions import db
 from sqlalchemy.dialects.postgresql import ExcludeConstraint
 from sqlalchemy import text
+from werkzeug.security import generate_password_hash, check_password_hash
 
 class User(db.Model):
     __tablename__ = 'users'
@@ -14,6 +15,12 @@ class User(db.Model):
 
     # Establish a relationship for easy querying later
     bookings = db.relationship('Booking', backref='user', lazy=True)
+
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
 
 class Court(db.Model):
     __tablename__ = 'courts'
