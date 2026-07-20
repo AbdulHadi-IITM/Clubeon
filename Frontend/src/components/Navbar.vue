@@ -1,16 +1,17 @@
+<!-- eslint-disable vue/multi-word-component-names -->
 <template>
-  <header class="navbar" :class="{ 'is-scrolled': isScrolled }">
+  <header class="navbar" :class="{ 'is-scrolled': isScrolled || isLightBgPage }">
     <div class="container">
-      <a href="#top" class="logo" aria-label="ClubDash home">
+      <router-link to="/" class="logo" aria-label="ClubDash home">
         <span class="mark">C</span>
         <span class="logo-text">ClubDash</span>
-      </a>
+      </router-link>
 
       <nav class="nav-links" aria-label="Primary navigation">
-        <a href="#features" :class="{ active: activeSection === 'features' }" @click="activeSection = 'features'">Features</a>
-        <a href="#facilities" :class="{ active: activeSection === 'facilities' }" @click="activeSection = 'facilities'">Facilities</a>
-        <a href="#membership" :class="{ active: activeSection === 'membership' }" @click="activeSection = 'membership'">Membership</a>
-        <a href="#contact" :class="{ active: activeSection === 'contact' }" @click="activeSection = 'contact'">Contact</a>
+        <router-link :to="{ path: '/', hash: '#features' }" :class="{ active: activeSection === 'features' }" @click="activeSection = 'features'">Features</router-link>
+        <router-link :to="{ path: '/', hash: '#facilities' }" :class="{ active: activeSection === 'facilities' }" @click="activeSection = 'facilities'">Facilities</router-link>
+        <router-link :to="{ path: '/', hash: '#membership' }" :class="{ active: activeSection === 'membership' }" @click="activeSection = 'membership'">Membership</router-link>
+        <router-link :to="{ path: '/', hash: '#contact' }" :class="{ active: activeSection === 'contact' }" @click="activeSection = 'contact'">Contact</router-link>
       </nav>
 
       <div class="actions">
@@ -22,7 +23,13 @@
 </template>
 
 <script setup>
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref, computed } from 'vue'
+import { useRoute } from 'vue-router'
+
+const route = useRoute()
+const isLightBgPage = computed(() => {
+  return route && route.path === '/profile'
+})
 
 const isScrolled = ref(false)
 const activeSection = ref('')
