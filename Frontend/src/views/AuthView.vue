@@ -413,7 +413,7 @@ const handleLogin = async () => {
   try {
     await auth.login({ email: loginForm.email, password: loginForm.password })
     // Redirect after successful login
-    router.push({ name: 'landing' }) // or replace with your dashboard route
+    router.push({ name: 'profile' }) // or replace with your dashboard route
   } catch (err) {
     // auth.error contains message; you can show it in UI
     console.log(err)
