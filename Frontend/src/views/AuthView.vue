@@ -190,6 +190,41 @@
 							</div>
 						</div>
 
+						<div class="form-group">
+							<label class="role-label">Register As</label>
+							<div class="role-cards" role="radiogroup" aria-label="Register As">
+								<label
+									v-for="roleOption in ['Player', 'Front Desk', 'Admin']"
+									:key="roleOption"
+									class="role-card"
+									:class="{ active: registerForm.role === roleOption }"
+								>
+									<input
+										type="radio"
+										name="role"
+										:value="roleOption"
+										v-model="registerForm.role"
+										required
+										class="role-radio-input"
+									/>
+									<div class="role-card-content">
+										<div class="role-icon">
+											<svg v-if="roleOption === 'Player'" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+												<path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+											</svg>
+											<svg v-else-if="roleOption === 'Front Desk'" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+												<path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+											</svg>
+											<svg v-else xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+												<path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+											</svg>
+										</div>
+										<span class="role-name">{{ roleOption }}</span>
+									</div>
+								</label>
+							</div>
+						</div>
+
 						<button type="submit" class="submit-btn">Create Account</button>
 					</form>
 				</div>
@@ -259,6 +294,7 @@ const registerForm = reactive({
 	name: '',
 	email: '',
 	password: '',
+	role: 'Player',
 })
 
 const handleLogin = () => {
@@ -266,7 +302,7 @@ const handleLogin = () => {
 }
 
 const handleRegister = () => {
-	alert(`Creating account for: ${registerForm.name} (${registerForm.email})`)
+	alert(`Creating account for: ${registerForm.name} (${registerForm.email}) as ${registerForm.role}`)
 }
 
 const handleForgotPassword = () => {
@@ -709,5 +745,91 @@ input:focus {
 	.form-container {
 		padding: 2rem 2rem 6rem;
 	}
+}
+
+/* Role selector styling */
+.role-label {
+	font-size: 0.88rem;
+	font-weight: 600;
+	color: #334155;
+	margin-bottom: 0.25rem;
+}
+
+.role-cards {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: 0.65rem;
+}
+
+.role-card {
+	position: relative;
+	display: flex;
+	cursor: pointer;
+	border: 1px solid #e2e8f0;
+	border-radius: 0.75rem;
+	background: #ffffff;
+	padding: 0.75rem 0.5rem;
+	transition: all 0.2s ease;
+	user-select: none;
+}
+
+.role-card:hover {
+	border-color: #cbd5e1;
+	background: #f8fafc;
+}
+
+.role-card.active {
+	border-color: #2563eb;
+	background: #eff6ff;
+	box-shadow: 0 0 0 1px #2563eb;
+}
+
+.role-radio-input {
+	position: absolute;
+	opacity: 0;
+	width: 0;
+	height: 0;
+	margin: 0;
+	pointer-events: none;
+}
+
+.role-card-content {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	gap: 0.4rem;
+}
+
+.role-icon {
+	width: 1.35rem;
+	height: 1.35rem;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: #64748b;
+	transition: color 0.2s ease;
+}
+
+.role-icon svg {
+	width: 100%;
+	height: 100%;
+}
+
+.role-card.active .role-icon {
+	color: #2563eb;
+}
+
+.role-name {
+	font-size: 0.82rem;
+	font-weight: 600;
+	color: #334155;
+	transition: color 0.2s ease;
+	white-space: nowrap;
+}
+
+.role-card.active .role-name {
+	color: #2563eb;
 }
 </style>
