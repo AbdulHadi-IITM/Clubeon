@@ -28,7 +28,7 @@ import { useRoute } from 'vue-router'
 
 const route = useRoute()
 const isLightBgPage = computed(() => {
-  return route && route.path === '/profile'
+  return route && (route.path === '/profile' || route.path === '/admin')
 })
 
 const isScrolled = ref(false)
