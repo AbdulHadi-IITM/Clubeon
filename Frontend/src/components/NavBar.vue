@@ -2,21 +2,27 @@
 <template>
   <header class="navbar" :class="{ 'is-scrolled': isScrolled || isLightBgPage }">
     <div class="container">
-      <router-link to="/" class="logo" aria-label="ClubDash home">
+      <router-link :to="{ name: 'landing' }" class="logo" aria-label="ClubDash home">
         <span class="mark">C</span>
         <span class="logo-text">ClubDash</span>
       </router-link>
 
       <nav class="nav-links" aria-label="Primary navigation">
-        <router-link :to="{ path: '/', hash: '#features' }" :class="{ active: activeSection === 'features' }" @click="activeSection = 'features'">Features</router-link>
-        <router-link :to="{ path: '/', hash: '#facilities' }" :class="{ active: activeSection === 'facilities' }" @click="activeSection = 'facilities'">Facilities</router-link>
-        <router-link :to="{ path: '/', hash: '#membership' }" :class="{ active: activeSection === 'membership' }" @click="activeSection = 'membership'">Membership</router-link>
-        <router-link :to="{ path: '/', hash: '#contact' }" :class="{ active: activeSection === 'contact' }" @click="activeSection = 'contact'">Contact</router-link>
+        <router-link :to="{ name: 'landing', hash: '#features' }" :class="{ active: activeSection === 'features' }" @click="activeSection = 'features'">Features</router-link>
+        <router-link :to="{ name: 'landing', hash: '#facilities' }" :class="{ active: activeSection === 'facilities' }" @click="activeSection = 'facilities'">Facilities</router-link>
+        <router-link :to="{ name: 'landing', hash: '#membership' }" :class="{ active: activeSection === 'membership' }" @click="activeSection = 'membership'">Membership</router-link>
+        <router-link :to="{ name: 'landing', hash: '#contact' }" :class="{ active: activeSection === 'contact' }" @click="activeSection = 'contact'">Contact</router-link>
       </nav>
 
       <div class="actions">
-        <router-link to="/login" class="login-btn">Login</router-link>
-        <router-link to="/register" class="primary-btn">Get Started</router-link>
+        <template v-if="isAuthenticated">
+          <button type="button" class="login-btn" @click="handleLogout">Logout</button>
+          <router-link :to="dashboardRoute" class="primary-btn">Dashboard</router-link>
+        </template>
+        <template v-else>
+          <router-link :to="{ name: 'login' }" class="login-btn">Login</router-link>
+          <router-link :to="{ name: 'register' }" class="primary-btn">Get Started</router-link>
+        </template>
       </div>
     </div>
   </header>
@@ -24,9 +30,19 @@
 
 <script setup>
 import { onBeforeUnmount, onMounted, ref, computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 
+const router = useRouter()
 const route = useRoute()
+const auth = useAuthStore()
+
+const isAuthenticated = computed(() => auth.isAuthenticated())
+const dashboardRoute = computed(() => {
+  const routeName = auth.user?.role === 'owner' ? 'admin' : 'profile'
+  return { name: routeName }
+})
+
 const isLightBgPage = computed(() => {
   return route && (route.path === '/profile' || route.path === '/admin')
 })
@@ -43,7 +59,13 @@ const updateScrollState = () => {
 
 let observer = null
 
+const handleLogout = async () => {
+  await auth.logout()
+  router.push({ name: 'login' })
+}
+
 onMounted(() => {
+  auth.restoreUser()
   updateScrollState()
   window.addEventListener('scroll', updateScrollState, { passive: true })
 

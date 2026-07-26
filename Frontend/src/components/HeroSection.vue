@@ -29,7 +29,7 @@
 				</p>
 
 				<div class="hero-actions">
-					<router-link to="/register" class="primary-action">Get Started</router-link>
+					<router-link :to="primaryRoute" class="primary-action">{{ primaryActionLabel }}</router-link>
 					<a class="secondary-action" href="#features">Watch Demo</a>
 				</div>
 
@@ -53,10 +53,19 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { useAuthStore } from '@/stores/auth'
 import landingVideo from '@/assets/LandingVideo.mp4'
 
 const videoRef = ref(null)
+const auth = useAuthStore()
+
+const primaryRoute = computed(() => {
+  if (!auth.isAuthenticated()) return { name: 'register' }
+  return { name: auth.user?.role === 'owner' ? 'admin' : 'profile' }
+})
+
+const primaryActionLabel = computed(() => (auth.isAuthenticated() ? 'Go to Dashboard' : 'Get Started'))
 </script>
 
 <style scoped>

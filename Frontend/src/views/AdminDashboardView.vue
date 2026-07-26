@@ -11,7 +11,7 @@
     <aside class="admin-sidebar" :class="{ 'mobile-show': isMobileSidebarOpen }">
       <!-- Sidebar Header / Logo -->
       <div class="sidebar-header">
-        <router-link to="/" class="brand-logo" aria-label="ClubDash Home">
+        <router-link :to="{ name: 'landing' }" class="brand-logo" aria-label="ClubDash Home">
           <span class="logo-mark">⚡</span>
           <span class="logo-text">ClubDash</span>
         </router-link>
@@ -751,7 +751,11 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 
+const router = useRouter()
+const auth = useAuthStore()
 const isMobileSidebarOpen = ref(false)
 const activeNav = ref('Dashboard')
 
@@ -806,8 +810,9 @@ const setActiveNav = (navName) => {
   isMobileSidebarOpen.value = false
 }
 
-const handleLogout = () => {
-  alert('Logging out of Admin Session...')
+const handleLogout = async () => {
+  await auth.logout()
+  router.push({ name: 'login' })
 }
 
 const handleNotifications = () => {

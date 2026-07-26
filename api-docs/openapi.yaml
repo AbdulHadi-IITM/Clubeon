@@ -1,0 +1,301 @@
+openapi: 3.0.3
+info:
+  title: Club Booking SaaS Platform API
+  description: Multi-tenant booking engine for Players and Club Owners.
+  version: 2.0.0
+
+servers:
+  - url: http://127.0.0.1:5000/api/v1
+    description: Local Flask Development Server
+
+security:
+  - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+
+    OperatingHours:
+      type: object
+      properties:
+        open_time:
+          type: string
+          example: "06:00"
+          description: "HH:MM format"
+        close_time:
+          type: string
+          example: "22:00"
+          description: "HH:MM format"
+        slot_duration_minutes:
+          type: integer
+          example: 60
+          description: "Granularity of bookable slots"
+
+    Club:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        address:
+          type: string
+        owner_id:
+          type: integer
+        operating_hours:
+          $ref: '#/components/schemas/OperatingHours'
+
+    Court:
+      type: object
+      properties:
+        id:
+          type: integer
+        club_id:
+          type: integer
+        name:
+          type: string
+        is_active:
+          type: boolean
+        operating_hours_override:
+          $ref: '#/components/schemas/OperatingHours'
+
+# ---------------------------------------------------------
+# ENDPOINTS
+# ---------------------------------------------------------
+paths:
+  # --- AUTHENTICATION ---
+  /auth/register:
+    post:
+      summary: Register a new user
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, password, role]
+              properties:
+                name: { type: string }
+                email: { type: string, format: email }
+                password: { type: string, format: password }
+                role: { type: string, enum: [player, owner] }
+      responses:
+        '201':
+          description: User registered
+
+  /auth/login:
+    post:
+      summary: Authenticate user (JWT)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string }
+                password: { type: string }
+      responses:
+        '200':
+          description: Successful login returns JWT access_token
+
+  # --- MULTI-TENANT: CLUBS & COURTS ---
+  /clubs:
+    get:
+      summary: List all active clubs (Player Discovery)
+      security: [] # Can be public or player-only depending on your preference
+      responses:
+        '200':
+          description: Array of available clubs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Club'
+    post:
+      summary: Register a new Club (Owner Only)
+      description: Requires 'owner' role. The JWT identity is automatically set as the owner_id.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, address, operating_hours]
+              properties:
+                name: { type: string }
+                address: { type: string }
+                operating_hours:
+                  $ref: '#/components/schemas/OperatingHours'
+      responses:
+        '201':
+          description: Club created successfully
+
+  /clubs/{clubId}:
+    put:
+      summary: Update Club settings & availability (Owner Only)
+      description: Verifies JWT identity matches Club's owner_id.
+      parameters:
+        - name: clubId
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                operating_hours:
+                  $ref: '#/components/schemas/OperatingHours'
+      responses:
+        '200':
+          description: Club settings updated
+
+  /clubs/{clubId}/courts:
+    post:
+      summary: Add a court to a club (Owner Only)
+      description: Verifies JWT identity matches Club's owner_id.
+      parameters:
+        - name: clubId
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string, example: "Court 1 - Clay" }
+                operating_hours_override:
+                  $ref: '#/components/schemas/OperatingHours'
+                  description: "Optional: Override club default hours for this specific court"
+      responses:
+        '201':
+          description: Court added to club
+
+  /clubs/{clubId}/availability:
+    get:
+      summary: Get court availability for a specific club and date
+      parameters:
+        - name: clubId
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: date
+          in: query
+          required: true
+          schema: { type: string, format: date, example: "2026-07-20" }
+      responses:
+        '200':
+          description: Returns matrix of courts and slots generated dynamically based on operating hours.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    court_id: { type: integer }
+                    court_name: { type: string }
+                    slots:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          start_time: { type: string }
+                          end_time: { type: string }
+                          status: { type: string, enum: [available, booked, blocked] }
+
+  # --- PLAYER TRANSACTIONS ---
+  /bookings:
+    post:
+      summary: Player books a slot
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [court_id, booking_date, start_time, end_time]
+              properties:
+                court_id: { type: integer }
+                booking_date: { type: string, format: date }
+                start_time: { type: string }
+                end_time: { type: string }
+      responses:
+        '201':
+          description: Booking successful
+        '409':
+          description: Race condition (slot overlapping via GiST constraint)
+
+  /bookings/{bookingId}/release:
+    patch:
+      summary: Release an active slot to the public (Player)
+      parameters:
+        - name: bookingId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Slot released (soft-delete)
+
+  # --- ADMIN ACTIONS ---
+  /admin/overrides:
+    post:
+      summary: Force override a player's slot (Owner Only)
+      description: Verifies JWT identity matches the owner of the club housing the court.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [booking_id, reason]
+              properties:
+                booking_id: { type: integer }
+                reason: { type: string, minLength: 20 }
+      responses:
+        '201':
+          description: Override initiated
+
+  /admin/blocks:
+    post:
+      summary: Block a court for maintenance/tournament (Owner Only)
+      description: Verifies JWT identity matches the owner of the club housing the court.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [court_id, start_date, end_date, title]
+              properties:
+                court_id: { type: integer }
+                start_date: { type: string, format: date }
+                end_date: { type: string, format: date }
+                title: { type: string }
+      responses:
+        '201':
+          description: Court blocked

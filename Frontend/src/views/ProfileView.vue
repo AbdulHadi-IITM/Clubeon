@@ -12,32 +12,32 @@
         </div>
 
         <!-- 1. Header Card (Full Width) -->
-        <ProfileHeader 
-          :user="userState" 
-          :stats="statsState" 
-          @edit-avatar="triggerAvatarUpload" 
+        <ProfileHeader
+          :user="userState"
+          :stats="statsState"
+          @edit-avatar="triggerAvatarUpload"
         />
 
         <!-- 2. Dual Column Layout (Info & Membership / Settings & Achievements) -->
         <div class="dashboard-grid">
           <!-- Left: Info Card & Settings -->
           <div class="grid-column">
-            <ProfileInfoCard 
-              :info="userState" 
-              @edit="openEditProfileModal" 
+            <ProfileInfoCard
+              :info="userState"
+              @edit="openEditProfileModal"
             />
-            <SettingsPanel 
-              @action="handleSettingsAction" 
+            <SettingsPanel
+              @action="handleSettingsAction"
             />
           </div>
 
           <!-- Right: Membership Card & Achievements -->
           <div class="grid-column">
-            <MembershipCard 
-              :membership="membershipState" 
-              @renew="renewMembership" 
+            <MembershipCard
+              :membership="membershipState"
+              @renew="renewMembership"
             />
-            
+
             <!-- Achievements Box -->
             <div class="achievements-card">
               <div class="card-header">
@@ -68,10 +68,10 @@
           </div>
           <div v-else class="items-grid bookings-layout">
             <div v-for="booking in bookingsState" :key="booking.id">
-              <BookingCard 
-                :booking="booking" 
-                @view="viewBookingDetails" 
-                @cancel="confirmCancelBooking" 
+              <BookingCard
+                :booking="booking"
+                @view="viewBookingDetails"
+                @cancel="confirmCancelBooking"
               />
             </div>
           </div>
@@ -88,9 +88,9 @@
           </div>
           <div v-else class="items-grid events-layout">
             <div v-for="event in eventsState" :key="event.id">
-              <EventCard 
-                :event="event" 
-                @click-action="handleEventAction" 
+              <EventCard
+                :event="event"
+                @click-action="handleEventAction"
               />
             </div>
           </div>
@@ -220,7 +220,8 @@
 <script setup>
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
-import Navbar from '@/components/Navbar.vue'
+import { useAuthStore } from '@/stores/auth'
+import Navbar from '@/components/NavBar.vue'
 import FooterSection from '@/components/FooterSection.vue'
 import ProfileHeader from '@/components/ProfileHeader.vue'
 import ProfileInfoCard from '@/components/ProfileInfoCard.vue'
@@ -231,6 +232,7 @@ import AchievementBadge from '@/components/AchievementBadge.vue'
 import SettingsPanel from '@/components/SettingsPanel.vue'
 
 const router = useRouter()
+const auth = useAuthStore()
 const fileInput = ref(null)
 
 // 1. User State
@@ -480,10 +482,10 @@ const handleSettingsAction = (action) => {
   }
 }
 
-const handleLogout = () => {
+const handleLogout = async () => {
   if (confirm('Are you sure you want to log out from ClubDash?')) {
-    alert('Logging out...')
-    router.push('/')
+    await auth.logout()
+    router.push({ name: 'login' })
   }
 }
 </script>
@@ -493,7 +495,7 @@ const handleLogout = () => {
 
 .profile-page {
   min-height: 100vh;
-  background: 
+  background:
     radial-gradient(circle at top left, rgba(79, 70, 229, 0.07), transparent 35%),
     radial-gradient(circle at right 22rem, rgba(249, 115, 22, 0.05), transparent 30%),
     #f8fafc;
