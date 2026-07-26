@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 import LandingView from '../views/LandingView.vue'
 import AuthView from '../views/AuthView.vue'
 import ProfileView from '../views/ProfileView.vue'
@@ -28,13 +29,38 @@ const router = createRouter({
       path: '/profile',
       name: 'profile',
       component: ProfileView,
+      meta: { requiresAuth: true },
     },
     {
       path: '/admin',
       name: 'admin',
       component: AdminDashboardView,
+      meta: { requiresAuth: true, requiresRole: 'owner' },
     },
   ],
+})
+
+const getHomeRouteForUser = (user) => {
+  return { name: user?.role === 'owner' ? 'admin' : 'profile' }
+}
+
+router.beforeEach(async (to) => {
+  const auth = useAuthStore()
+
+  const isAuthed = auth.isAuthenticated()
+
+  if (to.meta.requiresAuth && !isAuthed) {
+    return { name: 'login' }
+  }
+
+  if (to.meta.requiresRole && auth.user?.role !== to.meta.requiresRole) {
+    return isAuthed ? getHomeRouteForUser(auth.user) : { name: 'login' }
+  }
+
+  if ((to.name === 'login' || to.name === 'register') && isAuthed) {
+    return getHomeRouteForUser(auth.user)
+  }
+
 })
 
 export default router

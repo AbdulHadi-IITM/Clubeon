@@ -59,7 +59,7 @@ def register():
             "message": "Missing required fields (name, email, password, role)"
         }), 400
 
-    allowed_roles = ['player', 'owner']
+    allowed_roles = ['player', 'owner', 'front-desk']
     if data['role'] not in allowed_roles:
         return jsonify({
             "code": "VALIDATION_ERROR",
@@ -121,7 +121,6 @@ def get_current_user():
 
 
 @auth_bp.route('/logout', methods=['POST'])
-@jwt_required(optional=True)
 def logout():
     """
     Logout by clearing the HttpOnly cookie.

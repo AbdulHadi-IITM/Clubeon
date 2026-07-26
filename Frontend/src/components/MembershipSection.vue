@@ -21,7 +21,7 @@
 						<li v-for="benefit in plan.benefits" :key="benefit">{{ benefit }}</li>
 					</ul>
 
-					<router-link to="/register" class="plan-link">
+					<router-link :to="planRoute" class="plan-link">
 						{{ plan.cta }}
 					</router-link>
 				</article>
@@ -31,6 +31,16 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
+import { useAuthStore } from '@/stores/auth'
+
+const auth = useAuthStore()
+
+const planRoute = computed(() => {
+  if (!auth.isAuthenticated()) return { name: 'register' }
+  return { name: auth.user?.role === 'owner' ? 'admin' : 'profile' }
+})
+
 const plans = [
 	{
 		name: 'Basic',
