@@ -24,8 +24,8 @@
 - [x] Implement Notifications Module (`get`, `read`, `read-all`)
 
 ## Application Configuration
-- [ ] Update `app/__init__.py` to register all module blueprints
-- [ ] Resolve cross-module dependencies using Services
+- [x] Update `app/__init__.py` to register all module blueprints
+- [x] Resolve cross-module dependencies using Services
 
 ## Testing (`pytest`)
 - [x] Setup `conftest.py` (fixtures for app, db, auth_headers, mock data)
@@ -41,4 +41,4 @@
 - [x] Write tests for Notifications
 
 ## Documentation
-- [ ] Update `api-docs/openapi.yaml` with logged deviations
+- [x] Update `api-docs/openapi.yaml` with logged deviations
