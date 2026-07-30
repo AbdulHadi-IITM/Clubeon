@@ -12,11 +12,11 @@
 - [x] Define `Notification` model (Notifications)
 
 ## API Modules (Controllers & Services)
-- [ ] Implement Auth Module (`register`, `login`, `logout`, `me`)
-- [ ] Implement Clubs Module (`get clubs`, `get courts`)
-- [ ] Implement Availability Module (`get availability matrix`)
-- [ ] Implement Bookings Module (`create`, `get my bookings`, `release`)
-- [ ] Implement Admin Actions Module (`override`, `block court`)
+- [x] Implement Auth Module (`register`, `login`, `logout`, `me`)
+- [x] Implement Clubs Module (`get clubs`, `get courts`)
+- [x] Implement Availability Module (`get availability matrix`)
+- [x] Implement Bookings Module (`create`, `get my bookings`, `release`)
+- [x] Implement Admin Actions Module (`override`, `block court`)
 - [ ] Implement Memberships Module (`plans`, `subscribe`, `my memberships`, `cancel`)
 - [ ] Implement Events Module (`list`, `create`, `register`, `cancel`)
 - [ ] Implement Payments Module (`my payments`, `webhook`)
@@ -28,12 +28,12 @@
 - [ ] Resolve cross-module dependencies using Services
 
 ## Testing (`pytest`)
-- [ ] Setup `conftest.py` (fixtures for app, db, auth_headers, mock data)
-- [ ] Write tests for Auth
-- [ ] Write tests for Clubs
-- [ ] Write tests for Availability
-- [ ] Write tests for Bookings
-- [ ] Write tests for Admin Actions
+- [x] Setup `conftest.py` (fixtures for app, db, auth_headers, mock data)
+- [x] Write tests for Auth
+- [x] Write tests for Clubs
+- [x] Write tests for Availability
+- [x] Write tests for Bookings
+- [x] Write tests for Admin Actions
 - [ ] Write tests for Memberships
 - [ ] Write tests for Events
 - [ ] Write tests for Payments

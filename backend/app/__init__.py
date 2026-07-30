@@ -55,7 +55,7 @@ def create_app(config_class=Config):
     # 1. Route to serve the actual YAML file
     @app.route('/api/docs/openapi.yaml')
     def send_openapi_yaml():
-        yaml_dir = os.path.abspath(os.path.join(app.root_path, '../../api-docs'))
+        yaml_dir = os.path.abspath(os.path.join(app.root_path, '../docs/api-docs'))
         return send_from_directory(yaml_dir, 'openapi.yaml')
 
     # 2. Setup the Swagger UI blueprint
