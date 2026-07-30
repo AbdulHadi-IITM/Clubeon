@@ -18,7 +18,7 @@
 - [x] Implement Bookings Module (`create`, `get my bookings`, `release`)
 - [x] Implement Admin Actions Module (`override`, `block court`)
 - [x] Implement Memberships Module (`plans`, `subscribe`, `my memberships`, `cancel`)
-- [ ] Implement Events Module (`list`, `create`, `register`, `cancel`)
+- [x] Implement Events Module (`list`, `create`, `register`, `cancel`)
 - [ ] Implement Payments Module (`my payments`, `webhook`)
 - [ ] Implement Attendance Module (`check-in`, `check-out`, `admin view`)
 - [ ] Implement Notifications Module (`get`, `read`, `read-all`)
@@ -35,7 +35,7 @@
 - [x] Write tests for Bookings
 - [x] Write tests for Admin Actions
 - [x] Write tests for Memberships
-- [ ] Write tests for Events
+- [x] Write tests for Events
 - [ ] Write tests for Payments
 - [ ] Write tests for Attendance
 - [ ] Write tests for Notifications

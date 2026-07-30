@@ -54,6 +54,10 @@ def create_app(config_class=Config):
     from app.memberships.controllers import memberships_bp
     app.register_blueprint(memberships_bp)
 
+    from app.events.controllers import events_bp
+    app.register_blueprint(events_bp)
+
+
 
 
     # 1. Route to serve the actual YAML file
