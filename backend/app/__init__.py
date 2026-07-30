@@ -57,6 +57,10 @@ def create_app(config_class=Config):
     from app.events.controllers import events_bp
     app.register_blueprint(events_bp)
 
+    from app.payments.controllers import payments_bp
+    app.register_blueprint(payments_bp)
+
+
 
 
 
