@@ -1,7 +1,7 @@
-from app.auth.decorators import role_required
 from flask import Blueprint, request, jsonify
-from app.bookings.services import BookingService, AuthorizationService
 from flask_jwt_extended import get_jwt_identity
+from app.bookings.services import BookingService, AuthorizationService, CourtService
+from app.auth.decorators import role_required
 
 # Define the blueprint and the base URL
 bookings_bp = Blueprint('bookings', __name__, url_prefix='/api/v1/bookings')
@@ -58,6 +58,72 @@ def block_court():
     # TODO Proceed with blocking logic...
     return jsonify({"message": "Court blocked successfully"}), 201
 
-# TODO Enable owners/admins to create their clubs and add courts
-# TODO Get all the available clubs/courts (for the players)
-# TODO Owners/admins should be able to customize the court availablity/ slots or even the club availability
+@bookings_bp.route('/courts', methods=['GET'])
+@role_required('owner')
+def list_courts():
+    user_id = get_jwt_identity()
+    courts = CourtService.get_courts_for_owner(int(user_id))
+    return jsonify([{
+        "id": c.id,
+        "name": c.name,
+        "is_active": c.is_active
+    } for c in courts]), 200
+
+@bookings_bp.route('/courts', methods=['POST'])
+@role_required('owner')
+def create_court():
+    user_id = get_jwt_identity()
+    data = request.get_json()
+
+    court_name = data.get('court_name')
+    if not court_name:
+        return jsonify({"code": "VALIDATION_ERROR", "message": "Court name is required"}), 400
+
+    court, error = CourtService.create_court(
+        owner_id=int(user_id),
+        court_name=court_name,
+        club_name=data.get('club_name'),
+        club_address=data.get('club_address')
+    )
+    if error:
+        return jsonify(error), 400 if error['code'] == 'CLUB_REQUIRED' else 500
+
+    return jsonify({"message": "Court created successfully", "court": {
+        "id": court.id,
+        "name": court.name,
+        "is_active": court.is_active
+    }}), 201
+
+@bookings_bp.route('/courts/<int:court_id>', methods=['PUT'])
+@role_required('owner')
+def update_court(court_id):
+    user_id = get_jwt_identity()
+    data = request.get_json()
+
+    court_name = data.get('court_name')
+    if not court_name:
+        return jsonify({"code": "VALIDATION_ERROR", "message": "Court name is required"}), 400
+
+    court, error = CourtService.update_court(
+        court_id=court_id,
+        owner_id=int(user_id),
+        court_name=court_name,
+        is_active=data.get('is_active', True)
+    )
+    if error:
+        return jsonify(error), 404 if error['code'] == 'NOT_FOUND' else 500
+
+    return jsonify({"message": "Court updated successfully"}), 200
+
+@bookings_bp.route('/courts/<int:court_id>', methods=['DELETE'])
+@role_required('owner')
+def delete_court(court_id):
+    user_id = get_jwt_identity()
+    success, error = CourtService.delete_court(
+        court_id=court_id,
+        owner_id=int(user_id)
+    )
+    if error:
+        return jsonify(error), 404 if error['code'] == 'NOT_FOUND' else 500
+
+    return jsonify({"message": "Court deleted successfully"}), 200
