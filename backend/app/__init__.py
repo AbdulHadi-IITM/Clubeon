@@ -60,6 +60,10 @@ def create_app(config_class=Config):
     from app.payments.controllers import payments_bp
     app.register_blueprint(payments_bp)
 
+    from app.attendance.controllers import attendance_bp
+    app.register_blueprint(attendance_bp)
+
+
 
 
 

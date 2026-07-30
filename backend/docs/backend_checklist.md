@@ -20,7 +20,7 @@
 - [x] Implement Memberships Module (`plans`, `subscribe`, `my memberships`, `cancel`)
 - [x] Implement Events Module (`list`, `create`, `register`, `cancel`)
 - [x] Implement Payments Module (`my payments`, `webhook`)
-- [ ] Implement Attendance Module (`check-in`, `check-out`, `admin view`)
+- [x] Implement Attendance Module (`check-in`, `check-out`, `admin view`)
 - [ ] Implement Notifications Module (`get`, `read`, `read-all`)
 
 ## Application Configuration
@@ -37,7 +37,7 @@
 - [x] Write tests for Memberships
 - [x] Write tests for Events
 - [x] Write tests for Payments
-- [ ] Write tests for Attendance
+- [x] Write tests for Attendance
 - [ ] Write tests for Notifications
 
 ## Documentation
