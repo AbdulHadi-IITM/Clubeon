@@ -48,6 +48,10 @@ def create_app(config_class=Config):
     from app.availability.controllers import availability_bp
     app.register_blueprint(availability_bp)
 
+    from app.admin.controllers import admin_bp
+    app.register_blueprint(admin_bp)
+
+
     # 1. Route to serve the actual YAML file
     @app.route('/api/docs/openapi.yaml')
     def send_openapi_yaml():
