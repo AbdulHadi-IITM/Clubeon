@@ -26,7 +26,14 @@ def create_app(config_class=Config):
          }})
 
     # Register models so Alembic can detect them
+    from app.auth import models
+    from app.clubs import models
     from app.bookings import models
+    from app.memberships import models
+    from app.events import models
+    from app.payments import models
+    from app.attendance import models
+    from app.notifications import models
 
     # Register Blueprints (Controllers)
     from app.bookings.controllers import bookings_bp

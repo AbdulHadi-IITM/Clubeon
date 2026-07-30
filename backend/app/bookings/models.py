@@ -1,6 +1,4 @@
 from app.extensions import db
-from sqlalchemy.dialects.postgresql import ExcludeConstraint
-from sqlalchemy import text
 
 class Booking(db.Model):
     __tablename__ = 'bookings'
@@ -17,16 +15,6 @@ class Booking(db.Model):
     
     user = db.relationship('User', backref='bookings', lazy=True)
     court = db.relationship('Court', backref='bookings', lazy=True)
-
-    __table_args__ = (
-        ExcludeConstraint(
-            (court_id, '='),
-            (booking_date, '='),
-            (text("tsrange(booking_date + start_time, booking_date + end_time, '[)')"), '&&'),
-            where=(status == 'active'),
-            name='prevent_overlapping_bookings'
-        ),
-    )
 
 class CourtBlock(db.Model):
     __tablename__ = 'court_blocks'

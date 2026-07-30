@@ -1,6 +1,7 @@
 from sqlalchemy.exc import IntegrityError
 from app.extensions import db
-from app.bookings.models import Booking, Court, Club
+from app.bookings.models import Booking
+from app.clubs.models import Court, Club
 
 class BookingService:
 
