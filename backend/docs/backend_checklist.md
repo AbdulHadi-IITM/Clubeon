@@ -17,7 +17,7 @@
 - [x] Implement Availability Module (`get availability matrix`)
 - [x] Implement Bookings Module (`create`, `get my bookings`, `release`)
 - [x] Implement Admin Actions Module (`override`, `block court`)
-- [ ] Implement Memberships Module (`plans`, `subscribe`, `my memberships`, `cancel`)
+- [x] Implement Memberships Module (`plans`, `subscribe`, `my memberships`, `cancel`)
 - [ ] Implement Events Module (`list`, `create`, `register`, `cancel`)
 - [ ] Implement Payments Module (`my payments`, `webhook`)
 - [ ] Implement Attendance Module (`check-in`, `check-out`, `admin view`)
@@ -34,7 +34,7 @@
 - [x] Write tests for Availability
 - [x] Write tests for Bookings
 - [x] Write tests for Admin Actions
-- [ ] Write tests for Memberships
+- [x] Write tests for Memberships
 - [ ] Write tests for Events
 - [ ] Write tests for Payments
 - [ ] Write tests for Attendance

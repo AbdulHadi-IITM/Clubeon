@@ -51,6 +51,10 @@ def create_app(config_class=Config):
     from app.admin.controllers import admin_bp
     app.register_blueprint(admin_bp)
 
+    from app.memberships.controllers import memberships_bp
+    app.register_blueprint(memberships_bp)
+
+
 
     # 1. Route to serve the actual YAML file
     @app.route('/api/docs/openapi.yaml')
