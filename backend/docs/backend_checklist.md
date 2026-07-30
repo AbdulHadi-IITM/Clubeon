@@ -21,7 +21,7 @@
 - [x] Implement Events Module (`list`, `create`, `register`, `cancel`)
 - [x] Implement Payments Module (`my payments`, `webhook`)
 - [x] Implement Attendance Module (`check-in`, `check-out`, `admin view`)
-- [ ] Implement Notifications Module (`get`, `read`, `read-all`)
+- [x] Implement Notifications Module (`get`, `read`, `read-all`)
 
 ## Application Configuration
 - [ ] Update `app/__init__.py` to register all module blueprints
@@ -38,7 +38,7 @@
 - [x] Write tests for Events
 - [x] Write tests for Payments
 - [x] Write tests for Attendance
-- [ ] Write tests for Notifications
+- [x] Write tests for Notifications
 
 ## Documentation
 - [ ] Update `api-docs/openapi.yaml` with logged deviations

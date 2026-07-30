@@ -63,6 +63,10 @@ def create_app(config_class=Config):
     from app.attendance.controllers import attendance_bp
     app.register_blueprint(attendance_bp)
 
+    from app.notifications.controllers import notifications_bp
+    app.register_blueprint(notifications_bp)
+
+
 
 
 
