@@ -1,5 +1,8 @@
-import pytest
+import sys
 import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+import pytest
 from app import create_app
 from app.extensions import db
 from app.auth.models import User

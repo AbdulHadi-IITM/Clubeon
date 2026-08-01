@@ -4,25 +4,31 @@ info:
   description: >
     Multi-tenant booking engine for Players and Club Owners.
     
+    ## Authentication
+    All protected endpoints use JWT stored in an **HttpOnly cookie** named `access_token_cookie`.
+    The browser automatically sends the cookie with each request – no manual token management is required.
+    Endpoints that require specific roles (e.g., `owner`, `player`) are marked accordingly.
+
     ## Implementation Deviations Logged
     1. Operating hours fields (`open_time`, `close_time`, `slot_duration_minutes`) are flat fields on `Club` and `Court` models, not nested objects.
     2. Overlap validation for Bookings is performed at the application layer via Python queries instead of PostgreSQL GiST constraints, as SQLite is used.
-    3. Additional modules implemented but not listed in initial API spec: Memberships, Events, Payments, Attendance, and Notifications.
-  version: 2.0.0
+    3. Additional modules implemented and documented: Memberships, Events, Payments, Attendance, and Notifications.
+  version: 2.1.0
 
 servers:
   - url: http://127.0.0.1:5000/api/v1
     description: Local Flask Development Server
 
 security:
-  - bearerAuth: []
+  - cookieAuth: []   # JWT stored in HttpOnly cookie
 
 components:
   securitySchemes:
-    bearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: access_token_cookie
+      description: JWT authentication cookie (HttpOnly)
 
   schemas:
     ErrorResponse:
@@ -77,11 +83,207 @@ components:
         operating_hours_override:
           $ref: '#/components/schemas/OperatingHours'
 
-# ---------------------------------------------------------
-# ENDPOINTS
-# ---------------------------------------------------------
+    # ----- Memberships -----
+    MembershipPlan:
+      type: object
+      properties:
+        id:
+          type: integer
+        club_id:
+          type: integer
+        name:
+          type: string
+        price_monthly:
+          type: number
+          format: float
+        benefits:
+          type: string
+        is_active:
+          type: boolean
+
+    Membership:
+      type: object
+      properties:
+        id:
+          type: integer
+        user_id:
+          type: integer
+        plan_id:
+          type: integer
+        club_id:
+          type: integer
+        status:
+          type: string
+          enum: [active, paused, expired, cancelled]
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+        auto_renew:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+
+    # ----- Events -----
+    Event:
+      type: object
+      properties:
+        id:
+          type: integer
+        club_id:
+          type: integer
+        created_by:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        event_date:
+          type: string
+          format: date
+        start_time:
+          type: string
+          format: time
+        end_time:
+          type: string
+          format: time
+        max_attendees:
+          type: integer
+          nullable: true
+        registration_fee:
+          type: number
+          format: float
+        status:
+          type: string
+          enum: [upcoming, ongoing, completed, cancelled]
+
+    EventRegistration:
+      type: object
+      properties:
+        id:
+          type: integer
+        event_id:
+          type: integer
+        user_id:
+          type: integer
+        status:
+          type: string
+          enum: [registered, cancelled]
+        registered_at:
+          type: string
+          format: date-time
+
+    # ----- Payments -----
+    Payment:
+      type: object
+      properties:
+        id:
+          type: integer
+        user_id:
+          type: integer
+        amount:
+          type: number
+          format: float
+        currency:
+          type: string
+          default: INR
+        payment_type:
+          type: string
+          enum: [booking, membership, event]
+        reference_id:
+          type: integer
+        status:
+          type: string
+          enum: [pending, completed, failed, refunded]
+        gateway_transaction_id:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    # ----- Attendance -----
+    AttendanceRecord:
+      type: object
+      properties:
+        id:
+          type: integer
+        user_id:
+          type: integer
+        booking_id:
+          type: integer
+          nullable: true
+        event_id:
+          type: integer
+          nullable: true
+        check_in_at:
+          type: string
+          format: date-time
+        check_out_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    # ----- Notifications -----
+    Notification:
+      type: object
+      properties:
+        id:
+          type: integer
+        user_id:
+          type: integer
+        title:
+          type: string
+        body:
+          type: string
+        type:
+          type: string
+          enum: [booking, event, payment, announcement]
+        is_read:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+
+    # ----- Availability -----
+    AvailabilityMatrix:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        courts:
+          type: array
+          items:
+            type: object
+            properties:
+              court_id:
+                type: integer
+              court_name:
+                type: string
+              slots:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    start_time:
+                      type: string
+                      format: time
+                    end_time:
+                      type: string
+                      format: time
+                    status:
+                      type: string
+                      enum: [available, booked, blocked]
+                    reason:
+                      type: string
+                      nullable: true
+
 paths:
-  # --- AUTHENTICATION ---
+  # ================= AUTHENTICATION =================
   /auth/register:
     post:
       summary: Register a new user
@@ -97,10 +299,14 @@ paths:
                 name: { type: string }
                 email: { type: string, format: email }
                 password: { type: string, format: password }
-                role: { type: string, enum: [player, owner] }
+                role: { type: string, enum: [player, owner, front-desk] }
       responses:
         '201':
-          description: User registered
+          description: User registered successfully
+        '400':
+          description: Validation error
+        '409':
+          description: Email already registered
 
   /auth/login:
     post:
@@ -118,16 +324,57 @@ paths:
                 password: { type: string }
       responses:
         '200':
-          description: Successful login returns JWT access_token
+          description: Login successful, JWT set as HttpOnly cookie
+        '400':
+          description: Missing credentials
+        '401':
+          description: Invalid credentials
 
-  # --- MULTI-TENANT: CLUBS & COURTS ---
-  /clubs:
+  /auth/me:
     get:
-      summary: List all active clubs (Player Discovery)
-      security: [] # Can be public or player-only depending on your preference
+      summary: Get current authenticated user
+      security: []
       responses:
         '200':
-          description: Array of available clubs
+          description: User data retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    type: object
+                    properties:
+                      id: { type: integer }
+                      name: { type: string }
+                      email: { type: string }
+                      role: { type: string }
+        '401':
+          description: Not authenticated
+        '404':
+          description: User not found
+
+  /auth/logout:
+    post:
+      summary: Clear authentication cookie
+      security: []
+      responses:
+        '200':
+          description: Logged out successfully
+
+  # ================= CLUBS & COURTS =================
+  /clubs:
+    get:
+      summary: List all clubs (public)
+      security: []
+      parameters:
+        - name: search
+          in: query
+          schema: { type: string }
+          description: Optional search by club name
+      responses:
+        '200':
+          description: Array of clubs
           content:
             application/json:
               schema:
@@ -135,28 +382,31 @@ paths:
                 items:
                   $ref: '#/components/schemas/Club'
     post:
-      summary: Register a new Club (Owner Only)
-      description: Requires 'owner' role. The JWT identity is automatically set as the owner_id.
+      summary: Create a new club (Owner Only)
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required: [name, address, operating_hours]
+              required: [name, address]
               properties:
                 name: { type: string }
                 address: { type: string }
-                operating_hours:
-                  $ref: '#/components/schemas/OperatingHours'
+                open_time: { type: string, example: "06:00" }
+                close_time: { type: string, example: "22:00" }
+                slot_duration_minutes: { type: integer, example: 60 }
       responses:
         '201':
           description: Club created successfully
+        '400':
+          description: Validation error
+        '409':
+          description: Owner already has a club
 
   /clubs/{clubId}:
     put:
-      summary: Update Club settings & availability (Owner Only)
-      description: Verifies JWT identity matches Club's owner_id.
+      summary: Update club settings (Owner Only)
       parameters:
         - name: clubId
           in: path
@@ -169,18 +419,92 @@ paths:
             schema:
               type: object
               properties:
-                operating_hours:
-                  $ref: '#/components/schemas/OperatingHours'
+                name: { type: string }
+                address: { type: string }
+                open_time: { type: string }
+                close_time: { type: string }
+                slot_duration_minutes: { type: integer }
       responses:
         '200':
-          description: Club settings updated
+          description: Club updated successfully
+        '403':
+          description: Not authorized
 
   /clubs/{clubId}/courts:
-    post:
-      summary: Add a court to a club (Owner Only)
-      description: Verifies JWT identity matches Club's owner_id.
+    get:
+      summary: List active courts for a club (public)
       parameters:
         - name: clubId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Array of active courts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Court'
+        '404':
+          description: Club not found
+
+  /clubs/my-club:
+    get:
+      summary: Get owner's own club (Owner Only)
+      responses:
+        '200':
+          description: Club data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Club'
+        '404':
+          description: No club found
+
+  # --- Court CRUD (Owner Only) ---
+  /clubs/courts:
+    get:
+      summary: List owner's courts with club info (Owner Only)
+      responses:
+        '200':
+          description: Courts and associated club
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  club:
+                    $ref: '#/components/schemas/Club'
+                  courts:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Court'
+    post:
+      summary: Create a court (and optionally a club if none exists)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [court_name]
+              properties:
+                court_name: { type: string }
+                club_name: { type: string, description: "Required if owner has no club yet" }
+                club_address: { type: string, description: "Required if owner has no club yet" }
+      responses:
+        '201':
+          description: Court created
+        '400':
+          description: Validation error or club required but missing
+
+  /clubs/courts/{courtId}:
+    put:
+      summary: Update a court (Owner Only)
+      parameters:
+        - name: courtId
           in: path
           required: true
           schema: { type: integer }
@@ -190,22 +514,39 @@ paths:
           application/json:
             schema:
               type: object
-              required: [name]
+              required: [court_name]
               properties:
-                name: { type: string, example: "Court 1 - Clay" }
-                operating_hours_override:
-                  $ref: '#/components/schemas/OperatingHours'
-                  description: "Optional: Override club default hours for this specific court"
+                court_name: { type: string }
+                is_active: { type: boolean, default: true }
+                open_time_override: { type: string, nullable: true }
+                close_time_override: { type: string, nullable: true }
+                slot_duration_override: { type: integer, nullable: true }
       responses:
-        '201':
-          description: Court added to club
-
-  /clubs/{clubId}/availability:
-    get:
-      summary: Get court availability for a specific club and date
+        '200':
+          description: Court updated successfully
+        '404':
+          description: Court not found or not owned
+    delete:
+      summary: Delete a court (Owner Only)
       parameters:
-        - name: clubId
+        - name: courtId
           in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Court deleted successfully
+        '404':
+          description: Court not found or not owned
+
+  # ================= AVAILABILITY =================
+  /availability/matrix:
+    get:
+      summary: Get availability matrix for a club on a given date
+      security: []
+      parameters:
+        - name: club_id
+          in: query
           required: true
           schema: { type: integer }
         - name: date
@@ -214,29 +555,20 @@ paths:
           schema: { type: string, format: date, example: "2026-07-20" }
       responses:
         '200':
-          description: Returns matrix of courts and slots generated dynamically based on operating hours.
+          description: Availability matrix
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    court_id: { type: integer }
-                    court_name: { type: string }
-                    slots:
-                      type: array
-                      items:
-                        type: object
-                        properties:
-                          start_time: { type: string }
-                          end_time: { type: string }
-                          status: { type: string, enum: [available, booked, blocked] }
+                $ref: '#/components/schemas/AvailabilityMatrix'
+        '400':
+          description: Invalid date or missing club_id
+        '404':
+          description: Club not found
 
-  # --- PLAYER TRANSACTIONS ---
+  # ================= BOOKINGS =================
   /bookings:
     post:
-      summary: Player books a slot
+      summary: Create a booking (Player Only)
       requestBody:
         required: true
         content:
@@ -247,17 +579,42 @@ paths:
               properties:
                 court_id: { type: integer }
                 booking_date: { type: string, format: date }
-                start_time: { type: string }
-                end_time: { type: string }
+                start_time: { type: string, format: time }
+                end_time: { type: string, format: time }
       responses:
         '201':
-          description: Booking successful
+          description: Booking created successfully
+        '400':
+          description: Validation error
+        '404':
+          description: Court not found or inactive
         '409':
-          description: Race condition (slot overlapping via GiST constraint)
+          description: Slot already booked
+
+    get:
+      summary: Get current user's bookings (Player Only)
+      responses:
+        '200':
+          description: List of bookings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id: { type: integer }
+                    court_id: { type: integer }
+                    court_name: { type: string }
+                    club_name: { type: string }
+                    booking_date: { type: string, format: date }
+                    start_time: { type: string, format: time }
+                    end_time: { type: string, format: time }
+                    status: { type: string, enum: [active, released, overridden] }
 
   /bookings/{bookingId}/release:
-    patch:
-      summary: Release an active slot to the public (Player)
+    post:
+      summary: Release/cancel a booking (JWT required – ownership enforced)
       parameters:
         - name: bookingId
           in: path
@@ -265,43 +622,351 @@ paths:
           schema: { type: integer }
       responses:
         '200':
-          description: Slot released (soft-delete)
+          description: Booking released successfully
+        '403':
+          description: Not authorized to release this booking
+        '404':
+          description: Booking not found
 
-  # --- ADMIN ACTIONS ---
-  /admin/overrides:
+  # ================= ADMIN (OWNER) =================
+  /admin/bookings/{bookingId}/override:
     post:
-      summary: Force override a player's slot (Owner Only)
-      description: Verifies JWT identity matches the owner of the club housing the court.
+      summary: Override a player's booking (Owner Only)
+      parameters:
+        - name: bookingId
+          in: path
+          required: true
+          schema: { type: integer }
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required: [booking_id, reason]
+              required: [reason]
               properties:
-                booking_id: { type: integer }
                 reason: { type: string, minLength: 20 }
       responses:
-        '201':
-          description: Override initiated
+        '200':
+          description: Booking overridden successfully
+        '400':
+          description: Validation error (reason too short)
+        '403':
+          description: Not authorized to override this booking
+        '404':
+          description: Booking not found
 
-  /admin/blocks:
+  /admin/courts/block:
     post:
       summary: Block a court for maintenance/tournament (Owner Only)
-      description: Verifies JWT identity matches the owner of the club housing the court.
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required: [court_id, start_date, end_date, title]
+              required: [court_id, start_date, end_date]
               properties:
                 court_id: { type: integer }
                 start_date: { type: string, format: date }
                 end_date: { type: string, format: date }
-                title: { type: string }
+                title: { type: string, default: "Admin Block" }
       responses:
         '201':
-          description: Court blocked
+          description: Court blocked successfully
+        '400':
+          description: Validation error
+        '403':
+          description: Not authorized to block this court
+        '404':
+          description: Court not found
+
+  # ================= MEMBERSHIPS =================
+  /memberships/plans:
+    get:
+      summary: Get membership plans (public)
+      parameters:
+        - name: club_id
+          in: query
+          schema: { type: integer }
+          description: Filter by club
+      responses:
+        '200':
+          description: List of membership plans
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MembershipPlan'
+
+  /memberships/subscribe:
+    post:
+      summary: Subscribe to a membership plan (JWT required)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [plan_id]
+              properties:
+                plan_id: { type: integer }
+                auto_renew: { type: boolean, default: false }
+      responses:
+        '201':
+          description: Subscribed successfully
+        '400':
+          description: Validation error
+        '404':
+          description: Plan not found
+        '409':
+          description: Already has active membership for this club
+
+  /memberships/my-memberships:
+    get:
+      summary: Get current user's memberships
+      responses:
+        '200':
+          description: List of memberships
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Membership'
+
+  /memberships/{membershipId}/cancel:
+    post:
+      summary: Cancel a membership (JWT required – ownership enforced)
+      parameters:
+        - name: membershipId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Membership cancelled successfully
+        '403':
+          description: Not authorized to cancel this membership
+        '404':
+          description: Membership not found
+
+  # ================= EVENTS =================
+  /events:
+    get:
+      summary: List upcoming events (public)
+      parameters:
+        - name: club_id
+          in: query
+          schema: { type: integer }
+          description: Filter by club
+      responses:
+        '200':
+          description: List of events
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Event'
+    post:
+      summary: Create a new event (Owner Only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [club_id, title, event_date, start_time, end_time]
+              properties:
+                club_id: { type: integer }
+                title: { type: string }
+                description: { type: string }
+                event_date: { type: string, format: date }
+                start_time: { type: string, format: time }
+                end_time: { type: string, format: time }
+                max_attendees: { type: integer, nullable: true }
+                registration_fee: { type: number, format: float, default: 0 }
+      responses:
+        '201':
+          description: Event created successfully
+        '400':
+          description: Validation error
+        '403':
+          description: Not authorized to create events for this club
+        '404':
+          description: Club not found
+
+  /events/{eventId}/register:
+    post:
+      summary: Register for an event (JWT required)
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Registered successfully
+        '409':
+          description: Already registered or event full
+        '404':
+          description: Event not found
+
+  /events/{eventId}/cancel:
+    post:
+      summary: Cancel event registration (JWT required – ownership enforced)
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Registration cancelled successfully
+        '404':
+          description: Registration not found
+
+  # ================= PAYMENTS =================
+  /payments/my-payments:
+    get:
+      summary: Get current user's payment history
+      responses:
+        '200':
+          description: List of payments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Payment'
+
+  /payments/webhook:
+    post:
+      summary: Payment gateway webhook (public)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                transaction_id: { type: string }
+                status: { type: string, enum: [completed, failed, refunded] }
+                reference_id: { type: integer }
+                payment_type: { type: string, enum: [booking, membership, event] }
+      responses:
+        '200':
+          description: Webhook processed successfully
+
+  # ================= ATTENDANCE =================
+  /attendance/check-in:
+    post:
+      summary: Check in a user (JWT required – any role)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              oneOf:
+                - required: [booking_id]
+                - required: [event_id]
+              properties:
+                booking_id: { type: integer, nullable: true }
+                event_id: { type: integer, nullable: true }
+      responses:
+        '201':
+          description: Checked in successfully
+        '400':
+          description: Validation error
+        '404':
+          description: Booking/event not found
+        '409':
+          description: Already checked in
+
+  /attendance/check-out:
+    post:
+      summary: Check out a user (JWT required – any role)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [attendance_id]
+              properties:
+                attendance_id: { type: integer }
+      responses:
+        '200':
+          description: Checked out successfully
+        '400':
+          description: Missing attendance_id
+        '403':
+          description: Not authorized
+        '404':
+          description: Attendance record not found
+
+  /attendance/admin/view:
+    get:
+      summary: View attendance records for a club (Owner Only)
+      parameters:
+        - name: club_id
+          in: query
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: List of attendance records
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AttendanceRecord'
+        '403':
+          description: Not authorized to view this club's attendance
+
+  # ================= NOTIFICATIONS =================
+  /notifications:
+    get:
+      summary: Get current user's notifications
+      responses:
+        '200':
+          description: List of notifications
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  unread_count:
+                    type: integer
+                  notifications:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Notification'
+
+  /notifications/{notificationId}/read:
+    post:
+      summary: Mark a notification as read
+      parameters:
+        - name: notificationId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Notification marked as read
+        '403':
+          description: Not authorized to mark this notification
+        '404':
+          description: Notification not found
+
+  /notifications/read-all:
+    post:
+      summary: Mark all notifications as read
+      responses:
+        '200':
+          description: All notifications marked as read

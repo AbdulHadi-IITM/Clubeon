@@ -759,36 +759,138 @@
 
           <!-- TAB 3: COURTS PREVIEW -->
           <div v-else-if="activeNav === 'Courts'" class="tab-pane">
-            <section class="kpi-grid">
-              <div class="kpi-card">
-                <span class="kpi-title">Total Courts</span>
-                <h3 class="kpi-value">16</h3>
-                <span class="trend-badge neutral">• All Facilities</span>
+            <!-- Aesthetic Club Banner -->
+            <div v-if="courtStore.club" class="club-banner glass">
+              <div class="club-banner-icon">🏛️</div>
+              <div class="club-banner-info">
+                <h2>{{ courtStore.club.name }}</h2>
+                <p>{{ courtStore.club.address }}</p>
+                <div class="club-hours-badge">
+                  <span
+                    >🕒 {{ courtStore.club.open_time || 'N/A' }} -
+                    {{ courtStore.club.close_time || 'N/A' }}</span
+                  >
+                  <span>⏱️ {{ courtStore.club.slot_duration_minutes || 60 }} min slots</span>
+                </div>
               </div>
+            </div>
+            <div v-else class="club-banner glass-empty">
+              <p>Club not set up yet. Add your first court to create your club.</p>
+            </div>
+
+            <!-- KPI Grid with Real Stats -->
+            <section class="kpi-grid" aria-label="Court Performance Indicators">
               <div class="kpi-card">
-                <span class="kpi-title">Available Courts</span>
-                <h3 class="kpi-value">14</h3>
-                <span class="trend-badge positive">↑ Ready for Booking</span>
+                <div class="kpi-header">
+                  <div class="kpi-icon-box emerald">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                      />
+                    </svg>
+                  </div>
+                  <span class="trend-badge neutral">• All Facilities</span>
+                </div>
+                <div class="kpi-body">
+                  <span class="kpi-title">Total Courts</span>
+                  <h3 class="kpi-value">{{ totalCourts }}</h3>
+                </div>
               </div>
+
               <div class="kpi-card">
-                <span class="kpi-title">Under Maintenance</span>
-                <h3 class="kpi-value">2</h3>
-                <span class="trend-badge neutral">• Courts 3 & 4</span>
+                <div class="kpi-header">
+                  <div class="kpi-icon-box blue">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+                      />
+                    </svg>
+                  </div>
+                  <span class="trend-badge positive">↑ Ready for Booking</span>
+                </div>
+                <div class="kpi-body">
+                  <span class="kpi-title">Available Courts</span>
+                  <h3 class="kpi-value">{{ activeCourtsCount }}</h3>
+                </div>
               </div>
+
               <div class="kpi-card">
-                <span class="kpi-title">Court Utilization</span>
-                <h3 class="kpi-value">87.5%</h3>
-                <span class="trend-badge positive">↑ Peak Occupancy</span>
+                <div class="kpi-header">
+                  <div class="kpi-icon-box orange">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                      />
+                    </svg>
+                  </div>
+                  <span class="trend-badge neutral">• Inactive / Maintenance</span>
+                </div>
+                <div class="kpi-body">
+                  <span class="kpi-title">Under Maintenance</span>
+                  <h3 class="kpi-value">{{ inactiveCourtsCount }}</h3>
+                </div>
+              </div>
+
+              <div class="kpi-card">
+                <div class="kpi-header">
+                  <div class="kpi-icon-box purple">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                  </div>
+                  <span class="trend-badge positive">↑ Peak Occupancy</span>
+                </div>
+                <div class="kpi-body">
+                  <span class="kpi-title">Court Utilization</span>
+                  <h3 class="kpi-value">87.5%</h3>
+                </div>
               </div>
             </section>
 
+            <!-- Courts List Section with Date Picker -->
             <section class="section-block">
               <div class="block-header flex-between">
                 <div>
                   <h3>Court Status Overview</h3>
                   <span class="subtext">Manage your club's courts and availability</span>
                 </div>
-                <button class="btn-primary-action" @click="openAddCourtModal">+ Add Court</button>
+                <div style="display: flex; gap: 1rem; align-items: center">
+                  <button class="btn-primary-action" @click="openAddCourtModal">+ Add Court</button>
+                </div>
               </div>
 
               <div v-if="courtStore.loading" class="loading-state">Loading courts...</div>
@@ -810,6 +912,22 @@
                     </span>
                   </div>
                   <h4 class="event-card-title">{{ court.name }}</h4>
+
+                  <!-- Default/Custom Badge -->
+                  <div class="court-settings-badge">
+                    <span
+                      v-if="
+                        court.open_time_override ||
+                        court.close_time_override ||
+                        court.slot_duration_override
+                      "
+                      class="badge-custom"
+                    >
+                      ⚙️ Custom
+                    </span>
+                    <span v-else class="badge-default"> 🏛️ Default </span>
+                  </div>
+
                   <div class="event-details">
                     <!-- Actions -->
                     <div class="detail-item" style="gap: 1rem; margin-top: 0.5rem">
@@ -1039,16 +1157,21 @@
               <div class="block-header">
                 <h3>System & Club Settings</h3>
                 <span class="subtext"
-                  >Manage facility parameters, operating hours, and alert settings</span
+                  >Manage facility parameters, operating hours, and default slot duration</span
                 >
               </div>
 
               <div class="analytics-grid">
-                <div class="card-box">
+                <!-- CASE 1: CLUB EXISTS -> Update Mode -->
+                <div v-if="courtStore.club" class="card-box">
                   <h4 class="settings-card-title">Club Information</h4>
                   <div class="setting-row">
                     <span class="setting-label">Club Name</span>
-                    <span class="setting-val">Apex Sports Arena</span>
+                    <input type="text" v-model="clubForm.name" class="settings-input" />
+                  </div>
+                  <div class="setting-row">
+                    <span class="setting-label">Club Address</span>
+                    <input type="text" v-model="clubForm.address" class="settings-input" />
                   </div>
                   <div class="setting-row">
                     <span class="setting-label">Contact Email</span>
@@ -1060,20 +1183,62 @@
                   </div>
                 </div>
 
+                <!-- CASE 2: NO CLUB -> Create Mode -->
+                <div v-else class="card-box">
+                  <h4 class="settings-card-title">Create Your Club</h4>
+                  <p class="subtext" style="margin-bottom: 1rem">
+                    You don't have a club yet. Create one to start adding courts.
+                  </p>
+                  <div class="setting-row">
+                    <span class="setting-label">Club Name</span>
+                    <input
+                      type="text"
+                      v-model="clubForm.name"
+                      class="settings-input"
+                      placeholder="e.g. Apex Sports Arena"
+                    />
+                  </div>
+                  <div class="setting-row">
+                    <span class="setting-label">Club Address</span>
+                    <input
+                      type="text"
+                      v-model="clubForm.address"
+                      class="settings-input"
+                      placeholder="Full physical address"
+                    />
+                  </div>
+                </div>
+
+                <!-- Operating Hours Card (Shared by both Create and Update) -->
                 <div class="card-box">
-                  <h4 class="settings-card-title">Operating Hours</h4>
+                  <h4 class="settings-card-title">Operating Hours (Default)</h4>
                   <div class="setting-row">
-                    <span class="setting-label">Monday - Friday</span>
-                    <span class="setting-val">6:00 AM - 10:00 PM</span>
+                    <span class="setting-label">Open Time</span>
+                    <input type="time" v-model="clubForm.open_time" class="settings-input" />
                   </div>
                   <div class="setting-row">
-                    <span class="setting-label">Saturday - Sunday</span>
-                    <span class="setting-val">7:00 AM - 11:00 PM</span>
+                    <span class="setting-label">Close Time</span>
+                    <input type="time" v-model="clubForm.close_time" class="settings-input" />
                   </div>
                   <div class="setting-row">
-                    <span class="setting-label">Holiday Schedule</span>
-                    <span class="setting-val">8:00 AM - 8:00 PM</span>
+                    <span class="setting-label">Slot Duration (mins)</span>
+                    <input
+                      type="number"
+                      v-model="clubForm.slot_duration_minutes"
+                      class="settings-input"
+                      min="15"
+                      step="15"
+                    />
                   </div>
+
+                  <!-- Dynamic Button -->
+                  <button
+                    class="btn-primary-action"
+                    style="margin-top: 1rem; width: 100%"
+                    @click="saveOrCreateClub"
+                  >
+                    {{ courtStore.club ? 'Save Default Settings' : 'Create Club' }}
+                  </button>
                 </div>
               </div>
             </section>
@@ -1106,7 +1271,7 @@
                 </div>
 
                 <!-- Show Club setup fields only if this is the first court (courts array is empty) -->
-                <div v-if="courtStore.courts.length === 0" class="form-row">
+                <div v-if="!courtStore.club" class="form-row">
                   <div class="form-group">
                     <label>Club Name</label>
                     <input
@@ -1161,6 +1326,62 @@
                   </div>
                 </div>
 
+                <!-- Toggle: Use Defaults or Custom -->
+                <div class="toggle-section">
+                  <label class="toggle-label">Operating Hours & Slot Duration</label>
+                  <div class="toggle-group">
+                    <button
+                      type="button"
+                      class="toggle-btn"
+                      :class="{ active: courtForm.use_defaults }"
+                      @click="courtForm.use_defaults = true"
+                    >
+                      Use Club Defaults
+                    </button>
+                    <button
+                      type="button"
+                      class="toggle-btn"
+                      :class="{ active: !courtForm.use_defaults }"
+                      @click="courtForm.use_defaults = false"
+                    >
+                      Custom Settings
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Override inputs – enabled only when custom is selected -->
+                <div class="form-row" :class="{ 'disabled-section': courtForm.use_defaults }">
+                  <div class="form-group">
+                    <label>Open Time</label>
+                    <input
+                      type="time"
+                      v-model="courtForm.open_time_override"
+                      :disabled="courtForm.use_defaults"
+                    />
+                  </div>
+                  <div class="form-group">
+                    <label>Close Time</label>
+                    <input
+                      type="time"
+                      v-model="courtForm.close_time_override"
+                      :disabled="courtForm.use_defaults"
+                    />
+                  </div>
+                </div>
+                <div class="form-row" :class="{ 'disabled-section': courtForm.use_defaults }">
+                  <div class="form-group">
+                    <label>Slot Duration (minutes)</label>
+                    <input
+                      type="number"
+                      v-model="courtForm.slot_duration_override"
+                      :disabled="courtForm.use_defaults"
+                      min="15"
+                      step="15"
+                      placeholder="e.g. 60"
+                    />
+                  </div>
+                </div>
+
                 <div class="modal-actions">
                   <button type="button" @click="closeEditCourtModal" class="cancel-modal-btn">
                     Cancel
@@ -1177,7 +1398,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, inject } from 'vue'
+import { ref, computed, onMounted, inject, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useCourtStore } from '@/stores/courts'
@@ -1201,13 +1422,57 @@ const currentDate = ref(
   }),
 )
 
+const totalCourts = computed(() => courtStore.courts.length)
+const activeCourtsCount = computed(() => courtStore.courts.filter((c) => c.is_active).length)
+const inactiveCourtsCount = computed(() => courtStore.courts.filter((c) => !c.is_active).length)
+
 // Form state for modals
-const courtForm = ref({ court_name: '', club_name: '', club_address: '', is_active: true })
+const clubForm = ref({
+  name: '',
+  address: '',
+  open_time: '',
+  close_time: '',
+  slot_duration_minutes: 60,
+})
+
+const courtForm = ref({
+  court_name: '',
+  is_active: true,
+  use_defaults: true, // new
+  open_time_override: '',
+  close_time_override: '',
+  slot_duration_override: '',
+})
 
 // Fetch data on mount
 onMounted(() => {
   courtStore.fetchCourts()
 })
+
+watch(
+  () => courtStore.club,
+  (newClub) => {
+    if (newClub) {
+      clubForm.value = {
+        name: newClub.name,
+        address: newClub.address || '',
+        open_time: newClub.open_time || '',
+        close_time: newClub.close_time || '',
+        slot_duration_minutes: newClub.slot_duration_minutes || 60,
+      }
+    } else {
+      // Reset the form if no club exists
+      clubForm.value = {
+        name: '',
+        address: '',
+        open_time: '',
+        close_time: '',
+        slot_duration_minutes: 60,
+      }
+    }
+  },
+  { immediate: true },
+)
 
 // Modal Handlers
 const openAddCourtModal = () => {
@@ -1229,24 +1494,28 @@ const handleCreateCourt = async () => {
   }
 }
 
-const openEditCourtModal = (court) => {
-  currentEditCourt.value = court
-  courtForm.value = {
-    court_name: court.name,
-    is_active: court.is_active,
-    club_name: '',
-    club_address: '', // not needed for edits
-  }
-  showEditCourtModal.value = true
-}
-
 const closeEditCourtModal = () => {
   showEditCourtModal.value = false
   currentEditCourt.value = null
 }
 
 const handleUpdateCourt = async () => {
-  const result = await courtStore.updateCourt(currentEditCourt.value.id, courtForm.value)
+  const payload = {
+    court_name: courtForm.value.court_name,
+    is_active: courtForm.value.is_active,
+    open_time_override: courtForm.value.use_defaults
+      ? null
+      : courtForm.value.open_time_override || null,
+    close_time_override: courtForm.value.use_defaults
+      ? null
+      : courtForm.value.close_time_override || null,
+    slot_duration_override: courtForm.value.use_defaults
+      ? null
+      : courtForm.value.slot_duration_override
+        ? Number(courtForm.value.slot_duration_override)
+        : null,
+  }
+  const result = await courtStore.updateCourt(currentEditCourt.value.id, payload)
   if (result.success) {
     closeEditCourtModal()
     toast.success('Court updated successfully! ✨')
@@ -1264,6 +1533,58 @@ const handleDeleteCourt = async (courtId) => {
       toast.error(result.error || 'Failed to delete court')
     }
   }
+}
+
+const saveOrCreateClub = async () => {
+  if (courtStore.club) {
+    // === UPDATE ===
+    const result = await courtStore.updateClubSettings({
+      name: clubForm.value.name,
+      address: clubForm.value.address,
+      open_time: clubForm.value.open_time || null,
+      close_time: clubForm.value.close_time || null,
+      slot_duration_minutes: clubForm.value.slot_duration_minutes || null,
+    })
+    if (result.success) {
+      toast.success('Club settings updated successfully!')
+    } else {
+      toast.error(result.error || 'Failed to update club settings')
+    }
+  } else {
+    // === CREATE ===
+    if (!clubForm.value.name || !clubForm.value.address) {
+      toast.error('Please provide a Club Name and Address')
+      return
+    }
+    const result = await courtStore.createClub({
+      name: clubForm.value.name,
+      address: clubForm.value.address,
+      open_time: clubForm.value.open_time || null,
+      close_time: clubForm.value.close_time || null,
+      slot_duration_minutes: clubForm.value.slot_duration_minutes || null,
+    })
+    if (result.success) {
+      toast.success('Club created successfully! 🏛️')
+      // fetchCourts() is already called inside createClub, so the UI will auto-switch to Update mode.
+    } else {
+      toast.error(result.error || 'Failed to create club')
+    }
+  }
+}
+
+const openEditCourtModal = (court) => {
+  currentEditCourt.value = court
+  const hasOverrides =
+    court.open_time_override || court.close_time_override || court.slot_duration_override
+  courtForm.value = {
+    court_name: court.name,
+    is_active: court.is_active,
+    use_defaults: !hasOverrides,
+    open_time_override: court.open_time_override || '',
+    close_time_override: court.close_time_override || '',
+    slot_duration_override: court.slot_duration_override || '',
+  }
+  showEditCourtModal.value = true
 }
 
 // Header title and subtitle reactive computation based on active sidebar tab
@@ -2871,6 +3192,192 @@ const upcomingEvents = ref([
 
 .submit-modal-btn:hover {
   background: #4338ca;
+}
+
+/* Club Banner */
+.club-banner {
+  margin-bottom: 2rem;
+  padding: 1.5rem 2rem;
+  border-radius: 1.25rem;
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.05), rgba(139, 92, 246, 0.05));
+  border: 1px solid rgba(37, 99, 235, 0.15);
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.03);
+}
+
+.club-banner.glass-empty {
+  background: #ffffff;
+  border: 1px dashed #e2e8f0;
+  color: #64748b;
+  text-align: center;
+  justify-content: center;
+}
+
+.club-banner-icon {
+  font-size: 2.5rem;
+}
+
+.club-banner-info h2 {
+  font-family: 'Poppins', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 0.25rem;
+}
+
+.club-banner-info p {
+  color: #64748b;
+  margin: 0 0 0.5rem;
+}
+
+.club-hours-badge {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #475569;
+}
+
+.club-hours-badge span {
+  background: rgba(226, 232, 240, 0.6);
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+}
+
+/* Settings Inputs */
+.settings-input {
+  width: 100%;
+  padding: 0.4rem 0.6rem;
+  border-radius: 0.5rem;
+  border: 1px solid #e2e8f0;
+  font-family: inherit;
+  font-size: 0.85rem;
+  color: #0f172a;
+  background: #ffffff;
+  transition: border-color 0.2s ease;
+}
+
+.settings-input:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* Ensure setting-row aligns inputs */
+.setting-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 0.85rem;
+  gap: 1rem;
+}
+.setting-label {
+  flex: 0 0 30%;
+}
+.settings-input {
+  flex: 1;
+}
+
+.court-settings-badge {
+  margin-bottom: 0.75rem;
+}
+.badge-default,
+.badge-custom {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  letter-spacing: 0.02em;
+}
+.badge-default {
+  background: rgba(100, 116, 139, 0.1);
+  color: #475569;
+}
+.badge-custom {
+  background: rgba(37, 99, 235, 0.1);
+  color: #2563eb;
+}
+
+/* Toggle section */
+.toggle-section {
+  margin: 0.5rem 0 1rem;
+  padding: 0.5rem 0;
+  border-top: 1px solid rgba(226, 232, 240, 0.6);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.6);
+}
+.toggle-label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 0.5rem;
+}
+.toggle-group {
+  display: flex;
+  gap: 0.5rem;
+}
+.toggle-btn {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #64748b;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.toggle-btn:hover {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+}
+.toggle-btn.active {
+  border-color: #2563eb;
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+/* Disable visual style for override inputs when using defaults */
+.disabled-section .form-group input,
+.disabled-section .form-group select {
+  opacity: 0.5;
+  background: #f1f5f9;
+  cursor: not-allowed;
+}
+
+/* Date Picker Wrapper */
+.date-picker-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Court Settings Badges */
+.court-settings-badge {
+  margin-bottom: 0.75rem;
+}
+.badge-default,
+.badge-custom {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  letter-spacing: 0.02em;
+}
+.badge-default {
+  background: rgba(100, 116, 139, 0.1);
+  color: #475569;
+}
+.badge-custom {
+  background: rgba(37, 99, 235, 0.1);
+  color: #2563eb;
 }
 
 /* Animations */

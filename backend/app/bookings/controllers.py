@@ -1,7 +1,7 @@
 from app.auth.decorators import role_required
 from flask import Blueprint, request, jsonify
 from app.bookings.services import BookingService
-from flask_jwt_extended import get_jwt_identity
+from flask_jwt_extended import get_jwt_identity, jwt_required
 
 bookings_bp = Blueprint('bookings', __name__, url_prefix='/api/v1/bookings')
 
@@ -52,7 +52,7 @@ def get_my_bookings():
     return jsonify(result), 200
 
 @bookings_bp.route('/<int:booking_id>/release', methods=['POST'])
-@role_required('owner')
+@jwt_required()
 def release_booking(booking_id):
     user_id = int(get_jwt_identity())
     success, error = BookingService.release_booking(user_id, booking_id)
