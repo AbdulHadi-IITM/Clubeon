@@ -1,5 +1,5 @@
 from app.extensions import db
-from app.bookings.models import User
+from app.auth.models import User
 from flask_jwt_extended import create_access_token
 from datetime import timedelta
 

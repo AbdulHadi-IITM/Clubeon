@@ -26,7 +26,14 @@ def create_app(config_class=Config):
          }})
 
     # Register models so Alembic can detect them
+    from app.auth import models
+    from app.clubs import models
     from app.bookings import models
+    from app.memberships import models
+    from app.events import models
+    from app.payments import models
+    from app.attendance import models
+    from app.notifications import models
 
     # Register Blueprints (Controllers)
     from app.bookings.controllers import bookings_bp
@@ -35,10 +42,40 @@ def create_app(config_class=Config):
     from app.auth.controllers import auth_bp
     app.register_blueprint(auth_bp)
 
+    from app.clubs.controllers import clubs_bp
+    app.register_blueprint(clubs_bp)
+
+    from app.availability.controllers import availability_bp
+    app.register_blueprint(availability_bp)
+
+    from app.admin.controllers import admin_bp
+    app.register_blueprint(admin_bp)
+
+    from app.memberships.controllers import memberships_bp
+    app.register_blueprint(memberships_bp)
+
+    from app.events.controllers import events_bp
+    app.register_blueprint(events_bp)
+
+    from app.payments.controllers import payments_bp
+    app.register_blueprint(payments_bp)
+
+    from app.attendance.controllers import attendance_bp
+    app.register_blueprint(attendance_bp)
+
+    from app.notifications.controllers import notifications_bp
+    app.register_blueprint(notifications_bp)
+
+
+
+
+
+
+
     # 1. Route to serve the actual YAML file
     @app.route('/api/docs/openapi.yaml')
     def send_openapi_yaml():
-        yaml_dir = os.path.abspath(os.path.join(app.root_path, '../../api-docs'))
+        yaml_dir = os.path.abspath(os.path.join(app.root_path, '../docs/api-docs'))
         return send_from_directory(yaml_dir, 'openapi.yaml')
 
     # 2. Setup the Swagger UI blueprint

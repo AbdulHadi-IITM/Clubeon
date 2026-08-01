@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.auth.services import AuthService
-from app.bookings.models import User
+from app.auth.models import User
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/api/v1/auth')
 

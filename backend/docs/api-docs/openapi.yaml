@@ -1,7 +1,13 @@
 openapi: 3.0.3
 info:
   title: Club Booking SaaS Platform API
-  description: Multi-tenant booking engine for Players and Club Owners.
+  description: >
+    Multi-tenant booking engine for Players and Club Owners.
+    
+    ## Implementation Deviations Logged
+    1. Operating hours fields (`open_time`, `close_time`, `slot_duration_minutes`) are flat fields on `Club` and `Court` models, not nested objects.
+    2. Overlap validation for Bookings is performed at the application layer via Python queries instead of PostgreSQL GiST constraints, as SQLite is used.
+    3. Additional modules implemented but not listed in initial API spec: Memberships, Events, Payments, Attendance, and Notifications.
   version: 2.0.0
 
 servers:
