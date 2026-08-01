@@ -1,352 +1,106 @@
-<!-- eslint-disable vue/multi-word-component-names -->
 <template>
-  <header class="navbar" :class="{ 'is-scrolled': isScrolled || isLightBgPage }">
-    <div class="container">
-      <router-link :to="{ name: 'landing' }" class="logo" aria-label="ClubDash home">
-        <span class="mark">C</span>
-        <span class="logo-text">ClubDash</span>
-      </router-link>
-
-      <nav class="nav-links" aria-label="Primary navigation">
-        <router-link :to="{ name: 'landing', hash: '#features' }" :class="{ active: activeSection === 'features' }" @click="activeSection = 'features'">Features</router-link>
-        <router-link :to="{ name: 'landing', hash: '#facilities' }" :class="{ active: activeSection === 'facilities' }" @click="activeSection = 'facilities'">Facilities</router-link>
-        <router-link :to="{ name: 'landing', hash: '#membership' }" :class="{ active: activeSection === 'membership' }" @click="activeSection = 'membership'">Membership</router-link>
-        <router-link :to="{ name: 'landing', hash: '#contact' }" :class="{ active: activeSection === 'contact' }" @click="activeSection = 'contact'">Contact</router-link>
-      </nav>
-
-      <div class="actions">
-        <template v-if="isAuthenticated">
-          <button type="button" class="login-btn" @click="handleLogout">Logout</button>
-          <router-link :to="dashboardRoute" class="primary-btn">Dashboard</router-link>
-        </template>
-        <template v-else>
-          <router-link :to="{ name: 'login' }" class="login-btn">Login</router-link>
-          <router-link :to="{ name: 'register' }" class="primary-btn">Get Started</router-link>
-        </template>
+  <nav class="landing-nav" :class="{ scrolled: isScrolled }">
+    <div class="nav-inner">
+      <div class="nav-brand">
+        <div class="brand-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+        </div>
+        <span class="brand-text">Sports<span class="brand-accent">Club</span></span>
+      </div>
+      <div class="nav-links">
+        <a href="#features" class="nav-link">Features</a>
+        <a href="#how-it-works" class="nav-link">How It Works</a>
+        <a href="#pricing" class="nav-link">Pricing</a>
+        <router-link to="/public" class="nav-link">Courts</router-link>
+      </div>
+      <div class="nav-actions">
+        <router-link to="/login" class="nav-btn-secondary">Sign In</router-link>
+        <router-link to="/register" class="nav-btn-primary">Get Started</router-link>
+      </div>
+      <button class="mobile-menu-btn" @click="mobileOpen = !mobileOpen">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path v-if="!mobileOpen" stroke-linecap="round" d="M4 6h16M4 12h16M4 18h16" />
+          <path v-else stroke-linecap="round" d="M6 6l12 12M6 18L18 6" />
+        </svg>
+      </button>
+    </div>
+    <div v-if="mobileOpen" class="mobile-menu">
+      <a href="#features" class="mobile-link" @click="mobileOpen = false">Features</a>
+      <a href="#how-it-works" class="mobile-link" @click="mobileOpen = false">How It Works</a>
+      <a href="#pricing" class="mobile-link" @click="mobileOpen = false">Pricing</a>
+      <router-link to="/public" class="mobile-link" @click="mobileOpen = false">View Courts</router-link>
+      <div class="mobile-actions">
+        <router-link to="/login" class="nav-btn-secondary w-full block text-center">Sign In</router-link>
+        <router-link to="/register" class="nav-btn-primary w-full block text-center">Get Started</router-link>
       </div>
     </div>
-  </header>
+  </nav>
 </template>
 
 <script setup>
-import { onBeforeUnmount, onMounted, ref, computed } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
-
-const router = useRouter()
-const route = useRoute()
-const auth = useAuthStore()
-
-const isAuthenticated = computed(() => auth.isAuthenticated())
-const dashboardRoute = computed(() => {
-  const routeName = auth.user?.role === 'owner' ? 'admin' : 'profile'
-  return { name: routeName }
-})
-
-const isLightBgPage = computed(() => {
-  return route && (route.path === '/profile' || route.path === '/admin')
-})
+import { ref, onMounted, onUnmounted } from 'vue'
 
 const isScrolled = ref(false)
-const activeSection = ref('')
+const mobileOpen = ref(false)
 
-const updateScrollState = () => {
-  isScrolled.value = window.scrollY > 80
-  if (window.scrollY < 120) {
-    activeSection.value = ''
-  }
+function onScroll() {
+  isScrolled.value = window.scrollY > 50
 }
-
-let observer = null
-
-const handleLogout = async () => {
-  await auth.logout()
-  router.push({ name: 'login' })
-}
-
-onMounted(() => {
-  auth.restoreUser()
-  updateScrollState()
-  window.addEventListener('scroll', updateScrollState, { passive: true })
-
-  // Intersection Observer to highlight active navbar links on scroll
-  const sections = ['features', 'facilities', 'membership', 'contact']
-  const observerOptions = {
-    root: null,
-    rootMargin: '-30% 0px -60% 0px',
-    threshold: 0.1
-  }
-
-  observer = new IntersectionObserver((entries) => {
-    entries.forEach((entry) => {
-      if (entry.isIntersecting) {
-        activeSection.value = entry.target.id
-      }
-    })
-  }, observerOptions)
-
-  sections.forEach((id) => {
-    const el = document.getElementById(id)
-    if (el) observer.observe(el)
-  })
-})
-
-onBeforeUnmount(() => {
-  window.removeEventListener('scroll', updateScrollState)
-  if (observer) {
-    observer.disconnect()
-  }
-})
+onMounted(() => window.addEventListener('scroll', onScroll, { passive: true }))
+onUnmounted(() => window.removeEventListener('scroll', onScroll))
 </script>
 
 <style scoped>
-.navbar {
+.landing-nav {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
-  z-index: 1000;
-  background: transparent;
-  border-bottom: 1px solid transparent;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  box-shadow: none;
-  transition:
-    background-color 0.4s ease,
-    backdrop-filter 0.4s ease,
-    -webkit-backdrop-filter 0.4s ease,
-    border-color 0.4s ease,
-    box-shadow 0.4s ease;
+  z-index: 100;
+  padding: 1rem 0;
+  transition: all 0.3s ease;
 }
-
-.navbar.is-scrolled {
-  background: rgba(255, 255, 255, 0.82);
-  border-bottom-color: rgba(226, 232, 240, 0.75);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  box-shadow: 0 8px 32px rgba(15, 23, 42, 0.06);
+.landing-nav.scrolled {
+  background: rgba(3, 7, 18, 0.85);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
 }
-
-.container {
-  width: min(1200px, calc(100% - 2rem));
+.nav-inner {
+  max-width: 1280px;
   margin: 0 auto;
-  min-height: 5rem;
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: center;
-  gap: 1.25rem;
-}
-
-.logo {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.75rem;
-  text-decoration: none;
-  font-family: 'Poppins', sans-serif;
-  font-size: 1.1rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  transition: color 0.4s ease;
-}
-
-.navbar:not(.is-scrolled) .logo {
-  color: #ffffff;
-}
-
-.navbar.is-scrolled .logo {
-  color: #0f172a;
-}
-
-.mark {
-  width: 2.45rem;
-  height: 2.45rem;
-  display: grid;
-  place-items: center;
-  border-radius: 0.95rem;
-  color: #ffffff;
-  background: linear-gradient(135deg, #2563eb 0%, #4f46e5 55%, #f97316 150%);
-  box-shadow: 0 14px 28px rgba(37, 99, 235, 0.22);
-  flex-shrink: 0;
-}
-
-.nav-links {
+  padding: 0 2rem;
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: space-between;
   gap: 2rem;
 }
+.nav-brand { display: flex; align-items: center; gap: 0.75rem; cursor: pointer; }
+.brand-icon { width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, #6366f1, #8b5cf6); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(99,102,241,0.3); }
+.brand-icon svg { width: 20px; height: 20px; color: white; }
+.brand-text { font-size: 1.25rem; font-weight: 700; color: white; }
+.brand-accent { background: linear-gradient(135deg, #818cf8, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.nav-links { display: flex; align-items: center; gap: 0.25rem; }
+.nav-link { padding: 0.5rem 1rem; border-radius: 0.75rem; font-size: 0.875rem; font-weight: 500; color: #9ca3af; text-decoration: none; transition: all 0.2s ease; }
+.nav-link:hover { color: #e5e7eb; background: rgba(255,255,255,0.04); }
+.nav-actions { display: flex; align-items: center; gap: 0.75rem; }
+.nav-btn-secondary { padding: 0.5rem 1.25rem; border-radius: 0.75rem; font-size: 0.875rem; font-weight: 500; color: #d1d5db; text-decoration: none; transition: all 0.2s ease; }
+.nav-btn-secondary:hover { background: rgba(255,255,255,0.06); }
+.nav-btn-primary { padding: 0.5rem 1.25rem; border-radius: 0.75rem; font-size: 0.875rem; font-weight: 600; color: white; background: linear-gradient(135deg, #6366f1, #8b5cf6); text-decoration: none; box-shadow: 0 4px 15px rgba(99,102,241,0.3); transition: all 0.2s ease; }
+.nav-btn-primary:hover { box-shadow: 0 6px 25px rgba(99,102,241,0.5); transform: translateY(-1px); }
+.mobile-menu-btn { display: none; background: none; border: none; color: #9ca3af; cursor: pointer; padding: 0.5rem; border-radius: 0.5rem; }
+.mobile-menu-btn svg { width: 24px; height: 24px; }
+.mobile-menu-btn:hover { background: rgba(255,255,255,0.04); color: white; }
+.mobile-menu { display: none; flex-direction: column; padding: 1rem 2rem 1.5rem; gap: 0.25rem; background: rgba(3,7,18,0.95); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.06); }
+.mobile-link { padding: 0.75rem 1rem; border-radius: 0.75rem; font-size: 0.9375rem; font-weight: 500; color: #9ca3af; text-decoration: none; transition: all 0.2s ease; }
+.mobile-link:hover { background: rgba(255,255,255,0.04); color: #e5e7eb; }
+.mobile-actions { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem; padding-top: 0.75rem; border-top: 1px solid rgba(255,255,255,0.06); }
 
-.nav-links a,
-.login-btn,
-.primary-btn {
-  transition:
-    transform 0.2s ease,
-    color 0.35s ease,
-    background-color 0.35s ease,
-    box-shadow 0.2s ease,
-    border-color 0.35s ease;
-}
-
-.nav-links a {
-  position: relative;
-  text-decoration: none;
-  font-size: 0.95rem;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-}
-
-.navbar:not(.is-scrolled) .nav-links a {
-  color: #ffffff;
-}
-
-.navbar.is-scrolled .nav-links a {
-  color: #475569;
-}
-
-.nav-links a::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  bottom: -0.55rem;
-  width: 100%;
-  height: 2px;
-  border-radius: 999px;
-  background: linear-gradient(90deg, #2563eb, #f97316);
-  transform: scaleX(0);
-  transform-origin: center;
-  transition: transform 0.2s ease;
-}
-
-.navbar.is-scrolled .nav-links a:hover,
-.navbar.is-scrolled .nav-links a:focus-visible {
-  color: #0f172a;
-}
-
-.navbar:not(.is-scrolled) .nav-links a:hover,
-.navbar:not(.is-scrolled) .nav-links a:focus-visible {
-  color: rgba(255, 255, 255, 0.85);
-}
-
-.nav-links a:hover::after,
-.nav-links a:focus-visible::after,
-.nav-links a.active::after {
-  transform: scaleX(1);
-}
-
-.navbar:not(.is-scrolled) .nav-links a.active {
-  color: #ffffff;
-}
-
-.navbar.is-scrolled .nav-links a.active {
-  color: #2563eb;
-}
-
-.actions {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.login-btn,
-.primary-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 2.75rem;
-  padding: 0.8rem 1.15rem;
-  border-radius: 999px;
-  text-decoration: none;
-  font-size: 0.95rem;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-}
-
-.navbar:not(.is-scrolled) .login-btn {
-  color: #ffffff;
-  background: transparent;
-  border: 1.5px solid rgba(255, 255, 255, 0.85);
-}
-
-.navbar.is-scrolled .login-btn {
-  color: #0f172a;
-  background: rgba(15, 23, 42, 0.04);
-  border: 1px solid rgba(15, 23, 42, 0.08);
-}
-
-.primary-btn {
-  color: #ffffff;
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-  border: 1px solid transparent;
-  box-shadow: 0 14px 28px rgba(37, 99, 235, 0.22);
-}
-
-.login-btn:hover,
-.login-btn:focus-visible,
-.primary-btn:hover,
-.primary-btn:focus-visible {
-  transform: translateY(-1px);
-}
-
-.navbar:not(.is-scrolled) .login-btn:hover,
-.navbar:not(.is-scrolled) .login-btn:focus-visible {
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.navbar.is-scrolled .login-btn:hover,
-.navbar.is-scrolled .login-btn:focus-visible {
-  background: rgba(15, 23, 42, 0.07);
-}
-
-.primary-btn:hover,
-.primary-btn:focus-visible {
-  box-shadow: 0 18px 36px rgba(37, 99, 235, 0.28);
-}
-
-@media (max-width: 980px) {
-  .container {
-    grid-template-columns: auto auto;
-    grid-template-areas:
-      'logo actions'
-      'nav nav';
-    padding: 0.9rem 0;
-  }
-
-  .logo {
-    grid-area: logo;
-  }
-
-  .nav-links {
-    grid-area: nav;
-    justify-content: flex-start;
-    overflow-x: auto;
-    padding-bottom: 0.25rem;
-    scrollbar-width: none;
-  }
-
-  .nav-links::-webkit-scrollbar {
-    display: none;
-  }
-
-  .actions {
-    grid-area: actions;
-    margin-left: auto;
-  }
-}
-
-@media (max-width: 640px) {
-  .container {
-    width: min(100% - 1rem, 1200px);
-  }
-
-  .actions {
-    width: 100%;
-    gap: 0.6rem;
-  }
-
-  .login-btn,
-  .primary-btn {
-    flex: 1 1 0;
-    min-width: 0;
-  }
+@media (max-width: 768px) {
+  .nav-links, .nav-actions { display: none; }
+  .mobile-menu-btn { display: block; }
+  .mobile-menu { display: flex; }
 }
 </style>

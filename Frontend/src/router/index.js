@@ -37,6 +37,11 @@ const router = createRouter({
       component: AdminDashboardView,
       meta: { requiresAuth: true, requiresRole: 'owner' },
     },
+      {
+    path: '/public',
+    name: 'PublicAvailability',
+    component: () => import('../views/Availability.vue'),
+  },
   ],
 })
 
