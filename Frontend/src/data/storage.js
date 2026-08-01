@@ -3,6 +3,7 @@ import { seedCourts, seedBookings } from './seed'
 const KEYS = {
   courts: 'sc_courts',
   bookings: 'sc_bookings',
+  waitlist: 'sc_waitlist',
 }
 
 function load(key, seed) {
@@ -21,6 +22,7 @@ export function initData() {
     Object.entries({
       [KEYS.courts]: seedCourts,
       [KEYS.bookings]: seedBookings,
+      [KEYS.waitlist]: [],
     }).forEach(([key, seed]) => localStorage.setItem(key, JSON.stringify(seed)))
     localStorage.setItem('sc_initialized', 'true')
   }
@@ -32,8 +34,11 @@ export const db = {
 
   get bookings() { return load(KEYS.bookings, seedBookings) },
   set bookings(v) { save(KEYS.bookings, v) },
+
+  get waitlist() { return load(KEYS.waitlist, []) },
+  set waitlist(v) { save(KEYS.waitlist, v) },
 }
 
 export function generateId(prefix = 'id') {
-  return `${prefix}-${Date.now()}-${Math.random().toString(30).slice(2, 8)}`
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
 }
