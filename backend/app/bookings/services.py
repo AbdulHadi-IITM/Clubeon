@@ -55,7 +55,7 @@ class BookingService:
         booking = Booking.query.get(booking_id)
         if not booking:
             return False, {"code": "NOT_FOUND", "message": "Booking not found"}
-        
+
         if booking.user_id != user_id:
             return False, {"code": "FORBIDDEN", "message": "Not authorized to release this booking"}
 

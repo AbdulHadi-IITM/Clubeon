@@ -5,26 +5,24 @@ import router from './router'
 import { useAuthStore } from './stores/auth'
 import './style.css'
 
-const app = createApp(App)
+import Vue3Toastify, { toast } from 'vue3-toastify'
+import 'vue3-toastify/dist/index.css'
 
+const app = createApp(App)
 const pinia = createPinia()
+
 app.use(pinia)
 app.use(router)
+app.use(Vue3Toastify, { autoClose: 3000 }) // 3 seconds timeout
 
-// Restore user before mounting to avoid flicker (optional but recommended)
+// Provide toast globally so you can use it anywhere without importing
+app.provide('toast', toast)
+
 const auth = useAuthStore(pinia)
-
 auth.restoreUser().finally(() => {
-  // Handle global unauthorized event (fired by axios interceptor)
   window.addEventListener('unauthorized', async () => {
     await auth.logout()
-    // redirect to login page
-    try {
-      router.push({ name: 'login' })
-    } catch (e) {
-      // ignore if routing fails during teardown
-    }
+    router.push({ name: 'login' })
   })
-
   app.mount('#app')
 })

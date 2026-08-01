@@ -32,30 +32,122 @@
           >
             <div class="item-icon-wrapper">
               <!-- SVG Icons -->
-              <svg v-if="item.icon === 'dashboard'" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+              <svg
+                v-if="item.icon === 'dashboard'"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
+                />
               </svg>
-              <svg v-else-if="item.icon === 'members'" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+              <svg
+                v-else-if="item.icon === 'members'"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+                />
               </svg>
-              <svg v-else-if="item.icon === 'courts'" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              <svg
+                v-else-if="item.icon === 'courts'"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                />
               </svg>
-              <svg v-else-if="item.icon === 'bookings'" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              <svg
+                v-else-if="item.icon === 'bookings'"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                />
               </svg>
-              <svg v-else-if="item.icon === 'events'" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M5 3v4M19 3v4M3 11h18M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              <svg
+                v-else-if="item.icon === 'events'"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M5 3v4M19 3v4M3 11h18M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                />
               </svg>
-              <svg v-else-if="item.icon === 'announcements'" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
+              <svg
+                v-else-if="item.icon === 'announcements'"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"
+                />
               </svg>
-              <svg v-else-if="item.icon === 'analytics'" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              <svg
+                v-else-if="item.icon === 'analytics'"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                />
               </svg>
-              <svg v-else-if="item.icon === 'settings'" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <svg
+                v-else-if="item.icon === 'settings'"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                />
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                />
               </svg>
             </div>
             <span class="item-name">{{ item.name }}</span>
@@ -68,8 +160,18 @@
       <div class="sidebar-footer">
         <a href="#" class="menu-item logout-link" @click.prevent="handleLogout">
           <div class="item-icon-wrapper">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+              />
             </svg>
           </div>
           <span class="item-name">Logout</span>
@@ -87,7 +189,15 @@
             @click="isMobileSidebarOpen = !isMobileSidebarOpen"
             aria-label="Toggle Sidebar"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="22" height="22">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="2"
+              width="22"
+              height="22"
+            >
               <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
@@ -100,16 +210,40 @@
         <div class="header-right">
           <!-- Live Date Chip -->
           <div class="header-date-chip">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="16" height="16">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="2"
+              width="16"
+              height="16"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+              />
             </svg>
             <span>{{ currentDate }}</span>
           </div>
 
           <!-- Notification Bell -->
           <button class="header-action-btn" aria-label="Notifications" @click="handleNotifications">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="20" height="20">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 01-6 0v-1m6 0H9" />
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="2"
+              width="20"
+              height="20"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 01-6 0v-1m6 0H9"
+              />
             </svg>
             <span class="unread-dot">3</span>
           </button>
@@ -130,7 +264,6 @@
       <!-- Dashboard Main Scrollable Area -->
       <main class="dashboard-body">
         <div class="content-container">
-
           <!-- TAB 1: DASHBOARD (MAIN OVERVIEW) -->
           <div v-if="activeNav === 'Dashboard'" class="tab-pane">
             <!-- KPI Cards (4 cards) -->
@@ -138,17 +271,61 @@
               <div class="kpi-card" v-for="kpi in kpiCards" :key="kpi.title">
                 <div class="kpi-header">
                   <div class="kpi-icon-box" :class="kpi.colorClass">
-                    <svg v-if="kpi.icon === 'members'" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    <svg
+                      v-if="kpi.icon === 'members'"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                      />
                     </svg>
-                    <svg v-else-if="kpi.icon === 'courts'" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    <svg
+                      v-else-if="kpi.icon === 'courts'"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                      />
                     </svg>
-                    <svg v-else-if="kpi.icon === 'bookings'" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <svg
+                      v-else-if="kpi.icon === 'bookings'"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
                     </svg>
-                    <svg v-else-if="kpi.icon === 'events'" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M5 3v4M19 3v4M3 11h18M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    <svg
+                      v-else-if="kpi.icon === 'events'"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M5 3v4M19 3v4M3 11h18M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                      />
                     </svg>
                   </div>
                   <span class="trend-badge" :class="kpi.trendType">
@@ -179,20 +356,75 @@
                   @click="handleQuickAction(action.title)"
                 >
                   <div class="action-icon" :class="action.colorClass">
-                    <svg v-if="action.icon === 'users'" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                    <svg
+                      v-if="action.icon === 'users'"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+                      />
                     </svg>
-                    <svg v-else-if="action.icon === 'court'" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    <svg
+                      v-else-if="action.icon === 'court'"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                      />
                     </svg>
-                    <svg v-else-if="action.icon === 'calendar'" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    <svg
+                      v-else-if="action.icon === 'calendar'"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                      />
                     </svg>
-                    <svg v-else-if="action.icon === 'megaphone'" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
+                    <svg
+                      v-else-if="action.icon === 'megaphone'"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"
+                      />
                     </svg>
-                    <svg v-else-if="action.icon === 'chart'" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    <svg
+                      v-else-if="action.icon === 'chart'"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                      />
                     </svg>
                   </div>
                   <div class="action-info">
@@ -200,7 +432,15 @@
                     <span class="action-desc">{{ action.desc }}</span>
                   </div>
                   <div class="action-arrow">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="16" height="16">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      width="16"
+                      height="16"
+                    >
                       <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
                     </svg>
                   </div>
@@ -230,7 +470,9 @@
                     <div v-for="item in bookingTrends" :key="item.sport" class="chart-row">
                       <div class="row-info">
                         <span class="sport-name">{{ item.sport }}</span>
-                        <span class="sport-count">{{ item.count }} bookings ({{ item.percentage }}%)</span>
+                        <span class="sport-count"
+                          >{{ item.count }} bookings ({{ item.percentage }}%)</span
+                        >
                       </div>
                       <div class="progress-track">
                         <div
@@ -298,8 +540,20 @@
                   <div class="box-header">
                     <div class="header-title">
                       <div class="icon-bubble blue">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="20" height="20">
-                          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          width="20"
+                          height="20"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+                          />
                         </svg>
                       </div>
                       <h3>Membership Overview</h3>
@@ -350,8 +604,20 @@
                   <div class="box-header">
                     <div class="header-title">
                       <div class="icon-bubble orange">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="20" height="20">
-                          <path stroke-linecap="round" stroke-linejoin="round" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          width="20"
+                          height="20"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"
+                          />
                         </svg>
                       </div>
                       <h3>Recent Announcements</h3>
@@ -359,13 +625,11 @@
                   </div>
 
                   <div class="announcements-list">
-                    <div
-                      v-for="item in announcements"
-                      :key="item.id"
-                      class="announcement-item"
-                    >
+                    <div v-for="item in announcements" :key="item.id" class="announcement-item">
                       <div class="announcement-top">
-                        <span class="announcement-badge" :class="item.categoryClass">{{ item.category }}</span>
+                        <span class="announcement-badge" :class="item.categoryClass">{{
+                          item.category
+                        }}</span>
                         <span class="announcement-date">{{ item.date }}</span>
                       </div>
                       <h4 class="announcement-title">{{ item.title }}</h4>
@@ -379,30 +643,54 @@
             <section class="section-block">
               <div class="block-header">
                 <h3>Upcoming Events</h3>
-                <span class="subtext">Scheduled tournaments, coaching clinics, and facility maintenance</span>
+                <span class="subtext"
+                  >Scheduled tournaments, coaching clinics, and facility maintenance</span
+                >
               </div>
 
               <div class="events-grid">
-                <div
-                  v-for="event in upcomingEvents"
-                  :key="event.id"
-                  class="admin-event-card"
-                >
+                <div v-for="event in upcomingEvents" :key="event.id" class="admin-event-card">
                   <div class="event-card-top">
                     <span class="event-type-chip" :class="event.chipClass">{{ event.type }}</span>
-                    <span class="event-status-pill" :class="event.statusClass">{{ event.status }}</span>
+                    <span class="event-status-pill" :class="event.statusClass">{{
+                      event.status
+                    }}</span>
                   </div>
                   <h4 class="event-card-title">{{ event.title }}</h4>
                   <div class="event-details">
                     <div class="detail-item">
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="16" height="16">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        width="16"
+                        height="16"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                        />
                       </svg>
                       <span>{{ event.date }}</span>
                     </div>
                     <div class="detail-item">
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="16" height="16">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        width="16"
+                        height="16"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                        />
                       </svg>
                       <span>{{ event.info }}</span>
                     </div>
@@ -456,8 +744,12 @@
                     <span class="plan-badge">{{ req.plan }}</span>
                     <span class="date-txt">{{ req.date }}</span>
                     <div class="action-buttons">
-                      <button class="btn-approve" @click="handleMemberAction('Approve', req.name)">Approve</button>
-                      <button class="btn-decline" @click="handleMemberAction('Decline', req.name)">Decline</button>
+                      <button class="btn-approve" @click="handleMemberAction('Approve', req.name)">
+                        Approve
+                      </button>
+                      <button class="btn-decline" @click="handleMemberAction('Decline', req.name)">
+                        Decline
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -467,45 +759,185 @@
 
           <!-- TAB 3: COURTS PREVIEW -->
           <div v-else-if="activeNav === 'Courts'" class="tab-pane">
-            <section class="kpi-grid">
-              <div class="kpi-card">
-                <span class="kpi-title">Total Courts</span>
-                <h3 class="kpi-value">16</h3>
-                <span class="trend-badge neutral">• All Facilities</span>
+            <!-- Aesthetic Club Banner -->
+            <div v-if="courtStore.club" class="club-banner glass">
+              <div class="club-banner-icon">🏛️</div>
+              <div class="club-banner-info">
+                <h2>{{ courtStore.club.name }}</h2>
+                <p>{{ courtStore.club.address }}</p>
+                <div class="club-hours-badge">
+                  <span
+                    >🕒 {{ courtStore.club.open_time || 'N/A' }} -
+                    {{ courtStore.club.close_time || 'N/A' }}</span
+                  >
+                  <span>⏱️ {{ courtStore.club.slot_duration_minutes || 60 }} min slots</span>
+                </div>
               </div>
+            </div>
+            <div v-else class="club-banner glass-empty">
+              <p>Club not set up yet. Add your first court to create your club.</p>
+            </div>
+
+            <!-- KPI Grid with Real Stats -->
+            <section class="kpi-grid" aria-label="Court Performance Indicators">
               <div class="kpi-card">
-                <span class="kpi-title">Available Courts</span>
-                <h3 class="kpi-value">14</h3>
-                <span class="trend-badge positive">↑ Ready for Booking</span>
+                <div class="kpi-header">
+                  <div class="kpi-icon-box emerald">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                      />
+                    </svg>
+                  </div>
+                  <span class="trend-badge neutral">• All Facilities</span>
+                </div>
+                <div class="kpi-body">
+                  <span class="kpi-title">Total Courts</span>
+                  <h3 class="kpi-value">{{ totalCourts }}</h3>
+                </div>
               </div>
+
               <div class="kpi-card">
-                <span class="kpi-title">Under Maintenance</span>
-                <h3 class="kpi-value">2</h3>
-                <span class="trend-badge neutral">• Courts 3 & 4</span>
+                <div class="kpi-header">
+                  <div class="kpi-icon-box blue">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+                      />
+                    </svg>
+                  </div>
+                  <span class="trend-badge positive">↑ Ready for Booking</span>
+                </div>
+                <div class="kpi-body">
+                  <span class="kpi-title">Available Courts</span>
+                  <h3 class="kpi-value">{{ activeCourtsCount }}</h3>
+                </div>
               </div>
+
               <div class="kpi-card">
-                <span class="kpi-title">Court Utilization</span>
-                <h3 class="kpi-value">87.5%</h3>
-                <span class="trend-badge positive">↑ Peak Occupancy</span>
+                <div class="kpi-header">
+                  <div class="kpi-icon-box orange">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                      />
+                    </svg>
+                  </div>
+                  <span class="trend-badge neutral">• Inactive / Maintenance</span>
+                </div>
+                <div class="kpi-body">
+                  <span class="kpi-title">Under Maintenance</span>
+                  <h3 class="kpi-value">{{ inactiveCourtsCount }}</h3>
+                </div>
+              </div>
+
+              <div class="kpi-card">
+                <div class="kpi-header">
+                  <div class="kpi-icon-box purple">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                  </div>
+                  <span class="trend-badge positive">↑ Peak Occupancy</span>
+                </div>
+                <div class="kpi-body">
+                  <span class="kpi-title">Court Utilization</span>
+                  <h3 class="kpi-value">87.5%</h3>
+                </div>
               </div>
             </section>
 
+            <!-- Courts List Section with Date Picker -->
             <section class="section-block">
-              <div class="block-header">
-                <h3>Court Status Overview</h3>
-                <span class="subtext">Live availability across tennis, badminton, and squash arenas</span>
+              <div class="block-header flex-between">
+                <div>
+                  <h3>Court Status Overview</h3>
+                  <span class="subtext">Manage your club's courts and availability</span>
+                </div>
+                <div style="display: flex; gap: 1rem; align-items: center">
+                  <button class="btn-primary-action" @click="openAddCourtModal">+ Add Court</button>
+                </div>
               </div>
 
-              <div class="events-grid">
-                <div v-for="court in courtItems" :key="court.id" class="admin-event-card">
+              <div v-if="courtStore.loading" class="loading-state">Loading courts...</div>
+              <div v-else-if="courtStore.courts.length === 0" class="empty-state">
+                <p>
+                  You haven't created any courts yet. Click "Add Court" to set up your club's first
+                  facility!
+                </p>
+              </div>
+              <div v-else class="events-grid">
+                <div v-for="court in courtStore.courts" :key="court.id" class="admin-event-card">
                   <div class="event-card-top">
-                    <span class="event-type-chip chip-blue">{{ court.sport }}</span>
-                    <span class="event-status-pill" :class="court.statusClass">{{ court.status }}</span>
+                    <span class="event-type-chip chip-blue">Court</span>
+                    <span
+                      class="event-status-pill"
+                      :class="court.is_active ? 'status-open' : 'status-scheduled'"
+                    >
+                      {{ court.is_active ? 'Active' : 'Inactive' }}
+                    </span>
                   </div>
                   <h4 class="event-card-title">{{ court.name }}</h4>
+
+                  <!-- Default/Custom Badge -->
+                  <div class="court-settings-badge">
+                    <span
+                      v-if="
+                        court.open_time_override ||
+                        court.close_time_override ||
+                        court.slot_duration_override
+                      "
+                      class="badge-custom"
+                    >
+                      ⚙️ Custom
+                    </span>
+                    <span v-else class="badge-default"> 🏛️ Default </span>
+                  </div>
+
                   <div class="event-details">
-                    <div class="detail-item"><span>Surface: {{ court.surface }}</span></div>
-                    <div class="detail-item"><span>Current Booking: {{ court.currentBooking }}</span></div>
+                    <!-- Actions -->
+                    <div class="detail-item" style="gap: 1rem; margin-top: 0.5rem">
+                      <button @click="openEditCourtModal(court)" class="action-btn view-btn">
+                        Edit
+                      </button>
+                      <button @click="handleDeleteCourt(court.id)" class="action-btn cancel-btn">
+                        Delete
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -596,12 +1028,18 @@
                 <div v-for="event in upcomingEvents" :key="event.id" class="admin-event-card">
                   <div class="event-card-top">
                     <span class="event-type-chip" :class="event.chipClass">{{ event.type }}</span>
-                    <span class="event-status-pill" :class="event.statusClass">{{ event.status }}</span>
+                    <span class="event-status-pill" :class="event.statusClass">{{
+                      event.status
+                    }}</span>
                   </div>
                   <h4 class="event-card-title">{{ event.title }}</h4>
                   <div class="event-details">
-                    <div class="detail-item"><span>Date: {{ event.date }}</span></div>
-                    <div class="detail-item"><span>Attendees: {{ event.info }}</span></div>
+                    <div class="detail-item">
+                      <span>Date: {{ event.date }}</span>
+                    </div>
+                    <div class="detail-item">
+                      <span>Attendees: {{ event.info }}</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -616,14 +1054,18 @@
                   <h3>Broadcast Announcements</h3>
                   <span class="subtext">Facility updates, policy changes, and tournament news</span>
                 </div>
-                <button class="btn-primary-action" @click="handleCreateAnnouncement">+ Create Announcement</button>
+                <button class="btn-primary-action" @click="handleCreateAnnouncement">
+                  + Create Announcement
+                </button>
               </div>
 
               <div class="card-box">
                 <div class="announcements-list">
                   <div v-for="item in announcements" :key="item.id" class="announcement-item">
                     <div class="announcement-top">
-                      <span class="announcement-badge" :class="item.categoryClass">{{ item.category }}</span>
+                      <span class="announcement-badge" :class="item.categoryClass">{{
+                        item.category
+                      }}</span>
                       <span class="announcement-date">{{ item.date }}</span>
                     </div>
                     <h4 class="announcement-title">{{ item.title }}</h4>
@@ -669,10 +1111,16 @@
                     <div v-for="item in bookingTrends" :key="item.sport" class="chart-row">
                       <div class="row-info">
                         <span class="sport-name">{{ item.sport }}</span>
-                        <span class="sport-count">{{ item.count }} bookings ({{ item.percentage }}%)</span>
+                        <span class="sport-count"
+                          >{{ item.count }} bookings ({{ item.percentage }}%)</span
+                        >
                       </div>
                       <div class="progress-track">
-                        <div class="progress-fill" :style="{ width: item.percentage + '%' }" :class="item.colorClass"></div>
+                        <div
+                          class="progress-fill"
+                          :style="{ width: item.percentage + '%' }"
+                          :class="item.colorClass"
+                        ></div>
                       </div>
                     </div>
                   </div>
@@ -690,7 +1138,11 @@
                         <span class="sport-count">{{ slot.rate }}% Occupied</span>
                       </div>
                       <div class="progress-track">
-                        <div class="progress-fill" :style="{ width: slot.rate + '%' }" :class="slot.colorClass"></div>
+                        <div
+                          class="progress-fill"
+                          :style="{ width: slot.rate + '%' }"
+                          :class="slot.colorClass"
+                        ></div>
                       </div>
                     </div>
                   </div>
@@ -704,15 +1156,22 @@
             <section class="section-block">
               <div class="block-header">
                 <h3>System & Club Settings</h3>
-                <span class="subtext">Manage facility parameters, operating hours, and alert settings</span>
+                <span class="subtext"
+                  >Manage facility parameters, operating hours, and default slot duration</span
+                >
               </div>
 
               <div class="analytics-grid">
-                <div class="card-box">
+                <!-- CASE 1: CLUB EXISTS -> Update Mode -->
+                <div v-if="courtStore.club" class="card-box">
                   <h4 class="settings-card-title">Club Information</h4>
                   <div class="setting-row">
                     <span class="setting-label">Club Name</span>
-                    <span class="setting-val">Apex Sports Arena</span>
+                    <input type="text" v-model="clubForm.name" class="settings-input" />
+                  </div>
+                  <div class="setting-row">
+                    <span class="setting-label">Club Address</span>
+                    <input type="text" v-model="clubForm.address" class="settings-input" />
                   </div>
                   <div class="setting-row">
                     <span class="setting-label">Contact Email</span>
@@ -724,25 +1183,214 @@
                   </div>
                 </div>
 
+                <!-- CASE 2: NO CLUB -> Create Mode -->
+                <div v-else class="card-box">
+                  <h4 class="settings-card-title">Create Your Club</h4>
+                  <p class="subtext" style="margin-bottom: 1rem">
+                    You don't have a club yet. Create one to start adding courts.
+                  </p>
+                  <div class="setting-row">
+                    <span class="setting-label">Club Name</span>
+                    <input
+                      type="text"
+                      v-model="clubForm.name"
+                      class="settings-input"
+                      placeholder="e.g. Apex Sports Arena"
+                    />
+                  </div>
+                  <div class="setting-row">
+                    <span class="setting-label">Club Address</span>
+                    <input
+                      type="text"
+                      v-model="clubForm.address"
+                      class="settings-input"
+                      placeholder="Full physical address"
+                    />
+                  </div>
+                </div>
+
+                <!-- Operating Hours Card (Shared by both Create and Update) -->
                 <div class="card-box">
-                  <h4 class="settings-card-title">Operating Hours</h4>
+                  <h4 class="settings-card-title">Operating Hours (Default)</h4>
                   <div class="setting-row">
-                    <span class="setting-label">Monday - Friday</span>
-                    <span class="setting-val">6:00 AM - 10:00 PM</span>
+                    <span class="setting-label">Open Time</span>
+                    <input type="time" v-model="clubForm.open_time" class="settings-input" />
                   </div>
                   <div class="setting-row">
-                    <span class="setting-label">Saturday - Sunday</span>
-                    <span class="setting-val">7:00 AM - 11:00 PM</span>
+                    <span class="setting-label">Close Time</span>
+                    <input type="time" v-model="clubForm.close_time" class="settings-input" />
                   </div>
                   <div class="setting-row">
-                    <span class="setting-label">Holiday Schedule</span>
-                    <span class="setting-val">8:00 AM - 8:00 PM</span>
+                    <span class="setting-label">Slot Duration (mins)</span>
+                    <input
+                      type="number"
+                      v-model="clubForm.slot_duration_minutes"
+                      class="settings-input"
+                      min="15"
+                      step="15"
+                    />
                   </div>
+
+                  <!-- Dynamic Button -->
+                  <button
+                    class="btn-primary-action"
+                    style="margin-top: 1rem; width: 100%"
+                    @click="saveOrCreateClub"
+                  >
+                    {{ courtStore.club ? 'Save Default Settings' : 'Create Club' }}
+                  </button>
                 </div>
               </div>
             </section>
           </div>
 
+          <!-- ADD COURT MODAL -->
+          <div v-if="showAddCourtModal" class="modal-overlay" role="dialog" aria-modal="true">
+            <div class="modal-card">
+              <div class="modal-header">
+                <h3>
+                  {{
+                    courtStore.courts.length === 0
+                      ? 'Setup Your Club & First Court'
+                      : 'Create New Court'
+                  }}
+                </h3>
+                <button @click="closeAddCourtModal" class="close-btn">×</button>
+              </div>
+              <form @submit.prevent="handleCreateCourt" class="modal-form">
+                <div class="form-row">
+                  <div class="form-group">
+                    <label>Court Name</label>
+                    <input
+                      type="text"
+                      v-model="courtForm.court_name"
+                      placeholder="e.g. Tennis Court 1"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <!-- Show Club setup fields only if this is the first court (courts array is empty) -->
+                <div v-if="!courtStore.club" class="form-row">
+                  <div class="form-group">
+                    <label>Club Name</label>
+                    <input
+                      type="text"
+                      v-model="courtForm.club_name"
+                      placeholder="e.g. Apex Sports Arena"
+                      required
+                    />
+                  </div>
+                  <div class="form-group">
+                    <label>Club Address</label>
+                    <input
+                      type="text"
+                      v-model="courtForm.club_address"
+                      placeholder="Full physical address"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div class="modal-actions">
+                  <button type="button" @click="closeAddCourtModal" class="cancel-modal-btn">
+                    Cancel
+                  </button>
+                  <button type="submit" class="submit-modal-btn">Create Court</button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <!-- EDIT COURT MODAL -->
+          <div v-if="showEditCourtModal" class="modal-overlay" role="dialog" aria-modal="true">
+            <div class="modal-card">
+              <div class="modal-header">
+                <h3>Edit Court</h3>
+                <button @click="closeEditCourtModal" class="close-btn">×</button>
+              </div>
+              <form @submit.prevent="handleUpdateCourt" class="modal-form">
+                <div class="form-row">
+                  <div class="form-group">
+                    <label>Court Name</label>
+                    <input type="text" v-model="courtForm.court_name" required />
+                  </div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label>Status</label>
+                    <select v-model="courtForm.is_active">
+                      <option :value="true">Active</option>
+                      <option :value="false">Inactive</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Toggle: Use Defaults or Custom -->
+                <div class="toggle-section">
+                  <label class="toggle-label">Operating Hours & Slot Duration</label>
+                  <div class="toggle-group">
+                    <button
+                      type="button"
+                      class="toggle-btn"
+                      :class="{ active: courtForm.use_defaults }"
+                      @click="courtForm.use_defaults = true"
+                    >
+                      Use Club Defaults
+                    </button>
+                    <button
+                      type="button"
+                      class="toggle-btn"
+                      :class="{ active: !courtForm.use_defaults }"
+                      @click="courtForm.use_defaults = false"
+                    >
+                      Custom Settings
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Override inputs – enabled only when custom is selected -->
+                <div class="form-row" :class="{ 'disabled-section': courtForm.use_defaults }">
+                  <div class="form-group">
+                    <label>Open Time</label>
+                    <input
+                      type="time"
+                      v-model="courtForm.open_time_override"
+                      :disabled="courtForm.use_defaults"
+                    />
+                  </div>
+                  <div class="form-group">
+                    <label>Close Time</label>
+                    <input
+                      type="time"
+                      v-model="courtForm.close_time_override"
+                      :disabled="courtForm.use_defaults"
+                    />
+                  </div>
+                </div>
+                <div class="form-row" :class="{ 'disabled-section': courtForm.use_defaults }">
+                  <div class="form-group">
+                    <label>Slot Duration (minutes)</label>
+                    <input
+                      type="number"
+                      v-model="courtForm.slot_duration_override"
+                      :disabled="courtForm.use_defaults"
+                      min="15"
+                      step="15"
+                      placeholder="e.g. 60"
+                    />
+                  </div>
+                </div>
+
+                <div class="modal-actions">
+                  <button type="button" @click="closeEditCourtModal" class="cancel-modal-btn">
+                    Cancel
+                  </button>
+                  <button type="submit" class="submit-modal-btn">Save Changes</button>
+                </div>
+              </form>
+            </div>
+          </div>
         </div>
       </main>
     </div>
@@ -750,46 +1398,235 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, inject, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useCourtStore } from '@/stores/courts'
 
+const toast = inject('toast')
+const courtStore = useCourtStore()
+const showAddCourtModal = ref(false)
+const showEditCourtModal = ref(false)
+const currentEditCourt = ref(null)
 const router = useRouter()
 const auth = useAuthStore()
 const isMobileSidebarOpen = ref(false)
 const activeNav = ref('Dashboard')
 
-const currentDate = ref(new Date().toLocaleDateString('en-US', {
-  weekday: 'short',
-  year: 'numeric',
-  month: 'short',
-  day: 'numeric'
-}))
+const currentDate = ref(
+  new Date().toLocaleDateString('en-US', {
+    weekday: 'short',
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  }),
+)
+
+const totalCourts = computed(() => courtStore.courts.length)
+const activeCourtsCount = computed(() => courtStore.courts.filter((c) => c.is_active).length)
+const inactiveCourtsCount = computed(() => courtStore.courts.filter((c) => !c.is_active).length)
+
+// Form state for modals
+const clubForm = ref({
+  name: '',
+  address: '',
+  open_time: '',
+  close_time: '',
+  slot_duration_minutes: 60,
+})
+
+const courtForm = ref({
+  court_name: '',
+  is_active: true,
+  use_defaults: true, // new
+  open_time_override: '',
+  close_time_override: '',
+  slot_duration_override: '',
+})
+
+// Fetch data on mount
+onMounted(() => {
+  courtStore.fetchCourts()
+})
+
+watch(
+  () => courtStore.club,
+  (newClub) => {
+    if (newClub) {
+      clubForm.value = {
+        name: newClub.name,
+        address: newClub.address || '',
+        open_time: newClub.open_time || '',
+        close_time: newClub.close_time || '',
+        slot_duration_minutes: newClub.slot_duration_minutes || 60,
+      }
+    } else {
+      // Reset the form if no club exists
+      clubForm.value = {
+        name: '',
+        address: '',
+        open_time: '',
+        close_time: '',
+        slot_duration_minutes: 60,
+      }
+    }
+  },
+  { immediate: true },
+)
+
+// Modal Handlers
+const openAddCourtModal = () => {
+  courtForm.value = { court_name: '', club_name: '', club_address: '', is_active: true }
+  showAddCourtModal.value = true
+}
+
+const closeAddCourtModal = () => {
+  showAddCourtModal.value = false
+}
+
+const handleCreateCourt = async () => {
+  const result = await courtStore.createCourt(courtForm.value)
+  if (result.success) {
+    closeAddCourtModal()
+    toast.success('Court created successfully! 🎾')
+  } else {
+    toast.error(result.error || 'Failed to create court')
+  }
+}
+
+const closeEditCourtModal = () => {
+  showEditCourtModal.value = false
+  currentEditCourt.value = null
+}
+
+const handleUpdateCourt = async () => {
+  const payload = {
+    court_name: courtForm.value.court_name,
+    is_active: courtForm.value.is_active,
+    open_time_override: courtForm.value.use_defaults
+      ? null
+      : courtForm.value.open_time_override || null,
+    close_time_override: courtForm.value.use_defaults
+      ? null
+      : courtForm.value.close_time_override || null,
+    slot_duration_override: courtForm.value.use_defaults
+      ? null
+      : courtForm.value.slot_duration_override
+        ? Number(courtForm.value.slot_duration_override)
+        : null,
+  }
+  const result = await courtStore.updateCourt(currentEditCourt.value.id, payload)
+  if (result.success) {
+    closeEditCourtModal()
+    toast.success('Court updated successfully! ✨')
+  } else {
+    toast.error(result.error || 'Failed to update court')
+  }
+}
+
+const handleDeleteCourt = async (courtId) => {
+  if (confirm('Are you sure you want to delete this court?')) {
+    const result = await courtStore.deleteCourt(courtId)
+    if (result.success) {
+      toast.success('Court deleted successfully.')
+    } else {
+      toast.error(result.error || 'Failed to delete court')
+    }
+  }
+}
+
+const saveOrCreateClub = async () => {
+  if (courtStore.club) {
+    // === UPDATE ===
+    const result = await courtStore.updateClubSettings({
+      name: clubForm.value.name,
+      address: clubForm.value.address,
+      open_time: clubForm.value.open_time || null,
+      close_time: clubForm.value.close_time || null,
+      slot_duration_minutes: clubForm.value.slot_duration_minutes || null,
+    })
+    if (result.success) {
+      toast.success('Club settings updated successfully!')
+    } else {
+      toast.error(result.error || 'Failed to update club settings')
+    }
+  } else {
+    // === CREATE ===
+    if (!clubForm.value.name || !clubForm.value.address) {
+      toast.error('Please provide a Club Name and Address')
+      return
+    }
+    const result = await courtStore.createClub({
+      name: clubForm.value.name,
+      address: clubForm.value.address,
+      open_time: clubForm.value.open_time || null,
+      close_time: clubForm.value.close_time || null,
+      slot_duration_minutes: clubForm.value.slot_duration_minutes || null,
+    })
+    if (result.success) {
+      toast.success('Club created successfully! 🏛️')
+      // fetchCourts() is already called inside createClub, so the UI will auto-switch to Update mode.
+    } else {
+      toast.error(result.error || 'Failed to create club')
+    }
+  }
+}
+
+const openEditCourtModal = (court) => {
+  currentEditCourt.value = court
+  const hasOverrides =
+    court.open_time_override || court.close_time_override || court.slot_duration_override
+  courtForm.value = {
+    court_name: court.name,
+    is_active: court.is_active,
+    use_defaults: !hasOverrides,
+    open_time_override: court.open_time_override || '',
+    close_time_override: court.close_time_override || '',
+    slot_duration_override: court.slot_duration_override || '',
+  }
+  showEditCourtModal.value = true
+}
 
 // Header title and subtitle reactive computation based on active sidebar tab
 const headerTitle = computed(() => {
   switch (activeNav.value) {
-    case 'Members': return 'Members Management'
-    case 'Courts': return 'Facility & Courts'
-    case 'Bookings': return 'Bookings & Reservations'
-    case 'Events': return 'Events & Tournaments'
-    case 'Announcements': return 'Announcements & Broadcasts'
-    case 'Analytics': return 'Performance & Analytics'
-    case 'Settings': return 'System Settings'
-    default: return 'Admin Dashboard'
+    case 'Members':
+      return 'Members Management'
+    case 'Courts':
+      return 'Facility & Courts'
+    case 'Bookings':
+      return 'Bookings & Reservations'
+    case 'Events':
+      return 'Events & Tournaments'
+    case 'Announcements':
+      return 'Announcements & Broadcasts'
+    case 'Analytics':
+      return 'Performance & Analytics'
+    case 'Settings':
+      return 'System Settings'
+    default:
+      return 'Admin Dashboard'
   }
 })
 
 const headerSubtitle = computed(() => {
   switch (activeNav.value) {
-    case 'Members': return 'Overview of registered club members, pending requests, and player accounts.'
-    case 'Courts': return 'Monitor court availability, status, and maintenance schedules.'
-    case 'Bookings': return 'Track active reservations, upcoming court slots, and cancellations.'
-    case 'Events': return 'Organize tournaments, coaching sessions, and social club activities.'
-    case 'Announcements': return 'Broadcast facility notices, schedule updates, and tournament alerts.'
-    case 'Analytics': return 'Detailed statistics on booking trends, peak hours, and membership growth.'
-    case 'Settings': return 'Configure club information, operating hours, and notification preferences.'
-    default: return 'Welcome back, Administrator • Monitor club operations and analytics.'
+    case 'Members':
+      return 'Overview of registered club members, pending requests, and player accounts.'
+    case 'Courts':
+      return 'Monitor court availability, status, and maintenance schedules.'
+    case 'Bookings':
+      return 'Track active reservations, upcoming court slots, and cancellations.'
+    case 'Events':
+      return 'Organize tournaments, coaching sessions, and social club activities.'
+    case 'Announcements':
+      return 'Broadcast facility notices, schedule updates, and tournament alerts.'
+    case 'Analytics':
+      return 'Detailed statistics on booking trends, peak hours, and membership growth.'
+    case 'Settings':
+      return 'Configure club information, operating hours, and notification preferences.'
+    default:
+      return 'Welcome back, Administrator • Monitor club operations and analytics.'
   }
 })
 
@@ -802,7 +1639,7 @@ const primaryNavItems = ref([
   { name: 'Events', icon: 'events' },
   { name: 'Announcements', icon: 'announcements' },
   { name: 'Analytics', icon: 'analytics' },
-  { name: 'Settings', icon: 'settings' }
+  { name: 'Settings', icon: 'settings' },
 ])
 
 const setActiveNav = (navName) => {
@@ -835,7 +1672,7 @@ const kpiCards = ref([
     icon: 'members',
     colorClass: 'blue',
     trend: '+12.4% this month',
-    trendType: 'positive'
+    trendType: 'positive',
   },
   {
     title: 'Active Courts',
@@ -843,7 +1680,7 @@ const kpiCards = ref([
     icon: 'courts',
     colorClass: 'emerald',
     trend: '87.5% operational',
-    trendType: 'neutral'
+    trendType: 'neutral',
   },
   {
     title: "Today's Bookings",
@@ -851,7 +1688,7 @@ const kpiCards = ref([
     icon: 'bookings',
     colorClass: 'purple',
     trend: '+8 vs yesterday',
-    trendType: 'positive'
+    trendType: 'positive',
   },
   {
     title: 'Active Events',
@@ -859,8 +1696,8 @@ const kpiCards = ref([
     icon: 'events',
     colorClass: 'orange',
     trend: '2 starting today',
-    trendType: 'neutral'
-  }
+    trendType: 'neutral',
+  },
 ])
 
 // Quick Actions mock list
@@ -869,32 +1706,32 @@ const quickActions = ref([
     title: 'Manage Members',
     desc: 'View & edit member profiles',
     icon: 'users',
-    colorClass: 'blue'
+    colorClass: 'blue',
   },
   {
     title: 'Manage Courts',
     desc: 'Update court availability',
     icon: 'court',
-    colorClass: 'emerald'
+    colorClass: 'emerald',
   },
   {
     title: 'Manage Events',
     desc: 'Create & schedule tournaments',
     icon: 'calendar',
-    colorClass: 'purple'
+    colorClass: 'purple',
   },
   {
     title: 'Announcements',
     desc: 'Broadcast news & updates',
     icon: 'megaphone',
-    colorClass: 'orange'
+    colorClass: 'orange',
   },
   {
     title: 'View Analytics',
     desc: 'Detailed revenue & stats',
     icon: 'chart',
-    colorClass: 'indigo'
-  }
+    colorClass: 'indigo',
+  },
 ])
 
 const handleQuickAction = (actionTitle) => {
@@ -908,24 +1745,58 @@ const handleQuickAction = (actionTitle) => {
 
 // Pending Requests mock data for Members tab
 const pendingRequests = ref([
-  { name: 'John Smith', email: 'john.smith@example.com', initials: 'JS', plan: 'Gold Member', date: 'Applied Jul 22' },
-  { name: 'Sarah Jenkins', email: 'sarah.j@example.com', initials: 'SJ', plan: 'Regular Member', date: 'Applied Jul 21' },
-  { name: 'Mike Ross', email: 'mike.ross@example.com', initials: 'MR', plan: 'VIP Pass', date: 'Applied Jul 20' }
-])
-
-// Court Status items for Courts tab
-const courtItems = ref([
-  { id: 1, name: 'Tennis Court 1', sport: 'Tennis', surface: 'Hard Court', status: 'Available', currentBooking: 'Free Slot', statusClass: 'status-open' },
-  { id: 2, name: 'Tennis Court 2', sport: 'Tennis', surface: 'Clay Court', status: 'Occupied', currentBooking: '5:00 - 7:00 PM (John Doe)', statusClass: 'status-confirmed' },
-  { id: 3, name: 'Badminton Arena A', sport: 'Badminton', surface: 'Synthetic Wood', status: 'Available', currentBooking: 'Free Slot', statusClass: 'status-open' },
-  { id: 4, name: 'Squash Court 1', sport: 'Squash', surface: 'Glass Back', status: 'Maintenance', currentBooking: 'Lighting Upgrade', statusClass: 'status-scheduled' }
+  {
+    name: 'John Smith',
+    email: 'john.smith@example.com',
+    initials: 'JS',
+    plan: 'Gold Member',
+    date: 'Applied Jul 22',
+  },
+  {
+    name: 'Sarah Jenkins',
+    email: 'sarah.j@example.com',
+    initials: 'SJ',
+    plan: 'Regular Member',
+    date: 'Applied Jul 21',
+  },
+  {
+    name: 'Mike Ross',
+    email: 'mike.ross@example.com',
+    initials: 'MR',
+    plan: 'VIP Pass',
+    date: 'Applied Jul 20',
+  },
 ])
 
 // Recent Bookings mock data for Bookings tab
 const recentBookings = ref([
-  { id: 101, player: 'John Doe', facility: 'Tennis Court 2', time: 'Today, 5:00 - 7:00 PM', initials: 'JD', status: 'Confirmed', statusClass: 'status-confirmed' },
-  { id: 102, player: 'Jane Smith', facility: 'Badminton Arena A', time: 'Today, 6:00 - 7:30 PM', initials: 'JS', status: 'Confirmed', statusClass: 'status-confirmed' },
-  { id: 103, player: 'Robert Paul', facility: 'Squash Court 2', time: 'Today, 7:00 - 8:00 PM', initials: 'RP', status: 'Cancelled', statusClass: 'status-scheduled' }
+  {
+    id: 101,
+    player: 'John Doe',
+    facility: 'Tennis Court 2',
+    time: 'Today, 5:00 - 7:00 PM',
+    initials: 'JD',
+    status: 'Confirmed',
+    statusClass: 'status-confirmed',
+  },
+  {
+    id: 102,
+    player: 'Jane Smith',
+    facility: 'Badminton Arena A',
+    time: 'Today, 6:00 - 7:30 PM',
+    initials: 'JS',
+    status: 'Confirmed',
+    statusClass: 'status-confirmed',
+  },
+  {
+    id: 103,
+    player: 'Robert Paul',
+    facility: 'Squash Court 2',
+    time: 'Today, 7:00 - 8:00 PM',
+    initials: 'RP',
+    status: 'Cancelled',
+    statusClass: 'status-scheduled',
+  },
 ])
 
 // Analytics - Booking Trends mock data
@@ -933,14 +1804,14 @@ const bookingTrends = ref([
   { sport: 'Tennis Courts', count: 189, percentage: 45, colorClass: 'bar-blue' },
   { sport: 'Badminton Arenas', count: 126, percentage: 30, colorClass: 'bar-emerald' },
   { sport: 'Squash Courts', count: 63, percentage: 15, colorClass: 'bar-orange' },
-  { sport: 'Swimming Lanes', count: 42, percentage: 10, colorClass: 'bar-purple' }
+  { sport: 'Swimming Lanes', count: 42, percentage: 10, colorClass: 'bar-purple' },
 ])
 
 // Analytics - Court Utilization mock data
 const courtUtilization = ref([
   { period: 'Prime Hours (5 PM - 10 PM)', rate: 92, colorClass: 'bar-blue' },
   { period: 'Afternoon (12 PM - 5 PM)', rate: 68, colorClass: 'bar-indigo' },
-  { period: 'Morning (6 AM - 12 PM)', rate: 54, colorClass: 'bar-purple' }
+  { period: 'Morning (6 AM - 12 PM)', rate: 54, colorClass: 'bar-purple' },
 ])
 
 // Announcements mock data
@@ -950,22 +1821,22 @@ const announcements = ref([
     title: 'Annual Facility Maintenance Shutdown Schedule Announced',
     date: 'July 20, 2026',
     category: 'General',
-    categoryClass: 'blue'
+    categoryClass: 'blue',
   },
   {
     id: 2,
     title: 'Updated Peak-Hour Court Reservation Policy & Guidelines',
     date: 'July 15, 2026',
     category: 'Policy',
-    categoryClass: 'orange'
+    categoryClass: 'orange',
   },
   {
     id: 3,
     title: 'Registration Open for Fall Junior Championship Series',
     date: 'July 10, 2026',
     category: 'Tournament',
-    categoryClass: 'emerald'
-  }
+    categoryClass: 'emerald',
+  },
 ])
 
 // Upcoming Events sample items
@@ -978,7 +1849,7 @@ const upcomingEvents = ref([
     info: '32 / 32 Registered Players',
     status: 'Registration Open',
     chipClass: 'chip-blue',
-    statusClass: 'status-open'
+    statusClass: 'status-open',
   },
   {
     id: 2,
@@ -988,7 +1859,7 @@ const upcomingEvents = ref([
     info: '15 / 20 Spots Filled',
     status: 'Confirmed',
     chipClass: 'chip-emerald',
-    statusClass: 'status-confirmed'
+    statusClass: 'status-confirmed',
   },
   {
     id: 3,
@@ -998,8 +1869,8 @@ const upcomingEvents = ref([
     info: 'Temporary Court Closure',
     status: 'Scheduled',
     chipClass: 'chip-orange',
-    statusClass: 'status-scheduled'
-  }
+    statusClass: 'status-scheduled',
+  },
 ])
 </script>
 
@@ -1363,7 +2234,9 @@ const upcomingEvents = ref([
   border-radius: 1rem;
   padding: 1.25rem;
   box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .kpi-card:hover {
@@ -1392,10 +2265,22 @@ const upcomingEvents = ref([
   height: 1.35rem;
 }
 
-.kpi-icon-box.blue { background: #eff6ff; color: #2563eb; }
-.kpi-icon-box.emerald { background: #ecfdf5; color: #059669; }
-.kpi-icon-box.purple { background: #f3e8ff; color: #9333ea; }
-.kpi-icon-box.orange { background: #fff7ed; color: #ea580c; }
+.kpi-icon-box.blue {
+  background: #eff6ff;
+  color: #2563eb;
+}
+.kpi-icon-box.emerald {
+  background: #ecfdf5;
+  color: #059669;
+}
+.kpi-icon-box.purple {
+  background: #f3e8ff;
+  color: #9333ea;
+}
+.kpi-icon-box.orange {
+  background: #fff7ed;
+  color: #ea580c;
+}
 
 .trend-badge {
   font-size: 0.75rem;
@@ -1407,8 +2292,14 @@ const upcomingEvents = ref([
   gap: 0.2rem;
 }
 
-.trend-badge.positive { background: #ecfdf5; color: #047857; }
-.trend-badge.neutral { background: #f1f5f9; color: #475569; }
+.trend-badge.positive {
+  background: #ecfdf5;
+  color: #047857;
+}
+.trend-badge.neutral {
+  background: #f1f5f9;
+  color: #475569;
+}
 
 .kpi-title {
   font-size: 0.82rem;
@@ -1499,11 +2390,26 @@ const upcomingEvents = ref([
   height: 1.25rem;
 }
 
-.action-icon.blue { background: #eff6ff; color: #2563eb; }
-.action-icon.emerald { background: #ecfdf5; color: #059669; }
-.action-icon.purple { background: #f3e8ff; color: #9333ea; }
-.action-icon.orange { background: #fff7ed; color: #ea580c; }
-.action-icon.indigo { background: #e0e7ff; color: #4338ca; }
+.action-icon.blue {
+  background: #eff6ff;
+  color: #2563eb;
+}
+.action-icon.emerald {
+  background: #ecfdf5;
+  color: #059669;
+}
+.action-icon.purple {
+  background: #f3e8ff;
+  color: #9333ea;
+}
+.action-icon.orange {
+  background: #fff7ed;
+  color: #ea580c;
+}
+.action-icon.indigo {
+  background: #e0e7ff;
+  color: #4338ca;
+}
 
 .action-info {
   margin-bottom: 0.75rem;
@@ -1527,7 +2433,9 @@ const upcomingEvents = ref([
 .action-arrow {
   margin-top: auto;
   color: #94a3b8;
-  transition: color 0.2s ease, transform 0.2s ease;
+  transition:
+    color 0.2s ease,
+    transform 0.2s ease;
 }
 
 .action-card:hover .action-arrow {
@@ -1580,7 +2488,10 @@ const upcomingEvents = ref([
   color: #475569;
 }
 
-.widget-badge.live { background: #ecfdf5; color: #047857; }
+.widget-badge.live {
+  background: #ecfdf5;
+  color: #047857;
+}
 
 .chart-placeholder {
   display: flex;
@@ -1601,8 +2512,14 @@ const upcomingEvents = ref([
   font-size: 0.82rem;
 }
 
-.sport-name { font-weight: 600; color: #334155; }
-.sport-count { font-weight: 600; color: #64748b; }
+.sport-name {
+  font-weight: 600;
+  color: #334155;
+}
+.sport-count {
+  font-weight: 600;
+  color: #64748b;
+}
 
 .progress-track {
   width: 100%;
@@ -1618,11 +2535,21 @@ const upcomingEvents = ref([
   transition: width 0.6s ease;
 }
 
-.progress-fill.bar-blue { background: linear-gradient(90deg, #3b82f6, #2563eb); }
-.progress-fill.bar-emerald { background: linear-gradient(90deg, #10b981, #059669); }
-.progress-fill.bar-orange { background: linear-gradient(90deg, #f97316, #ea580c); }
-.progress-fill.bar-purple { background: linear-gradient(90deg, #a855f7, #9333ea); }
-.progress-fill.bar-indigo { background: linear-gradient(90deg, #6366f1, #4f46e5); }
+.progress-fill.bar-blue {
+  background: linear-gradient(90deg, #3b82f6, #2563eb);
+}
+.progress-fill.bar-emerald {
+  background: linear-gradient(90deg, #10b981, #059669);
+}
+.progress-fill.bar-orange {
+  background: linear-gradient(90deg, #f97316, #ea580c);
+}
+.progress-fill.bar-purple {
+  background: linear-gradient(90deg, #a855f7, #9333ea);
+}
+.progress-fill.bar-indigo {
+  background: linear-gradient(90deg, #6366f1, #4f46e5);
+}
 
 .widget-footer {
   display: flex;
@@ -1646,10 +2573,18 @@ const upcomingEvents = ref([
   border-radius: 50%;
 }
 
-.dot.blue { background: #2563eb; }
-.dot.emerald { background: #059669; }
-.dot.orange { background: #ea580c; }
-.dot.purple { background: #9333ea; }
+.dot.blue {
+  background: #2563eb;
+}
+.dot.emerald {
+  background: #059669;
+}
+.dot.orange {
+  background: #ea580c;
+}
+.dot.purple {
+  background: #9333ea;
+}
 
 .utilization-summary {
   display: flex;
@@ -1727,8 +2662,14 @@ const upcomingEvents = ref([
   justify-content: center;
 }
 
-.icon-bubble.blue { background: #eff6ff; color: #2563eb; }
-.icon-bubble.orange { background: #fff7ed; color: #ea580c; }
+.icon-bubble.blue {
+  background: #eff6ff;
+  color: #2563eb;
+}
+.icon-bubble.orange {
+  background: #fff7ed;
+  color: #ea580c;
+}
 
 .total-tag {
   font-size: 0.75rem;
@@ -1795,7 +2736,9 @@ const upcomingEvents = ref([
   color: #64748b;
 }
 
-.text-emerald { color: #059669; }
+.text-emerald {
+  color: #059669;
+}
 
 .new-pill {
   font-size: 0.68rem;
@@ -1882,7 +2825,6 @@ const upcomingEvents = ref([
   font-size: 0.78rem;
   font-weight: 700;
   cursor: pointer;
-
 }
 
 .btn-decline {
@@ -1896,8 +2838,13 @@ const upcomingEvents = ref([
   cursor: pointer;
 }
 
-.btn-approve:hover { background: #059669; }
-.btn-decline:hover { background: #f8fafc; color: #0f172a; }
+.btn-approve:hover {
+  background: #059669;
+}
+.btn-decline:hover {
+  background: #f8fafc;
+  color: #0f172a;
+}
 
 .btn-primary-action {
   padding: 0.5rem 1rem;
@@ -1909,7 +2856,9 @@ const upcomingEvents = ref([
   font-weight: 700;
   cursor: pointer;
 }
-.btn-primary-action:hover { background: #1d4ed8; }
+.btn-primary-action:hover {
+  background: #1d4ed8;
+}
 
 /* Settings Rows */
 .settings-card-title {
@@ -1928,10 +2877,18 @@ const upcomingEvents = ref([
   font-size: 0.85rem;
 }
 
-.setting-row:last-child { border-bottom: none; }
+.setting-row:last-child {
+  border-bottom: none;
+}
 
-.setting-label { color: #64748b; font-weight: 500; }
-.setting-val { color: #0f172a; font-weight: 700; }
+.setting-label {
+  color: #64748b;
+  font-weight: 500;
+}
+.setting-val {
+  color: #0f172a;
+  font-weight: 700;
+}
 
 /* Announcements List */
 .announcements-list {
@@ -1967,9 +2924,18 @@ const upcomingEvents = ref([
   text-transform: uppercase;
 }
 
-.announcement-badge.blue { background: #eff6ff; color: #2563eb; }
-.announcement-badge.orange { background: #fff7ed; color: #ea580c; }
-.announcement-badge.emerald { background: #ecfdf5; color: #059669; }
+.announcement-badge.blue {
+  background: #eff6ff;
+  color: #2563eb;
+}
+.announcement-badge.orange {
+  background: #fff7ed;
+  color: #ea580c;
+}
+.announcement-badge.emerald {
+  background: #ecfdf5;
+  color: #059669;
+}
 
 .announcement-date {
   font-size: 0.75rem;
@@ -1997,7 +2963,9 @@ const upcomingEvents = ref([
   border-radius: 1rem;
   padding: 1.25rem;
   box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .admin-event-card:hover {
@@ -2019,18 +2987,33 @@ const upcomingEvents = ref([
   border-radius: 0.45rem;
 }
 
-.chip-blue { background: #eff6ff; color: #2563eb; }
-.chip-emerald { background: #ecfdf5; color: #059669; }
-.chip-orange { background: #fff7ed; color: #ea580c; }
+.chip-blue {
+  background: #eff6ff;
+  color: #2563eb;
+}
+.chip-emerald {
+  background: #ecfdf5;
+  color: #059669;
+}
+.chip-orange {
+  background: #fff7ed;
+  color: #ea580c;
+}
 
 .event-status-pill {
   font-size: 0.72rem;
   font-weight: 600;
 }
 
-.status-open { color: #2563eb; }
-.status-confirmed { color: #059669; }
-.status-scheduled { color: #d97706; }
+.status-open {
+  color: #2563eb;
+}
+.status-confirmed {
+  color: #059669;
+}
+.status-scheduled {
+  color: #d97706;
+}
 
 .event-card-title {
   font-family: 'Poppins', sans-serif;
@@ -2053,6 +3036,409 @@ const upcomingEvents = ref([
   gap: 0.45rem;
   font-size: 0.8rem;
   color: #64748b;
+}
+
+/* ================================================= */
+/*  MODAL STYLES (Copied & Adjusted from ProfileView) */
+/* ================================================= */
+.flex-between {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.loading-state {
+  padding: 2rem;
+  text-align: center;
+  color: #64748b;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(8px);
+  display: grid;
+  place-items: center;
+  padding: 1.5rem;
+  animation: fadeIn 0.3s ease;
+}
+
+.modal-card {
+  background: #ffffff;
+  border-radius: 1.75rem;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.15);
+  width: 100%;
+  max-width: 38rem;
+  overflow: hidden;
+  animation: scaleUp 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.6);
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-family: 'Poppins', sans-serif;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 1.75rem;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  transition: color 0.2s ease;
+}
+
+.close-btn:hover {
+  color: #4f46e5;
+}
+
+.modal-form {
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.25rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-group label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #475569;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid #e2e8f0;
+  font-family: inherit;
+  font-size: 0.95rem;
+  color: #0f172a;
+  background: #ffffff;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.cancel-modal-btn {
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.75rem;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #475569;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cancel-modal-btn:hover {
+  background: #f8fafc;
+}
+
+.submit-modal-btn {
+  padding: 0.75rem 1.75rem;
+  border-radius: 0.75rem;
+  border: none;
+  background: #4f46e5;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
+}
+
+.submit-modal-btn:hover {
+  background: #4338ca;
+}
+
+/* Club Banner */
+.club-banner {
+  margin-bottom: 2rem;
+  padding: 1.5rem 2rem;
+  border-radius: 1.25rem;
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.05), rgba(139, 92, 246, 0.05));
+  border: 1px solid rgba(37, 99, 235, 0.15);
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.03);
+}
+
+.club-banner.glass-empty {
+  background: #ffffff;
+  border: 1px dashed #e2e8f0;
+  color: #64748b;
+  text-align: center;
+  justify-content: center;
+}
+
+.club-banner-icon {
+  font-size: 2.5rem;
+}
+
+.club-banner-info h2 {
+  font-family: 'Poppins', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 0.25rem;
+}
+
+.club-banner-info p {
+  color: #64748b;
+  margin: 0 0 0.5rem;
+}
+
+.club-hours-badge {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #475569;
+}
+
+.club-hours-badge span {
+  background: rgba(226, 232, 240, 0.6);
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+}
+
+/* Settings Inputs */
+.settings-input {
+  width: 100%;
+  padding: 0.4rem 0.6rem;
+  border-radius: 0.5rem;
+  border: 1px solid #e2e8f0;
+  font-family: inherit;
+  font-size: 0.85rem;
+  color: #0f172a;
+  background: #ffffff;
+  transition: border-color 0.2s ease;
+}
+
+.settings-input:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* Ensure setting-row aligns inputs */
+.setting-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 0.85rem;
+  gap: 1rem;
+}
+.setting-label {
+  flex: 0 0 30%;
+}
+.settings-input {
+  flex: 1;
+}
+
+.court-settings-badge {
+  margin-bottom: 0.75rem;
+}
+.badge-default,
+.badge-custom {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  letter-spacing: 0.02em;
+}
+.badge-default {
+  background: rgba(100, 116, 139, 0.1);
+  color: #475569;
+}
+.badge-custom {
+  background: rgba(37, 99, 235, 0.1);
+  color: #2563eb;
+}
+
+/* Toggle section */
+.toggle-section {
+  margin: 0.5rem 0 1rem;
+  padding: 0.5rem 0;
+  border-top: 1px solid rgba(226, 232, 240, 0.6);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.6);
+}
+.toggle-label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 0.5rem;
+}
+.toggle-group {
+  display: flex;
+  gap: 0.5rem;
+}
+.toggle-btn {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #64748b;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.toggle-btn:hover {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+}
+.toggle-btn.active {
+  border-color: #2563eb;
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+/* Disable visual style for override inputs when using defaults */
+.disabled-section .form-group input,
+.disabled-section .form-group select {
+  opacity: 0.5;
+  background: #f1f5f9;
+  cursor: not-allowed;
+}
+
+/* Date Picker Wrapper */
+.date-picker-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Court Settings Badges */
+.court-settings-badge {
+  margin-bottom: 0.75rem;
+}
+.badge-default,
+.badge-custom {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  letter-spacing: 0.02em;
+}
+.badge-default {
+  background: rgba(100, 116, 139, 0.1);
+  color: #475569;
+}
+.badge-custom {
+  background: rgba(37, 99, 235, 0.1);
+  color: #2563eb;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleUp {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.35rem;
+  padding: 0.5rem 0.85rem;
+  border-radius: 0.75rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+  border: 1px solid transparent;
+  background: transparent;
+}
+
+/* "Edit" (View) Button */
+.view-btn {
+  background: #ffffff;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  color: #475569;
+}
+.view-btn:hover {
+  background: #f1f5f9;
+  border-color: rgba(203, 213, 225, 0.9);
+  color: #0f172a;
+}
+
+/* "Delete" (Cancel) Button */
+.cancel-btn {
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.15);
+  color: #dc2626;
+}
+.cancel-btn:hover {
+  background: #dc2626;
+  border-color: #dc2626;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
 }
 
 /* Responsive Rules */
@@ -2116,6 +3502,17 @@ const upcomingEvents = ref([
 
   .events-grid {
     grid-template-columns: 1fr;
+  }
+
+  .modal-card {
+    max-width: 100%;
+    margin: 0 1rem;
+  }
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+  .modal-form {
+    padding: 1.25rem;
   }
 }
 </style>

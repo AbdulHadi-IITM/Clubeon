@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import api from '../api/axios'
+import { useCourtStore } from '@/stores/courts.js'
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref(null)
@@ -62,13 +63,15 @@ export const useAuthStore = defineStore('auth', () => {
   async function logout() {
     loading.value = true
     try {
-      // let server clear cookie; ignore network errors
       await api.post('/auth/logout')
     } catch (err) {
       // ignore
     } finally {
       user.value = null
       loading.value = false
+      // Reset all dependent stores
+      const courtStore = useCourtStore()
+      courtStore.reset() // <-- clear club and courts
     }
   }
 
