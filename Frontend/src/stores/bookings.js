@@ -1,76 +1,115 @@
 import { defineStore } from 'pinia'
-import { db, generateId } from '../data/storage.js'
+import { ref, computed } from 'vue'
+import api from '@/api/axios'
 
-export const useBookingStore = defineStore('bookings', {
-  state: () => ({
-    bookings: [],
-    waitlist: [],
-  }),
-  actions: {
-    load() {
-      this.bookings = db.bookings
-      this.waitlist = db.waitlist
-    },
-    getUserBookings(userId) {
-      return this.bookings.filter((b) => b.userId === userId)
-    },
-    getBookingsByDate(date) {
-      return this.bookings.filter((b) => b.date === date)
-    },
-    getBookingsByCourt(courtId, date) {
-      return this.bookings.filter((b) => b.courtId === courtId && b.date === date)
-    },
-    createBooking(booking) {
-      const court = db.courts.find((c) => c.id === booking.courtId)
-      if (!court || !court.isActive) return { success: false, error: 'Court is not available' }
+export const useBookingStore = defineStore('bookings', () => {
+  const bookings = ref([])
+  const loading = ref(false)
+  const error = ref(null)
 
-      const existing = this.bookings.filter(
-        (b) => b.courtId === booking.courtId && b.date === booking.date && b.status !== 'cancelled' && b.status !== 'released'
-      )
-      const conflict = existing.some((b) => {
-        return booking.startTime < b.endTime && booking.endTime > b.startTime
+  const upcomingBookings = computed(() =>
+    bookings.value.filter(
+      booking =>
+        booking.status !== 'cancelled' &&
+        booking.status !== 'released',
+    ),
+  )
+
+  async function loadBookings() {
+    loading.value = true
+    error.value = null
+
+    try {
+      const { data } = await api.get('/bookings')
+      bookings.value = data
+      return data
+    } catch (err) {
+      error.value =
+        err.response?.data?.message ||
+        err.message ||
+        'Failed to load bookings'
+
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function createBooking({
+    court_id,
+    booking_date,
+    start_time,
+    end_time,
+  }) {
+    loading.value = true
+    error.value = null
+
+    try {
+      const { data } = await api.post('/bookings', {
+        court_id,
+        booking_date,
+        start_time,
+        end_time,
       })
-      if (conflict) {
-        this.waitlist = [...this.waitlist, { ...booking, id: generateId('wl') }]
-        db.waitlist = this.waitlist
-        return { success: false, error: 'Time slot is already booked. You have been added to the waitlist.' }
-      }
 
-      const newBooking = { ...booking, id: generateId('bk') }
-      this.bookings = [...this.bookings, newBooking]
-      db.bookings = this.bookings
+      await loadBookings()
 
-      return { success: true, booking: newBooking }
-    },
-    releaseBooking(bookingId) {
-      const idx = this.bookings.findIndex((b) => b.id === bookingId)
-      if (idx === -1) return { success: false, error: 'Booking not found' }
-      this.bookings[idx] = { ...this.bookings[idx], status: 'released' }
-      db.bookings = this.bookings
+      return data
+    } catch (err) {
+      error.value =
+        err.response?.data?.message ||
+        err.message ||
+        'Failed to create booking'
 
-      const releasedBooking = this.bookings[idx]
-      const wlIdx = this.waitlist.findIndex(
-        (w) => w.courtId === releasedBooking.courtId && w.date === releasedBooking.date
-          && w.startTime === releasedBooking.startTime && w.endTime === releasedBooking.endTime
-      )
-      if (wlIdx !== -1) {
-        const wlItem = this.waitlist[wlIdx]
-        this.waitlist = this.waitlist.filter((_, i) => i !== wlIdx)
-        db.waitlist = this.waitlist
-        return { success: true, booking: releasedBooking, waitlistFilled: wlItem }
-      }
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
 
-      return { success: true, booking: releasedBooking }
-    },
-    cancelBooking(bookingId) {
-      const idx = this.bookings.findIndex((b) => b.id === bookingId)
-      if (idx === -1) return { success: false, error: 'Booking not found' }
-      this.bookings[idx] = { ...this.bookings[idx], status: 'cancelled' }
-      db.bookings = this.bookings
-      return { success: true }
-    },
-    staffCreateBooking(booking) {
-      return this.createBooking(booking)
-    },
-  },
+  async function releaseBooking(bookingId) {
+    loading.value = true
+    error.value = null
+
+    try {
+      const { data } = await api.post(`/bookings/${bookingId}/release`)
+
+      await loadBookings()
+
+      return data
+    } catch (err) {
+      error.value =
+        err.response?.data?.message ||
+        err.message ||
+        'Failed to release booking'
+
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  function getUserBookings() {
+    return bookings.value
+  }
+
+  function reset() {
+    bookings.value = []
+    loading.value = false
+    error.value = null
+  }
+
+  return {
+    bookings,
+    loading,
+    error,
+
+    upcomingBookings,
+
+    loadBookings,
+    createBooking,
+    releaseBooking,
+    getUserBookings,
+    reset,
+  }
 })
