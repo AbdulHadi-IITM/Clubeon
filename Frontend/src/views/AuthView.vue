@@ -489,11 +489,22 @@ const loginForm = reactive({ email: '', password: '' })
 const registerForm = reactive({ name: '', email: '', password: '', role: 'player' })
 
 const redirectAfterAuth = (user) => {
-  if (auth.isAuthenticated()) {
-    const targetRoute = user?.role === 'owner' ? 'admin' : 'landing'
-    router.push({ name: targetRoute })
-  } else {
+  if (!auth.isAuthenticated()) {
     router.push({ name: 'login' })
+    return
+  }
+
+  switch (user?.role) {
+    case 'owner':
+      router.push({ name: 'admin' })
+      break
+
+    case 'player':
+      router.push({ name: 'member-dashboard' })
+      break
+
+    default:
+      router.push({ name: 'profile' })
   }
 }
 

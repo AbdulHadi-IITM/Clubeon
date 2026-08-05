@@ -7,7 +7,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
           </svg>
         </div>
-        <span class="brand-text">Sports<span class="brand-accent">Club</span></span>
+        <span class="brand-text">Club<span class="brand-accent">Dash</span></span>
       </div>
       <div class="nav-links">
         <a href="#features" class="nav-link">Features</a>
