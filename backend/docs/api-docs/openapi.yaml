@@ -861,6 +861,117 @@ paths:
         '200':
           description: Webhook processed successfully
 
+  # ----- Stripe -----
+  /payments/stripe/create-payment-intent:
+    post:
+      summary: Create a Stripe PaymentIntent (JWT required)
+      description: >
+        Records a pending Payment, creates a Stripe PaymentIntent, and returns
+        the client_secret for the frontend (Stripe.js) to confirm the card
+        payment. The **amount is resolved server-side** from the referenced
+        entity (never trusted from the client):
+        booking -> flat BOOKING_FEE (booking must belong to the caller and be
+        active); membership -> MembershipPlan.price_monthly; event ->
+        Event.registration_fee (must be > 0).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [payment_type, reference_id]
+              properties:
+                payment_type:
+                  type: string
+                  enum: [booking, membership, event]
+                reference_id:
+                  type: integer
+                  example: 1
+                  description: "booking_id, membership plan_id, or event_id depending on payment_type"
+                currency: { type: string, example: inr, description: "ISO 4217; defaults to STRIPE_DEFAULT_CURRENCY" }
+      responses:
+        '201':
+          description: PaymentIntent created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  payment_id: { type: integer }
+                  client_secret: { type: string }
+                  amount: { type: number, format: float, description: "resolved server-side" }
+                  currency: { type: string }
+                  payment_type: { type: string }
+                  reference_id: { type: integer }
+                  status: { type: string, example: pending }
+                  publishable_key: { type: string, nullable: true }
+        '400':
+          description: Validation error (bad payment_type, or free event)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+        '401':
+          description: Not authenticated
+        '403':
+          description: Booking belongs to another user
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+        '404':
+          description: Referenced booking / plan / event not found
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+        '502':
+          description: Stripe gateway error
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+        '503':
+          description: Stripe not configured (STRIPE_SECRET_KEY missing)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+  /payments/stripe/webhook:
+    post:
+      summary: Stripe webhook (public; verified by signature)
+      description: >
+        Receives Stripe events. The raw request body is verified against the
+        `Stripe-Signature` header using STRIPE_WEBHOOK_SECRET. On
+        `payment_intent.succeeded` / `payment_intent.payment_failed` the matching
+        Payment is marked completed / failed.
+      security: []
+      parameters:
+        - name: Stripe-Signature
+          in: header
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Raw Stripe event payload
+      responses:
+        '200':
+          description: Event processed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  received: { type: boolean }
+                  type: { type: string, example: payment_intent.succeeded }
+        '400':
+          description: Invalid payload or signature
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+        '503':
+          description: Stripe webhook not configured
+
   # ================= ATTENDANCE =================
   /attendance/check-in:
     post:
