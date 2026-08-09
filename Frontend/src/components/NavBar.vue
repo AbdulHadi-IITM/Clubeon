@@ -13,7 +13,6 @@
         <a href="#features" class="nav-link">Features</a>
         <a href="#how-it-works" class="nav-link">How It Works</a>
         <a href="#pricing" class="nav-link">Pricing</a>
-        <router-link to="/public" class="nav-link">Courts</router-link>
       </div>
       <div class="nav-actions">
         <router-link to="/login" class="nav-btn-secondary">Sign In</router-link>
@@ -30,7 +29,6 @@
       <a href="#features" class="mobile-link" @click="mobileOpen = false">Features</a>
       <a href="#how-it-works" class="mobile-link" @click="mobileOpen = false">How It Works</a>
       <a href="#pricing" class="mobile-link" @click="mobileOpen = false">Pricing</a>
-      <router-link to="/public" class="mobile-link" @click="mobileOpen = false">View Courts</router-link>
       <div class="mobile-actions">
         <router-link to="/login" class="nav-btn-secondary w-full block text-center">Sign In</router-link>
         <router-link to="/register" class="nav-btn-primary w-full block text-center">Get Started</router-link>

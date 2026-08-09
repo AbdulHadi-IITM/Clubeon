@@ -11,7 +11,7 @@
         <div class="pricing-header">
           <h3 class="plan-name">{{ plan.name }}</h3>
           <div class="plan-price">
-            <span class="plan-currency">$</span>
+            <span class="plan-currency">₹</span>
             <span class="plan-amount">{{ plan.price }}</span>
             <span class="plan-period">/{{ plan.period }}</span>
           </div>
