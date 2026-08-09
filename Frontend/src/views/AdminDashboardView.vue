@@ -1154,55 +1154,255 @@
             </section>
           </div>
 
-          <!-- TAB 5: EVENTS PREVIEW -->
+          <!-- TAB 5: EVENTS MANAGEMENT -->
           <div v-else-if="activeNav === 'Events'" class="tab-pane">
+            <!-- Dynamic KPI Cards for Events -->
             <section class="kpi-grid">
               <div class="kpi-card">
-                <span class="kpi-title">Active Events</span>
-                <h3 class="kpi-value">6</h3>
-                <span class="trend-badge neutral">• Scheduled this month</span>
+                <span class="kpi-title">Total Events</span>
+                <h3 class="kpi-value">{{ eventsKpis.total }}</h3>
+                <span class="trend-badge neutral">• All scheduled events</span>
               </div>
               <div class="kpi-card">
-                <span class="kpi-title">Tournament Entries</span>
-                <h3 class="kpi-value">32 / 32</h3>
-                <span class="trend-badge positive">↑ Fully Booked</span>
+                <span class="kpi-title">Upcoming & Active</span>
+                <h3 class="kpi-value">{{ eventsKpis.upcoming }}</h3>
+                <span class="trend-badge positive">↑ Active registration</span>
               </div>
               <div class="kpi-card">
-                <span class="kpi-title">Upcoming Clinics</span>
-                <h3 class="kpi-value">2</h3>
-                <span class="trend-badge positive">↑ Coaching Sessions</span>
+                <span class="kpi-title">Total Attendees</span>
+                <h3 class="kpi-value">{{ eventsKpis.totalRegistered }} / {{ eventsKpis.totalCapacity }}</h3>
+                <span class="trend-badge positive">↑ High participation</span>
               </div>
               <div class="kpi-card">
-                <span class="kpi-title">Completed Events</span>
-                <h3 class="kpi-value">18</h3>
-                <span class="trend-badge neutral">• This Season</span>
+                <span class="kpi-title">Event Revenue</span>
+                <h3 class="kpi-value">₹{{ eventsKpis.totalRevenue.toLocaleString() }}</h3>
+                <span class="trend-badge positive">• Collected entry fees</span>
               </div>
             </section>
 
+            <!-- Events Toolbar & Section Header -->
             <section class="section-block">
-              <div class="block-header">
-                <h3>Upcoming Tournaments & Clinics</h3>
-                <span class="subtext">Manage upcoming competitive leagues and masterclasses</span>
+              <div class="block-header bookings-toolbar-header">
+                <div>
+                  <h3>Club Events & Tournaments</h3>
+                  <span class="subtext">Organize, schedule, edit, and manage club competitions & coaching clinics</span>
+                </div>
+                <div class="header-action-buttons">
+                  <div class="view-toggle-group">
+                    <button 
+                      class="view-toggle-btn" 
+                      :class="{ active: eventViewMode === 'grid' }"
+                      @click="eventViewMode = 'grid'"
+                      title="Grid View"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+                    </button>
+                    <button 
+                      class="view-toggle-btn" 
+                      :class="{ active: eventViewMode === 'table' }"
+                      @click="eventViewMode = 'table'"
+                      title="Table View"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                    </button>
+                  </div>
+                  <button class="add-booking-btn" @click="openCreateEventModal">
+                    + Create Event
+                  </button>
+                </div>
               </div>
 
-              <div class="events-grid">
-                <div v-for="event in upcomingEvents" :key="event.id" class="admin-event-card">
-                  <div class="event-card-top">
-                    <span class="event-type-chip" :class="event.chipClass">{{ event.type }}</span>
-                    <span class="event-status-pill" :class="event.statusClass">{{
-                      event.status
-                    }}</span>
+              <!-- Filter & Search Bar -->
+              <div class="card-box bookings-filter-box">
+                <div class="filter-controls-row">
+                  <div class="search-input-wrapper">
+                    <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    <input
+                      type="text"
+                      v-model="eventSearchQuery"
+                      placeholder="Search event title, venue, organizer..."
+                      class="booking-search-input"
+                    />
+                    <button v-if="eventSearchQuery" class="clear-search-btn" @click="eventSearchQuery = ''">×</button>
                   </div>
-                  <h4 class="event-card-title">{{ event.title }}</h4>
-                  <div class="event-details">
-                    <div class="detail-item">
-                      <span>Date: {{ event.date }}</span>
+
+                  <div class="filter-dropdowns-group">
+                    <div class="filter-select-group">
+                      <select v-model="eventStatusFilter" class="filter-select">
+                        <option value="All">All Statuses</option>
+                        <option value="Upcoming">Upcoming</option>
+                        <option value="Ongoing">Ongoing</option>
+                        <option value="Completed">Completed</option>
+                        <option value="Cancelled">Cancelled</option>
+                      </select>
                     </div>
-                    <div class="detail-item">
-                      <span>Attendees: {{ event.info }}</span>
+
+                    <div class="filter-select-group">
+                      <select v-model="eventSportFilter" class="filter-select">
+                        <option value="All">All Sports</option>
+                        <option value="Tennis">Tennis</option>
+                        <option value="Badminton">Badminton</option>
+                        <option value="Squash">Squash</option>
+                        <option value="Swimming">Swimming</option>
+                        <option value="Social">Social</option>
+                      </select>
+                    </div>
+
+                    <div class="filter-select-group">
+                      <select v-model="eventTypeFilter" class="filter-select">
+                        <option value="All">All Types</option>
+                        <option value="Tournament">Tournament</option>
+                        <option value="Coaching Clinic">Coaching Clinic</option>
+                        <option value="Social League">Social League</option>
+                      </select>
+                    </div>
+
+                    <div class="filter-select-group">
+                      <select v-model="eventSortBy" class="filter-select">
+                        <option value="date">Sort: Date (Soonest)</option>
+                        <option value="title">Sort: Title (A-Z)</option>
+                        <option value="registered">Sort: Most Filled</option>
+                        <option value="fee">Sort: Fee (High-Low)</option>
+                      </select>
+                    </div>
+
+                    <button 
+                      v-if="eventSearchQuery || eventStatusFilter !== 'All' || eventSportFilter !== 'All' || eventTypeFilter !== 'All'"
+                      class="reset-filters-btn"
+                      @click="resetEventFilters"
+                    >
+                      Reset
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Events Container Display -->
+              <div v-if="filteredEvents.length === 0" class="card-box no-bookings-empty" style="margin-top: 1rem;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width: 48px; height: 48px; color: #94a3b8; margin-bottom: 1rem;"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                <p class="empty-title">No events found matching your criteria</p>
+                <p class="empty-sub">Try resetting your search query or filters, or create a new event.</p>
+              </div>
+
+              <!-- Grid View -->
+              <div v-else-if="eventViewMode === 'grid'" class="admin-events-grid-container" style="margin-top: 1rem;">
+                <div v-for="evt in filteredEvents" :key="evt.id" class="event-card-rich">
+                  <div class="event-card-rich-header">
+                    <span class="sport-badge-pill" :class="'sport-' + evt.sport.toLowerCase()">{{ evt.sport }}</span>
+                    <span class="booking-status-badge" :class="'estatus-' + evt.status.toLowerCase()">{{ evt.status }}</span>
+                  </div>
+
+                  <div class="event-card-rich-body">
+                    <h4 class="event-rich-title">{{ evt.title }}</h4>
+                    <span class="event-type-subtag">{{ evt.type }}</span>
+                    
+                    <p class="event-rich-desc">{{ evt.description }}</p>
+
+                    <div class="event-meta-list">
+                      <div class="meta-row">
+                        <svg class="meta-icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                        <span>{{ evt.dateDisplay }} • {{ evt.time }}</span>
+                      </div>
+                      <div class="meta-row">
+                        <svg class="meta-icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                        <span>{{ evt.venue }}</span>
+                      </div>
+                      <div class="meta-row">
+                        <svg class="meta-icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                        <span>{{ evt.registered }} / {{ evt.capacity }} Players Registered</span>
+                      </div>
+                      <div class="meta-row">
+                        <svg class="meta-icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span class="font-semibold" style="color: #0f172a;">Entry Fee: {{ evt.fee > 0 ? '₹' + evt.fee : 'Free' }}</span>
+                      </div>
+                    </div>
+
+                    <!-- Capacity Progress Bar -->
+                    <div class="capacity-progress-wrapper">
+                      <div class="capacity-progress-bar">
+                        <div 
+                          class="capacity-progress-fill" 
+                          :style="{ width: Math.min(100, Math.round((evt.registered / evt.capacity) * 100)) + '%' }"
+                          :class="{ full: evt.registered >= evt.capacity }"
+                        ></div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="event-card-rich-footer">
+                    <button class="action-icon-btn view-btn" @click="openEventDetails(evt)">
+                      View Details
+                    </button>
+                    <div style="display: flex; gap: 0.35rem;">
+                      <button class="action-icon-btn complete-btn" @click="openEditEventModal(evt)" title="Edit Event">
+                        ✎ Edit
+                      </button>
+                      <button class="action-icon-btn cancel-btn" @click="requestDeleteEvent(evt)" title="Delete Event">
+                        🗑
+                      </button>
                     </div>
                   </div>
                 </div>
+              </div>
+
+              <!-- Table View -->
+              <div v-else-if="eventViewMode === 'table'" class="card-box" style="margin-top: 1rem; overflow-x: auto;">
+                <table class="admin-bookings-table">
+                  <thead>
+                    <tr>
+                      <th>EVENT TITLE & TYPE</th>
+                      <th>SPORT & VENUE</th>
+                      <th>DATE & TIME</th>
+                      <th>ATTENDEES & CAPACITY</th>
+                      <th>FEE</th>
+                      <th>STATUS</th>
+                      <th style="text-align: right;">ACTIONS</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="evt in filteredEvents" :key="evt.id" class="booking-table-row">
+                      <td>
+                        <div class="player-info-meta">
+                          <span class="user-name-txt" style="font-size: 0.95rem;">{{ evt.title }}</span>
+                          <span class="user-email-txt">{{ evt.type }} • Organizer: {{ evt.organizer }}</span>
+                        </div>
+                      </td>
+                      <td>
+                        <div class="court-info-cell">
+                          <span class="court-name-txt">{{ evt.venue }}</span>
+                          <span class="sport-badge-pill" :class="'sport-' + evt.sport.toLowerCase()">{{ evt.sport }}</span>
+                        </div>
+                      </td>
+                      <td>
+                        <div class="court-info-cell">
+                          <span class="font-semibold">{{ evt.dateDisplay }}</span>
+                          <span class="time-subtxt">{{ evt.time }}</span>
+                        </div>
+                      </td>
+                      <td>
+                        <div class="court-info-cell">
+                          <span class="font-bold" style="color: #2563eb;">{{ evt.registered }} / {{ evt.capacity }}</span>
+                          <span class="time-subtxt">{{ evt.registered >= evt.capacity ? 'Fully Booked' : (evt.capacity - evt.registered) + ' spots left' }}</span>
+                        </div>
+                      </td>
+                      <td>
+                        <span class="amount-txt">{{ evt.fee > 0 ? '₹' + evt.fee : 'Free' }}</span>
+                      </td>
+                      <td>
+                        <span class="booking-status-badge" :class="'estatus-' + evt.status.toLowerCase()">
+                          {{ evt.status }}
+                        </span>
+                      </td>
+                      <td style="text-align: right;">
+                        <div class="table-actions-group">
+                          <button class="action-icon-btn view-btn" @click="openEventDetails(evt)">Details</button>
+                          <button class="action-icon-btn complete-btn" @click="openEditEventModal(evt)">Edit</button>
+                          <button class="action-icon-btn cancel-btn" @click="requestDeleteEvent(evt)">✕</button>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </section>
           </div>
@@ -1774,6 +1974,276 @@
                 <button type="submit" class="submit-modal-btn">Create Reservation</button>
               </div>
             </form>
+          </div>
+        </div>
+
+        <!-- CREATE EVENT MODAL -->
+        <div v-if="showCreateEventModal" class="modal-overlay" @click.self="closeCreateEventModal">
+          <div class="modal-card">
+            <div class="modal-header">
+              <h3>+ Create New Event</h3>
+              <button class="close-modal-btn" @click="closeCreateEventModal">✕</button>
+            </div>
+            <form @submit.prevent="handleCreateEvent" class="modal-form">
+              <div class="form-group">
+                <label>Event Title *</label>
+                <input type="text" v-model="eventForm.title" required placeholder="e.g. Apex Summer Tennis Open 2026" />
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Sport Category *</label>
+                  <select v-model="eventForm.sport" required>
+                    <option value="Tennis">Tennis</option>
+                    <option value="Badminton">Badminton</option>
+                    <option value="Squash">Squash</option>
+                    <option value="Swimming">Swimming</option>
+                    <option value="Social">Social / General</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Event Type *</label>
+                  <select v-model="eventForm.type" required>
+                    <option value="Tournament">Tournament</option>
+                    <option value="Coaching Clinic">Coaching Clinic</option>
+                    <option value="Social League">Social League</option>
+                    <option value="Exhibition">Exhibition / Match</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Event Date *</label>
+                  <input type="date" v-model="eventForm.date" required />
+                </div>
+                <div class="form-group">
+                  <label>Time Slot *</label>
+                  <input type="text" v-model="eventForm.time" required placeholder="e.g. 10:00 AM - 04:00 PM" />
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Venue / Court Location *</label>
+                  <input type="text" v-model="eventForm.venue" required placeholder="e.g. Tennis Courts 1 & 2" />
+                </div>
+                <div class="form-group">
+                  <label>Max Player Capacity *</label>
+                  <input type="number" v-model="eventForm.capacity" min="1" required />
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Entry Fee (₹)</label>
+                  <input type="number" v-model="eventForm.fee" min="0" step="50" placeholder="0 for Free" />
+                </div>
+                <div class="form-group">
+                  <label>Event Status</label>
+                  <select v-model="eventForm.status">
+                    <option value="Upcoming">Upcoming</option>
+                    <option value="Ongoing">Ongoing</option>
+                    <option value="Completed">Completed</option>
+                    <option value="Cancelled">Cancelled</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>Organizer Name</label>
+                <input type="text" v-model="eventForm.organizer" placeholder="e.g. Head Coach David" />
+              </div>
+
+              <div class="form-group">
+                <label>Description & Rules</label>
+                <textarea v-model="eventForm.description" rows="3" placeholder="Describe event details, prizes, eligibility, or equipment guidelines..."></textarea>
+              </div>
+
+              <div class="modal-actions">
+                <button type="button" class="cancel-modal-btn" @click="closeCreateEventModal">Cancel</button>
+                <button type="submit" class="submit-modal-btn">Publish Event</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- EDIT EVENT MODAL -->
+        <div v-if="showEditEventModal && editingEvent" class="modal-overlay" @click.self="closeEditEventModal">
+          <div class="modal-card">
+            <div class="modal-header">
+              <h3>✎ Edit Event: {{ editingEvent.title }}</h3>
+              <button class="close-modal-btn" @click="closeEditEventModal">✕</button>
+            </div>
+            <form @submit.prevent="handleUpdateEvent" class="modal-form">
+              <div class="form-group">
+                <label>Event Title *</label>
+                <input type="text" v-model="editEventForm.title" required />
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Sport Category</label>
+                  <select v-model="editEventForm.sport">
+                    <option value="Tennis">Tennis</option>
+                    <option value="Badminton">Badminton</option>
+                    <option value="Squash">Squash</option>
+                    <option value="Swimming">Swimming</option>
+                    <option value="Social">Social</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Event Type</label>
+                  <select v-model="editEventForm.type">
+                    <option value="Tournament">Tournament</option>
+                    <option value="Coaching Clinic">Coaching Clinic</option>
+                    <option value="Social League">Social League</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Event Date</label>
+                  <input type="date" v-model="editEventForm.date" />
+                </div>
+                <div class="form-group">
+                  <label>Time Slot</label>
+                  <input type="text" v-model="editEventForm.time" />
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Venue / Location</label>
+                  <input type="text" v-model="editEventForm.venue" />
+                </div>
+                <div class="form-group">
+                  <label>Capacity</label>
+                  <input type="number" v-model="editEventForm.capacity" min="1" />
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Entry Fee (₹)</label>
+                  <input type="number" v-model="editEventForm.fee" min="0" />
+                </div>
+                <div class="form-group">
+                  <label>Event Status</label>
+                  <select v-model="editEventForm.status">
+                    <option value="Upcoming">Upcoming</option>
+                    <option value="Ongoing">Ongoing</option>
+                    <option value="Completed">Completed</option>
+                    <option value="Cancelled">Cancelled</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>Description</label>
+                <textarea v-model="editEventForm.description" rows="3"></textarea>
+              </div>
+
+              <div class="modal-actions">
+                <button type="button" class="cancel-modal-btn" @click="closeEditEventModal">Cancel</button>
+                <button type="submit" class="submit-modal-btn">Save Changes</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- VIEW EVENT DETAILS & PARTICIPANTS MODAL -->
+        <div v-if="showEventDetailsModal && selectedEvent" class="modal-overlay" @click.self="closeEventDetailsModal">
+          <div class="modal-card booking-detail-modal">
+            <div class="modal-header">
+              <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+                <h2 style="margin: 0;">{{ selectedEvent.title }}</h2>
+                <span class="sport-badge-pill" :class="'sport-' + selectedEvent.sport.toLowerCase()">{{ selectedEvent.sport }}</span>
+                <span class="booking-status-badge" :class="'estatus-' + selectedEvent.status.toLowerCase()">{{ selectedEvent.status }}</span>
+              </div>
+              <button class="close-modal-btn" @click="closeEventDetailsModal">✕</button>
+            </div>
+
+            <div class="modal-body booking-detail-body">
+              <div class="detail-section-card">
+                <h4>Event Overview</h4>
+                <div class="detail-grid">
+                  <div class="detail-item">
+                    <span class="detail-label">Event Category</span>
+                    <span class="detail-val font-semibold">{{ selectedEvent.type }}</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="detail-label">Scheduled Date</span>
+                    <span class="detail-val font-semibold">{{ selectedEvent.dateDisplay }}</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="detail-label">Time & Slot</span>
+                    <span class="detail-val">{{ selectedEvent.time }}</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="detail-label">Venue Location</span>
+                    <span class="detail-val">{{ selectedEvent.venue }}</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="detail-label">Organizer / Host</span>
+                    <span class="detail-val">{{ selectedEvent.organizer }}</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="detail-label">Entry Fee</span>
+                    <span class="detail-val font-bold" style="color: #2563eb;">{{ selectedEvent.fee > 0 ? '₹' + selectedEvent.fee : 'Free Entry' }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="detail-section-card">
+                <h4>Event Description</h4>
+                <p class="notes-text">{{ selectedEvent.description }}</p>
+              </div>
+
+              <div class="detail-section-card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                  <h4 style="margin: 0; border: none; padding: 0;">Registered Participants ({{ selectedEvent.registered }} / {{ selectedEvent.capacity }})</h4>
+                  <button class="export-csv-btn" style="padding: 0.35rem 0.75rem; font-size: 0.78rem;" @click="addSampleParticipant(selectedEvent)">+ Register Player</button>
+                </div>
+
+                <div v-if="!selectedEvent.participants || selectedEvent.participants.length === 0" style="color: #64748b; font-size: 0.85rem; font-style: italic;">
+                  No players registered yet.
+                </div>
+                <div v-else class="participants-tags-list">
+                  <div v-for="(p, idx) in selectedEvent.participants" :key="idx" class="participant-pill-item">
+                    <span>👤 {{ p }}</span>
+                    <button class="remove-participant-btn" @click="removeParticipant(selectedEvent, idx)" title="Remove">×</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="modal-footer">
+              <div style="display: flex; gap: 0.75rem;">
+                <button class="action-icon-btn complete-btn" @click="openEditEventModal(selectedEvent)">✎ Edit Event</button>
+                <button class="action-icon-btn cancel-btn" @click="requestDeleteEvent(selectedEvent)">🗑 Delete Event</button>
+              </div>
+              <button class="cancel-modal-btn" @click="closeEventDetailsModal">Close</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- DELETE EVENT CONFIRMATION MODAL -->
+        <div v-if="showDeleteEventModal && eventToDelete" class="modal-overlay" @click.self="showDeleteEventModal = false">
+          <div class="modal-card small-confirm-modal">
+            <div class="modal-header">
+              <h3 style="color: #ef4444; margin: 0;">Delete Event</h3>
+              <button class="close-modal-btn" @click="showDeleteEventModal = false">✕</button>
+            </div>
+            <div class="modal-body" style="padding: 1.5rem 0;">
+              <p>Are you sure you want to delete event <strong>"{{ eventToDelete.title }}"</strong>?</p>
+              <p style="font-size: 0.85rem; color: #64748b; margin-top: 0.5rem;">This action will remove the event schedule and notify all {{ eventToDelete.registered }} registered attendees.</p>
+            </div>
+            <div class="modal-footer">
+              <button class="cancel-modal-btn" @click="showDeleteEventModal = false">Keep Event</button>
+              <button class="submit-modal-btn danger-btn" @click="confirmDeleteEvent">Confirm Delete</button>
+            </div>
           </div>
         </div>
       </main>
@@ -2556,39 +3026,325 @@ const announcements = ref([
   },
 ])
 
-// Upcoming Events sample items
-const upcomingEvents = ref([
+// --- EVENTS MANAGEMENT STATE & CRUD LOGIC ---
+const eventViewMode = ref('grid') // 'grid' | 'table'
+const eventSearchQuery = ref('')
+const eventStatusFilter = ref('All')
+const eventSportFilter = ref('All')
+const eventTypeFilter = ref('All')
+const eventSortBy = ref('date')
+
+const showCreateEventModal = ref(false)
+const showEditEventModal = ref(false)
+const showEventDetailsModal = ref(false)
+const showDeleteEventModal = ref(false)
+
+const selectedEvent = ref(null)
+const editingEvent = ref(null)
+const eventToDelete = ref(null)
+
+const eventsList = ref([
   {
-    id: 1,
+    id: 'EVT-201',
     title: 'Apex Summer Tennis Open 2026',
     type: 'Tournament',
-    date: 'July 28 - July 30, 2026',
-    info: '32 / 32 Registered Players',
-    status: 'Registration Open',
-    chipClass: 'chip-blue',
-    statusClass: 'status-open',
+    sport: 'Tennis',
+    date: '2026-08-28',
+    dateDisplay: 'Aug 28 - Aug 30, 2026',
+    time: '09:00 AM - 06:00 PM',
+    venue: 'Tennis Courts 1 & 2',
+    capacity: 32,
+    registered: 32,
+    fee: 500,
+    status: 'Upcoming',
+    organizer: 'Head Coach David',
+    description: 'Annual competitive tennis tournament featuring singles and doubles knockouts with trophy prizes and ranking points.',
+    participants: ['John Doe', 'Alice Johnson', 'Michael Brown', 'Sophia Martinez', 'Robert Paul', 'David Lee', 'Emma Wilson', 'James Taylor']
   },
   {
-    id: 2,
+    id: 'EVT-202',
     title: 'Masterclass Badminton Clinic',
-    type: 'Coaching Session',
-    date: 'August 02, 2026',
-    info: '15 / 20 Spots Filled',
-    status: 'Confirmed',
-    chipClass: 'chip-emerald',
-    statusClass: 'status-confirmed',
+    type: 'Coaching Clinic',
+    sport: 'Badminton',
+    date: '2026-08-20',
+    dateDisplay: 'Aug 20, 2026',
+    time: '04:00 PM - 07:00 PM',
+    venue: 'Badminton Arena A',
+    capacity: 20,
+    registered: 16,
+    fee: 350,
+    status: 'Upcoming',
+    organizer: 'Coach Lin Dan',
+    description: 'Intensive footwork and smash technique coaching clinic for intermediate and advanced badminton players.',
+    participants: ['Jane Smith', 'Chris Evans', 'Sarah Parker', 'Tom Holland', 'Zendaya Coleman']
   },
   {
-    id: 3,
-    title: 'Courts 3 & 4 Lighting Upgrade',
-    type: 'Maintenance Schedule',
-    date: 'August 05, 2026',
-    info: 'Temporary Court Closure',
-    status: 'Scheduled',
-    chipClass: 'chip-orange',
-    statusClass: 'status-scheduled',
+    id: 'EVT-203',
+    title: 'Squash Club Championship 2026',
+    type: 'Tournament',
+    sport: 'Squash',
+    date: '2026-09-05',
+    dateDisplay: 'Sep 05, 2026',
+    time: '10:00 AM - 05:00 PM',
+    venue: 'Squash Courts 1 & 2',
+    capacity: 16,
+    registered: 12,
+    fee: 400,
+    status: 'Upcoming',
+    organizer: 'Squash Director Alex',
+    description: 'Club championship event for squash enthusiasts. Round-robin format followed by knockout finals.',
+    participants: ['Robert Paul', 'David Lee', 'Mark Ruffalo', 'Scarlett Johansson']
   },
+  {
+    id: 'EVT-204',
+    title: 'Weekend Swimming Sprint Challenge',
+    type: 'Social League',
+    sport: 'Swimming',
+    date: '2026-08-15',
+    dateDisplay: 'Aug 15, 2026',
+    time: '07:00 AM - 11:00 AM',
+    venue: 'Olympic Swimming Pool',
+    capacity: 25,
+    registered: 25,
+    fee: 0,
+    status: 'Ongoing',
+    organizer: 'Swim Coach Maria',
+    description: 'Fun weekend sprint relays and freestyle 50m challenges open to all club members. Refreshments included.',
+    participants: ['Michael Brown', 'John Doe', 'Alice Johnson', 'Kevin Hart']
+  },
+  {
+    id: 'EVT-205',
+    title: 'Junior Tennis Grassroots Camp',
+    type: 'Coaching Clinic',
+    sport: 'Tennis',
+    date: '2026-07-10',
+    dateDisplay: 'Jul 10, 2026',
+    time: '09:00 AM - 12:00 PM',
+    venue: 'Tennis Court 3',
+    capacity: 15,
+    registered: 15,
+    fee: 250,
+    status: 'Completed',
+    organizer: 'Coach Serena',
+    description: 'Introductory tennis drills and fun games designed for kids aged 8 to 14.',
+    participants: ['Leo Messi', 'Cristiano R.', 'Neymar Jr.']
+  }
 ])
+
+// Alias upcomingEvents to keep dashboard home components in sync
+const upcomingEvents = computed(() => {
+  return eventsList.value.map(e => ({
+    id: e.id,
+    title: e.title,
+    type: e.type,
+    date: e.dateDisplay,
+    info: `${e.registered} / ${e.capacity} Registered Players`,
+    status: e.status,
+    chipClass: e.sport === 'Tennis' ? 'chip-blue' : e.sport === 'Badminton' ? 'chip-emerald' : 'chip-orange',
+    statusClass: e.status === 'Upcoming' ? 'status-open' : 'status-confirmed'
+  }))
+})
+
+// Event Form State
+const eventForm = reactive({
+  title: '',
+  sport: 'Tennis',
+  type: 'Tournament',
+  date: new Date().toISOString().split('T')[0],
+  time: '10:00 AM - 04:00 PM',
+  venue: 'Tennis Court 1',
+  capacity: 16,
+  fee: 0,
+  status: 'Upcoming',
+  organizer: 'Club Staff',
+  description: ''
+})
+
+const editEventForm = reactive({
+  id: '',
+  title: '',
+  sport: 'Tennis',
+  type: 'Tournament',
+  date: '',
+  time: '',
+  venue: '',
+  capacity: 16,
+  fee: 0,
+  status: 'Upcoming',
+  description: ''
+})
+
+// Computed Properties for Events
+const filteredEvents = computed(() => {
+  return eventsList.value.filter(e => {
+    const q = eventSearchQuery.value.trim().toLowerCase()
+    const matchesSearch = !q ||
+      e.title.toLowerCase().includes(q) ||
+      e.venue.toLowerCase().includes(q) ||
+      e.organizer.toLowerCase().includes(q)
+
+    const matchesStatus = eventStatusFilter.value === 'All' || e.status.toLowerCase() === eventStatusFilter.value.toLowerCase()
+    const matchesSport = eventSportFilter.value === 'All' || e.sport.toLowerCase() === eventSportFilter.value.toLowerCase()
+    const matchesType = eventTypeFilter.value === 'All' || e.type.toLowerCase() === eventTypeFilter.value.toLowerCase()
+
+    return matchesSearch && matchesStatus && matchesSport && matchesType
+  }).sort((a, b) => {
+    if (eventSortBy.value === 'date') return a.date.localeCompare(b.date)
+    if (eventSortBy.value === 'title') return a.title.localeCompare(b.title)
+    if (eventSortBy.value === 'registered') return b.registered - a.registered
+    if (eventSortBy.value === 'fee') return b.fee - a.fee
+    return 0
+  })
+})
+
+const eventsKpis = computed(() => {
+  const total = eventsList.value.length
+  const upcoming = eventsList.value.filter(e => e.status === 'Upcoming' || e.status === 'Ongoing').length
+  const totalRegistered = eventsList.value.reduce((sum, e) => sum + e.registered, 0)
+  const totalCapacity = eventsList.value.reduce((sum, e) => sum + e.capacity, 0)
+  const totalRevenue = eventsList.value.reduce((sum, e) => sum + (e.registered * e.fee), 0)
+
+  return { total, upcoming, totalRegistered, totalCapacity, totalRevenue }
+})
+
+// Event Action Methods
+function resetEventFilters() {
+  eventSearchQuery.value = ''
+  eventStatusFilter.value = 'All'
+  eventSportFilter.value = 'All'
+  eventTypeFilter.value = 'All'
+  eventSortBy.value = 'date'
+}
+
+function openCreateEventModal() {
+  eventForm.title = ''
+  eventForm.description = ''
+  showCreateEventModal.value = true
+}
+
+function closeCreateEventModal() {
+  showCreateEventModal.value = false
+}
+
+function handleCreateEvent() {
+  if (!eventForm.title || !eventForm.venue) {
+    if (toast) toast.error('Please fill in event title and venue.')
+    return
+  }
+  const newId = `EVT-${200 + eventsList.value.length + 1}`
+  const createdEvent = {
+    id: newId,
+    title: eventForm.title,
+    type: eventForm.type,
+    sport: eventForm.sport,
+    date: eventForm.date,
+    dateDisplay: new Date(eventForm.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+    time: eventForm.time,
+    venue: eventForm.venue,
+    capacity: Number(eventForm.capacity) || 16,
+    registered: 0,
+    fee: Number(eventForm.fee) || 0,
+    status: eventForm.status,
+    organizer: eventForm.organizer || 'Club Admin',
+    description: eventForm.description || 'Club event scheduled by administrator.',
+    participants: []
+  }
+
+  eventsList.value.unshift(createdEvent)
+  showCreateEventModal.value = false
+  if (toast) toast.success(`Event "${createdEvent.title}" created successfully!`)
+}
+
+function openEventDetails(event) {
+  selectedEvent.value = event
+  showEventDetailsModal.value = true
+}
+
+function closeEventDetailsModal() {
+  showEventDetailsModal.value = false
+  selectedEvent.value = null
+}
+
+function openEditEventModal(event) {
+  editingEvent.value = event
+  editEventForm.id = event.id
+  editEventForm.title = event.title
+  editEventForm.sport = event.sport
+  editEventForm.type = event.type
+  editEventForm.date = event.date
+  editEventForm.time = event.time
+  editEventForm.venue = event.venue
+  editEventForm.capacity = event.capacity
+  editEventForm.fee = event.fee
+  editEventForm.status = event.status
+  editEventForm.description = event.description
+  showEditEventModal.value = true
+}
+
+function closeEditEventModal() {
+  showEditEventModal.value = false
+  editingEvent.value = null
+}
+
+function handleUpdateEvent() {
+  if (!editingEvent.value) return
+  const target = eventsList.value.find(e => e.id === editingEvent.value.id)
+  if (target) {
+    target.title = editEventForm.title
+    target.sport = editEventForm.sport
+    target.type = editEventForm.type
+    target.date = editEventForm.date
+    if (editEventForm.date) {
+      target.dateDisplay = new Date(editEventForm.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    }
+    target.time = editEventForm.time
+    target.venue = editEventForm.venue
+    target.capacity = Number(editEventForm.capacity) || target.capacity
+    target.fee = Number(editEventForm.fee) || 0
+    target.status = editEventForm.status
+    target.description = editEventForm.description
+  }
+
+  showEditEventModal.value = false
+  editingEvent.value = null
+  if (toast) toast.success('Event details updated successfully!')
+}
+
+function requestDeleteEvent(event) {
+  eventToDelete.value = event
+  showDeleteEventModal.value = true
+}
+
+function confirmDeleteEvent() {
+  if (!eventToDelete.value) return
+  eventsList.value = eventsList.value.filter(e => e.id !== eventToDelete.value.id)
+  showDeleteEventModal.value = false
+  if (showEventDetailsModal.value) showEventDetailsModal.value = false
+  if (toast) toast.success(`Event "${eventToDelete.value.title}" deleted.`)
+  eventToDelete.value = null
+}
+
+function addSampleParticipant(event) {
+  const sampleNames = ['Alex Morgan', 'Carlos Alcaraz', 'Coco Gauff', 'Novak D.', 'Iga Swiatek', 'Jannik Sinner']
+  const randomName = sampleNames[Math.floor(Math.random() * sampleNames.length)]
+  if (event.registered < event.capacity) {
+    event.participants = event.participants || []
+    event.participants.push(randomName)
+    event.registered += 1
+    if (toast) toast.success(`Registered ${randomName} to event!`)
+  } else {
+    if (toast) toast.error('Event is already at full capacity!')
+  }
+}
+
+function removeParticipant(event, index) {
+  if (event.participants && event.participants[index]) {
+    const removedName = event.participants[index]
+    event.participants.splice(index, 1)
+    event.registered = Math.max(0, event.registered - 1)
+    if (toast) toast.success(`Removed ${removedName} from event.`)
+  }
+}
 </script>
 
 <style scoped>
@@ -4697,5 +5453,196 @@ const upcomingEvents = ref([
 
 .small-confirm-modal {
   max-width: 440px;
+}
+
+/* --- EVENTS TAB STYLES --- */
+.view-toggle-group {
+  display: flex;
+  background: #f1f5f9;
+  padding: 0.2rem;
+  border-radius: 0.65rem;
+  border: 1px solid #cbd5e1;
+}
+
+.view-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.45rem 0.65rem;
+  border-radius: 0.5rem;
+  background: transparent;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.view-toggle-btn:hover {
+  color: #0f172a;
+}
+
+.view-toggle-btn.active {
+  background: #ffffff;
+  color: #2563eb;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.admin-events-grid-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.25rem;
+}
+
+.event-card-rich {
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.85rem;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+}
+
+.event-card-rich:hover {
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+  border-color: #cbd5e1;
+  transform: translateY(-2px);
+}
+
+.event-card-rich-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem 0.5rem;
+}
+
+.event-card-rich-body {
+  padding: 0.5rem 1.25rem 1rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.event-rich-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 0.2rem;
+  line-height: 1.35;
+}
+
+.event-type-subtag {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 0.75rem;
+  display: inline-block;
+}
+
+.event-rich-desc {
+  font-size: 0.84rem;
+  color: #475569;
+  line-height: 1.45;
+  margin-bottom: 1rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.event-meta-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  font-size: 0.82rem;
+  color: #334155;
+  margin-bottom: 1rem;
+}
+
+.meta-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.meta-icn {
+  width: 15px;
+  height: 15px;
+  color: #64748b;
+  flex-shrink: 0;
+}
+
+.capacity-progress-wrapper {
+  margin-top: auto;
+  padding-top: 0.5rem;
+}
+
+.capacity-progress-bar {
+  height: 6px;
+  border-radius: 999px;
+  background: #e2e8f0;
+  overflow: hidden;
+}
+
+.capacity-progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: #2563eb;
+  transition: width 0.3s ease;
+}
+
+.capacity-progress-fill.full {
+  background: #ef4444;
+}
+
+.event-card-rich-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 1.25rem;
+  background: #f8fafc;
+  border-top: 1px solid #f1f5f9;
+}
+
+.estatus-upcoming { background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; }
+.estatus-ongoing { background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; }
+.estatus-completed { background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; }
+.estatus-cancelled { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+
+.participants-tags-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.participant-pill-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.65rem;
+  border-radius: 999px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #1e293b;
+}
+
+.remove-participant-btn {
+  background: none;
+  border: none;
+  font-size: 1rem;
+  line-height: 1;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 0 0.15rem;
+}
+
+.remove-participant-btn:hover {
+  color: #ef4444;
 }
 </style>
