@@ -19,3 +19,12 @@ class Config:
 
     # CORS
     CORS_ORIGINS = os.environ.get('CORS_ORIGINS', 'http://localhost:5173').split(',')
+
+    # Stripe
+    STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY')
+    STRIPE_PUBLISHABLE_KEY = os.environ.get('STRIPE_PUBLISHABLE_KEY')
+    STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET')
+    # Default currency for Stripe charges (ISO 4217, lowercase for the Stripe API)
+    STRIPE_DEFAULT_CURRENCY = os.environ.get('STRIPE_DEFAULT_CURRENCY', 'inr')
+    # Flat fee charged for a court booking (no per-court pricing exists in the model yet)
+    BOOKING_FEE = float(os.environ.get('BOOKING_FEE', '500'))
