@@ -944,51 +944,212 @@
             </section>
           </div>
 
-          <!-- TAB 4: BOOKINGS PREVIEW -->
+          <!-- TAB 4: BOOKINGS MANAGEMENT -->
           <div v-else-if="activeNav === 'Bookings'" class="tab-pane">
+            <!-- Dynamic KPI Cards -->
             <section class="kpi-grid">
               <div class="kpi-card">
-                <span class="kpi-title">Today's Bookings</span>
-                <h3 class="kpi-value">42</h3>
-                <span class="trend-badge positive">↑ +8 vs yesterday</span>
+                <span class="kpi-title">Total Bookings</span>
+                <h3 class="kpi-value">{{ bookingKpis.total }}</h3>
+                <span class="trend-badge positive">All recorded slots</span>
               </div>
               <div class="kpi-card">
-                <span class="kpi-title">Upcoming (7 Days)</span>
-                <h3 class="kpi-value">215</h3>
-                <span class="trend-badge positive">↑ High Demand</span>
+                <span class="kpi-title">Active / Confirmed</span>
+                <h3 class="kpi-value">{{ bookingKpis.confirmed }}</h3>
+                <span class="trend-badge positive">↑ High Occupancy</span>
               </div>
               <div class="kpi-card">
-                <span class="kpi-title">Completed Today</span>
-                <h3 class="kpi-value">28</h3>
-                <span class="trend-badge neutral">• On Schedule</span>
+                <span class="kpi-title">Completed (Auto & Manual)</span>
+                <h3 class="kpi-value">{{ bookingKpis.completed }}</h3>
+                <span class="trend-badge neutral">• {{ bookingKpis.autoCompleted }} time-completed</span>
               </div>
               <div class="kpi-card">
                 <span class="kpi-title">Cancellations</span>
-                <h3 class="kpi-value">3</h3>
-                <span class="trend-badge neutral">• Low Rate</span>
+                <h3 class="kpi-value">{{ bookingKpis.cancelled }}</h3>
+                <span class="trend-badge neutral">• {{ bookingKpis.cancelled }} refunded</span>
               </div>
             </section>
 
+            <!-- Bookings Toolbar & Management Section -->
             <section class="section-block">
-              <div class="block-header">
-                <h3>Recent Reservations</h3>
-                <span class="subtext">Real-time schedule of court bookings</span>
+              <div class="block-header bookings-toolbar-header">
+                <div>
+                  <h3>Bookings & Reservations</h3>
+                  <span class="subtext">Real-time schedule of court bookings • Time-based completion enabled</span>
+                </div>
+                <div class="header-action-buttons">
+                  <button class="export-csv-btn" @click="exportBookingsCSV" title="Export to CSV">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 15px; height: 15px; margin-right: 6px;"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    Export CSV
+                  </button>
+                  <button class="add-booking-btn" @click="openNewBookingModal">
+                    + New Booking
+                  </button>
+                </div>
               </div>
 
-              <div class="card-box">
-                <div class="pending-list">
-                  <div v-for="b in recentBookings" :key="b.id" class="pending-row">
-                    <div class="user-cell">
-                      <div class="user-avatar-sm">{{ b.initials }}</div>
-                      <div>
-                        <span class="user-name-txt">{{ b.player }}</span>
-                        <span class="user-email-txt">{{ b.facility }}</span>
-                      </div>
+              <!-- Filter & Search Controls Bar (Decluttered & Spacious) -->
+              <div class="card-box bookings-filter-box">
+                <div class="filter-controls-row">
+                  <!-- Search Input -->
+                  <div class="search-input-wrapper">
+                    <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    <input
+                      type="text"
+                      v-model="bookingSearchQuery"
+                      placeholder="Search player, email, court, ID..."
+                      class="booking-search-input"
+                    />
+                    <button v-if="bookingSearchQuery" class="clear-search-btn" @click="bookingSearchQuery = ''">×</button>
+                  </div>
+
+                  <div class="filter-dropdowns-group">
+                    <!-- Status Filter -->
+                    <div class="filter-select-group">
+                      <select v-model="bookingStatusFilter" class="filter-select">
+                        <option value="All">All Statuses</option>
+                        <option value="Confirmed">Confirmed</option>
+                        <option value="Completed">Completed</option>
+                        <option value="Pending">Pending</option>
+                        <option value="Cancelled">Cancelled</option>
+                      </select>
                     </div>
-                    <span class="date-txt">{{ b.time }}</span>
-                    <span class="event-status-pill" :class="b.statusClass">{{ b.status }}</span>
+
+                    <!-- Facility/Sport Filter -->
+                    <div class="filter-select-group">
+                      <select v-model="bookingFacilityFilter" class="filter-select">
+                        <option value="All">All Sports</option>
+                        <option value="Tennis">Tennis</option>
+                        <option value="Badminton">Badminton</option>
+                        <option value="Squash">Squash</option>
+                        <option value="Swimming">Swimming</option>
+                      </select>
+                    </div>
+
+                    <!-- Timeframe Filter -->
+                    <div class="filter-select-group">
+                      <select v-model="bookingDateFilter" class="filter-select">
+                        <option value="All">All Time</option>
+                        <option value="Today">Today</option>
+                        <option value="Upcoming">Upcoming</option>
+                        <option value="Past">Past / Completed</option>
+                      </select>
+                    </div>
+
+                    <!-- Sort By -->
+                    <div class="filter-select-group">
+                      <select v-model="bookingSortBy" class="filter-select">
+                        <option value="newest">Sort: Newest First</option>
+                        <option value="oldest">Sort: Oldest First</option>
+                        <option value="name">Sort: Player A-Z</option>
+                        <option value="amount">Sort: Fee High-Low</option>
+                      </select>
+                    </div>
+
+                    <button 
+                      v-if="bookingSearchQuery || bookingStatusFilter !== 'All' || bookingFacilityFilter !== 'All' || bookingDateFilter !== 'All'"
+                      class="reset-filters-btn"
+                      @click="resetBookingFilters"
+                      title="Reset Filters"
+                    >
+                      Reset
+                    </button>
                   </div>
                 </div>
+              </div>
+
+              <!-- Bookings Table Display (Clean, Spacious & Modern) -->
+              <div class="card-box" style="margin-top: 1rem; overflow-x: auto;">
+                <div v-if="filteredBookings.length === 0" class="no-bookings-empty">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width: 48px; height: 48px; color: #94a3b8; margin-bottom: 1rem;"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                  <p class="empty-title">No bookings match your filter</p>
+                  <p class="empty-sub">Try adjusting your search query or dropdown filters.</p>
+                </div>
+
+                <table v-else class="admin-bookings-table">
+                  <thead>
+                    <tr>
+                      <th>PLAYER & ID</th>
+                      <th>COURT & SCHEDULE</th>
+                      <th>FEE & PAYMENT</th>
+                      <th>STATUS</th>
+                      <th style="text-align: right;">ACTIONS</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="b in filteredBookings" :key="b.id" class="booking-table-row">
+                      <!-- Player & ID -->
+                      <td>
+                        <div class="user-cell">
+                          <div class="user-avatar-sm">{{ b.initials }}</div>
+                          <div class="player-info-meta">
+                            <div class="player-name-line">
+                              <span class="user-name-txt">{{ b.player }}</span>
+                              <span class="booking-ref-tag">{{ b.id }}</span>
+                            </div>
+                            <span class="user-email-txt">{{ b.email }} • <span class="usertype-tag">{{ b.userType }}</span></span>
+                          </div>
+                        </div>
+                      </td>
+
+                      <!-- Court & Schedule -->
+                      <td>
+                        <div class="court-info-cell">
+                          <div class="facility-head-line">
+                            <span class="court-name-txt">{{ b.facility }}</span>
+                            <span class="sport-badge-pill" :class="'sport-' + b.sport.toLowerCase()">{{ b.sport }}</span>
+                          </div>
+                          <span class="time-subtxt">{{ b.dateDisplay }} ({{ b.date }}) • {{ b.time }}</span>
+                        </div>
+                      </td>
+
+                      <!-- Fee & Payment -->
+                      <td>
+                        <div class="payment-cell">
+                          <span class="amount-txt">₹{{ b.amount }}</span>
+                          <span class="pay-status-tag" :class="'pay-' + b.paymentStatus.toLowerCase()">{{ b.paymentStatus }}</span>
+                        </div>
+                      </td>
+
+                      <!-- Booking Status -->
+                      <td>
+                        <div style="display: flex; flex-direction: column; gap: 0.15rem; align-items: flex-start;">
+                          <span class="booking-status-badge" :class="'bstatus-' + getEffectiveStatus(b).toLowerCase()">
+                            {{ getEffectiveStatus(b) }}
+                          </span>
+                          <span v-if="isTimeCompleted(b)" class="auto-completed-hint">⏱ Time completed</span>
+                        </div>
+                      </td>
+
+                      <!-- Clean Actions Column -->
+                      <td style="text-align: right;">
+                        <div class="table-actions-group">
+                          <button class="action-icon-btn view-btn" title="View Full Details" @click="openBookingDetails(b)">
+                            Details
+                          </button>
+
+                          <button 
+                            v-if="getEffectiveStatus(b) === 'Confirmed' || getEffectiveStatus(b) === 'Pending'" 
+                            class="action-icon-btn cancel-btn" 
+                            title="Cancel Booking"
+                            @click="requestCancelBooking(b)"
+                          >
+                            Cancel
+                          </button>
+
+                          <button 
+                            v-if="getEffectiveStatus(b) === 'Confirmed'" 
+                            class="action-icon-btn complete-btn" 
+                            title="Mark Completed"
+                            @click="markBookingCompleted(b)"
+                          >
+                            ✓
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </section>
           </div>
@@ -1392,13 +1553,236 @@
             </div>
           </div>
         </div>
+
+        <!-- BOOKING DETAILS MODAL -->
+        <div v-if="showBookingDetailsModal && selectedBooking" class="modal-overlay" @click.self="closeBookingDetailsModal">
+          <div class="modal-card booking-detail-modal">
+            <div class="modal-header">
+              <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+                <h2 style="margin: 0;">Booking Details</h2>
+                <span class="booking-ref-tag large">{{ selectedBooking.id }}</span>
+                <span class="booking-status-badge" :class="'bstatus-' + selectedBooking.status.toLowerCase()">
+                  {{ selectedBooking.status }}
+                </span>
+              </div>
+              <button class="close-modal-btn" @click="closeBookingDetailsModal">✕</button>
+            </div>
+
+            <div class="modal-body booking-detail-body">
+              <!-- Player Profile Section -->
+              <div class="detail-section-card">
+                <h4>Player Information</h4>
+                <div class="detail-grid">
+                  <div class="detail-item">
+                    <span class="detail-label">Player Name</span>
+                    <span class="detail-val font-bold">{{ selectedBooking.player }}</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="detail-label">Email Address</span>
+                    <span class="detail-val">{{ selectedBooking.email }}</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="detail-label">Phone</span>
+                    <span class="detail-val">{{ selectedBooking.phone }}</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="detail-label">User Tier</span>
+                    <span class="detail-val">{{ selectedBooking.userType }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Reservation Details Section -->
+              <div class="detail-section-card">
+                <h4>Reservation & Schedule</h4>
+                <div class="detail-grid">
+                  <div class="detail-item">
+                    <span class="detail-label">Facility / Court</span>
+                    <span class="detail-val font-bold">{{ selectedBooking.facility }}</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="detail-label">Sport Category</span>
+                    <span class="detail-val">{{ selectedBooking.sport }}</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="detail-label">Scheduled Date</span>
+                    <span class="detail-val">{{ selectedBooking.dateDisplay }} ({{ selectedBooking.date }})</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="detail-label">Time Slot</span>
+                    <span class="detail-val">{{ selectedBooking.time }} ({{ selectedBooking.duration }})</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Payment & Fee Section -->
+              <div class="detail-section-card">
+                <h4>Payment & Billing</h4>
+                <div class="detail-grid">
+                  <div class="detail-item">
+                    <span class="detail-label">Booking Fee</span>
+                    <span class="detail-val font-bold" style="color: #2563eb; font-size: 1.1rem;">₹{{ selectedBooking.amount }}</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="detail-label">Payment Status</span>
+                    <span class="pay-status-tag" :class="'pay-' + selectedBooking.paymentStatus.toLowerCase()">{{ selectedBooking.paymentStatus }}</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="detail-label">Payment Method</span>
+                    <span class="detail-val">{{ selectedBooking.paymentMethod }}</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="detail-label">Created At</span>
+                    <span class="detail-val">{{ selectedBooking.createdAt }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Notes Section -->
+              <div v-if="selectedBooking.notes" class="detail-section-card">
+                <h4>Notes & Comments</h4>
+                <p class="notes-text">{{ selectedBooking.notes }}</p>
+              </div>
+            </div>
+
+            <div class="modal-footer">
+              <div style="display: flex; gap: 0.75rem;">
+                <button 
+                  v-if="selectedBooking.status === 'Confirmed' || selectedBooking.status === 'Pending'"
+                  class="cancel-modal-btn danger-btn"
+                  @click="requestCancelBooking(selectedBooking)"
+                >
+                  ✕ Cancel Booking
+                </button>
+                <button 
+                  v-if="selectedBooking.status === 'Confirmed'"
+                  class="submit-modal-btn success-btn"
+                  @click="markBookingCompleted(selectedBooking)"
+                >
+                  ✓ Mark Completed
+                </button>
+              </div>
+              <button class="cancel-modal-btn" @click="closeBookingDetailsModal">Close</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- CANCEL BOOKING CONFIRMATION MODAL -->
+        <div v-if="showCancelConfirmModal && bookingToCancel" class="modal-overlay" @click.self="showCancelConfirmModal = false">
+          <div class="modal-card small-confirm-modal">
+            <div class="modal-header">
+              <h3 style="color: #ef4444; margin: 0;">Cancel Booking</h3>
+              <button class="close-modal-btn" @click="showCancelConfirmModal = false">✕</button>
+            </div>
+            <div class="modal-body" style="padding: 1.5rem 0;">
+              <p>Are you sure you want to cancel booking <strong>{{ bookingToCancel.id }}</strong> for <strong>{{ bookingToCancel.player }}</strong>?</p>
+              <p style="font-size: 0.85rem; color: #64748b; margin-top: 0.5rem;">This action will change the status to Cancelled and initiate a refund for ₹{{ bookingToCancel.amount }}.</p>
+            </div>
+            <div class="modal-footer">
+              <button class="cancel-modal-btn" @click="showCancelConfirmModal = false">Keep Booking</button>
+              <button class="submit-modal-btn danger-btn" @click="confirmCancelBooking">Confirm Cancellation</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- CREATE NEW BOOKING MODAL -->
+        <div v-if="showNewBookingModal" class="modal-overlay" @click.self="closeNewBookingModal">
+          <div class="modal-card">
+            <div class="modal-header">
+              <h2>Add New Court Reservation</h2>
+              <button class="close-modal-btn" @click="closeNewBookingModal">✕</button>
+            </div>
+            <form @submit.prevent="handleCreateNewBooking" class="modal-form">
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Player Name *</label>
+                  <input type="text" v-model="newBookingForm.player" required placeholder="e.g. Alex Smith" />
+                </div>
+                <div class="form-group">
+                  <label>Player Email *</label>
+                  <input type="email" v-model="newBookingForm.email" required placeholder="alex@example.com" />
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Phone Number</label>
+                  <input type="text" v-model="newBookingForm.phone" placeholder="+1 (555) 000-0000" />
+                </div>
+                <div class="form-group">
+                  <label>User Type</label>
+                  <select v-model="newBookingForm.userType">
+                    <option value="Member (VIP)">Member (VIP)</option>
+                    <option value="Member (Standard)">Member (Standard)</option>
+                    <option value="Casual Player">Casual Player</option>
+                    <option value="Guest">Guest</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Facility / Court *</label>
+                  <select v-model="newBookingForm.facility" @change="newBookingForm.sport = newBookingForm.facility.includes('Tennis') ? 'Tennis' : newBookingForm.facility.includes('Badminton') ? 'Badminton' : newBookingForm.facility.includes('Squash') ? 'Squash' : 'Swimming'">
+                    <option value="Tennis Court 1">Tennis Court 1</option>
+                    <option value="Tennis Court 2">Tennis Court 2</option>
+                    <option value="Badminton Arena A">Badminton Arena A</option>
+                    <option value="Badminton Arena B">Badminton Arena B</option>
+                    <option value="Squash Court 1">Squash Court 1</option>
+                    <option value="Squash Court 2">Squash Court 2</option>
+                    <option value="Swimming Lane 1">Swimming Lane 1</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Date *</label>
+                  <input type="date" v-model="newBookingForm.date" required />
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Time Slot *</label>
+                  <input type="text" v-model="newBookingForm.time" required placeholder="e.g. 05:00 PM - 07:00 PM" />
+                </div>
+                <div class="form-group">
+                  <label>Duration</label>
+                  <input type="text" v-model="newBookingForm.duration" placeholder="e.g. 2.0 hrs" />
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Booking Fee (₹)</label>
+                  <input type="number" v-model="newBookingForm.amount" min="0" step="5" />
+                </div>
+                <div class="form-group">
+                  <label>Payment Status</label>
+                  <select v-model="newBookingForm.paymentStatus">
+                    <option value="Paid">Paid</option>
+                    <option value="Pending">Pending</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>Notes / Special Requests</label>
+                <textarea v-model="newBookingForm.notes" rows="2" placeholder="Add any special instructions or equipment requests..."></textarea>
+              </div>
+
+              <div class="modal-actions">
+                <button type="button" class="cancel-modal-btn" @click="closeNewBookingModal">Cancel</button>
+                <button type="submit" class="submit-modal-btn">Create Reservation</button>
+              </div>
+            </form>
+          </div>
+        </div>
       </main>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, inject, watch } from 'vue'
+import { ref, computed, onMounted, inject, watch, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useCourtStore } from '@/stores/courts'
@@ -1768,36 +2152,369 @@ const pendingRequests = ref([
   },
 ])
 
-// Recent Bookings mock data for Bookings tab
-const recentBookings = ref([
+// Bookings Management State & Logic
+const bookingsList = ref([
   {
-    id: 101,
+    id: 'BK-101',
     player: 'John Doe',
+    email: 'john.doe@example.com',
+    phone: '+1 (555) 234-5678',
     facility: 'Tennis Court 2',
-    time: 'Today, 5:00 - 7:00 PM',
+    sport: 'Tennis',
+    date: '2026-08-09',
+    dateDisplay: 'Today',
+    time: '5:00 PM - 7:00 PM',
+    duration: '2.0 hrs',
+    amount: 50,
+    paymentStatus: 'Paid',
+    paymentMethod: 'Credit Card (Stripe)',
+    status: 'Confirmed',
     initials: 'JD',
-    status: 'Confirmed',
-    statusClass: 'status-confirmed',
+    userType: 'Member (VIP)',
+    createdAt: '2026-08-09 10:15 AM',
+    notes: 'Player requested hard court surface preference.'
   },
   {
-    id: 102,
+    id: 'BK-102',
     player: 'Jane Smith',
+    email: 'jane.smith@example.com',
+    phone: '+1 (555) 345-6789',
     facility: 'Badminton Arena A',
-    time: 'Today, 6:00 - 7:30 PM',
-    initials: 'JS',
+    sport: 'Badminton',
+    date: '2026-08-09',
+    dateDisplay: 'Today',
+    time: '6:00 PM - 7:30 PM',
+    duration: '1.5 hrs',
+    amount: 35,
+    paymentStatus: 'Paid',
+    paymentMethod: 'UPI / Digital Wallet',
     status: 'Confirmed',
-    statusClass: 'status-confirmed',
+    initials: 'JS',
+    userType: 'Member (Standard)',
+    createdAt: '2026-08-09 11:30 AM',
+    notes: 'Double badminton session.'
   },
   {
-    id: 103,
+    id: 'BK-103',
     player: 'Robert Paul',
+    email: 'robert.paul@example.com',
+    phone: '+1 (555) 456-7890',
     facility: 'Squash Court 2',
-    time: 'Today, 7:00 - 8:00 PM',
-    initials: 'RP',
+    sport: 'Squash',
+    date: '2026-08-09',
+    dateDisplay: 'Today',
+    time: '7:00 PM - 8:00 PM',
+    duration: '1.0 hr',
+    amount: 25,
+    paymentStatus: 'Refunded',
+    paymentMethod: 'Credit Card',
     status: 'Cancelled',
-    statusClass: 'status-scheduled',
+    initials: 'RP',
+    userType: 'Casual Player',
+    createdAt: '2026-08-08 09:45 AM',
+    notes: 'Cancelled by user due to personal conflict.'
   },
+  {
+    id: 'BK-104',
+    player: 'Alice Johnson',
+    email: 'alice.johnson@example.com',
+    phone: '+1 (555) 567-8901',
+    facility: 'Tennis Court 1',
+    sport: 'Tennis',
+    date: '2026-08-10',
+    dateDisplay: 'Tomorrow',
+    time: '09:00 AM - 11:00 AM',
+    duration: '2.0 hrs',
+    amount: 60,
+    paymentStatus: 'Paid',
+    paymentMethod: 'Credit Card',
+    status: 'Confirmed',
+    initials: 'AJ',
+    userType: 'Member (VIP)',
+    createdAt: '2026-08-08 14:20 PM',
+    notes: 'Coaching session booking.'
+  },
+  {
+    id: 'BK-105',
+    player: 'Michael Brown',
+    email: 'michael.b@example.com',
+    phone: '+1 (555) 678-9012',
+    facility: 'Swimming Lane 1',
+    sport: 'Swimming',
+    date: '2026-08-10',
+    dateDisplay: 'Tomorrow',
+    time: '07:00 AM - 08:00 AM',
+    duration: '1.0 hr',
+    amount: 20,
+    paymentStatus: 'Paid',
+    paymentMethod: 'Debit Card',
+    status: 'Completed',
+    initials: 'MB',
+    userType: 'Casual Player',
+    createdAt: '2026-08-07 16:10 PM',
+    notes: 'Morning swim session.'
+  },
+  {
+    id: 'BK-106',
+    player: 'Sophia Martinez',
+    email: 'sophia.m@example.com',
+    phone: '+1 (555) 789-0123',
+    facility: 'Badminton Arena B',
+    sport: 'Badminton',
+    date: '2026-08-11',
+    dateDisplay: 'Aug 11',
+    time: '04:00 PM - 05:30 PM',
+    duration: '1.5 hrs',
+    amount: 35,
+    paymentStatus: 'Pending',
+    paymentMethod: 'Pay at Desk',
+    status: 'Pending',
+    initials: 'SM',
+    userType: 'Guest',
+    createdAt: '2026-08-09 15:00 PM',
+    notes: 'Pending walk-in payment at desk.'
+  },
+  {
+    id: 'BK-107',
+    player: 'David Lee',
+    email: 'david.lee@example.com',
+    phone: '+1 (555) 890-1234',
+    facility: 'Squash Court 1',
+    sport: 'Squash',
+    date: '2026-08-12',
+    dateDisplay: 'Aug 12',
+    time: '06:00 PM - 07:00 PM',
+    duration: '1.0 hr',
+    amount: 30,
+    paymentStatus: 'Paid',
+    paymentMethod: 'Credit Card',
+    status: 'Confirmed',
+    initials: 'DL',
+    userType: 'Member (Standard)',
+    createdAt: '2026-08-09 16:30 PM',
+    notes: 'Regular member slot.'
+  }
 ])
+
+// Keep recentBookings alias for any legacy usage
+const recentBookings = bookingsList
+
+// Filters & Controls state
+const bookingSearchQuery = ref('')
+const bookingStatusFilter = ref('All')
+const bookingFacilityFilter = ref('All')
+const bookingDateFilter = ref('All')
+const bookingSortBy = ref('newest')
+
+// Modals state
+const showBookingDetailsModal = ref(false)
+const selectedBooking = ref(null)
+const showNewBookingModal = ref(false)
+const showCancelConfirmModal = ref(false)
+const bookingToCancel = ref(null)
+
+const newBookingForm = reactive({
+  player: '',
+  email: '',
+  phone: '',
+  facility: 'Tennis Court 1',
+  sport: 'Tennis',
+  date: new Date().toISOString().split('T')[0],
+  time: '10:00 AM - 11:00 AM',
+  duration: '1.0 hr',
+  amount: 40,
+  paymentStatus: 'Paid',
+  status: 'Confirmed',
+  userType: 'Casual Player',
+  notes: ''
+})
+
+// Time-based completion logic helpers
+function isTimeCompleted(booking) {
+  if (!booking || booking.status === 'Cancelled' || booking.status === 'Completed') return false
+  const today = new Date().toISOString().split('T')[0]
+  if (booking.date < today) return true
+  return false
+}
+
+function getEffectiveStatus(booking) {
+  if (!booking) return 'Confirmed'
+  if (booking.status === 'Cancelled') return 'Cancelled'
+  if (booking.status === 'Completed') return 'Completed'
+  if (isTimeCompleted(booking)) return 'Completed'
+  return booking.status
+}
+
+function resetBookingFilters() {
+  bookingSearchQuery.value = ''
+  bookingStatusFilter.value = 'All'
+  bookingFacilityFilter.value = 'All'
+  bookingDateFilter.value = 'All'
+  bookingSortBy.value = 'newest'
+}
+
+// Filtered Bookings computed property
+const filteredBookings = computed(() => {
+  return bookingsList.value.filter(b => {
+    const q = bookingSearchQuery.value.trim().toLowerCase()
+    const matchesSearch = !q || 
+      b.id.toLowerCase().includes(q) ||
+      b.player.toLowerCase().includes(q) ||
+      b.email.toLowerCase().includes(q) ||
+      b.facility.toLowerCase().includes(q)
+
+    const effStatus = getEffectiveStatus(b)
+    const matchesStatus = bookingStatusFilter.value === 'All' || effStatus.toLowerCase() === bookingStatusFilter.value.toLowerCase()
+
+    const matchesFacility = bookingFacilityFilter.value === 'All' || 
+      b.sport.toLowerCase() === bookingFacilityFilter.value.toLowerCase() ||
+      b.facility.toLowerCase().includes(bookingFacilityFilter.value.toLowerCase())
+
+    let matchesDate = true
+    if (bookingDateFilter.value === 'Today') {
+      matchesDate = b.dateDisplay === 'Today' || b.date === new Date().toISOString().split('T')[0]
+    } else if (bookingDateFilter.value === 'Upcoming') {
+      matchesDate = effStatus === 'Confirmed' || effStatus === 'Pending'
+    } else if (bookingDateFilter.value === 'Past') {
+      matchesDate = effStatus === 'Completed' || effStatus === 'Cancelled'
+    }
+
+    return matchesSearch && matchesStatus && matchesFacility && matchesDate
+  }).sort((a, b) => {
+    if (bookingSortBy.value === 'newest') return b.id.localeCompare(a.id)
+    if (bookingSortBy.value === 'oldest') return a.id.localeCompare(b.id)
+    if (bookingSortBy.value === 'name') return a.player.localeCompare(b.player)
+    if (bookingSortBy.value === 'amount') return b.amount - a.amount
+    return 0
+  })
+})
+
+// KPI calculations
+const bookingKpis = computed(() => {
+  const total = bookingsList.value.length
+  const confirmed = bookingsList.value.filter(b => getEffectiveStatus(b) === 'Confirmed').length
+  const completed = bookingsList.value.filter(b => getEffectiveStatus(b) === 'Completed').length
+  const autoCompleted = bookingsList.value.filter(b => isTimeCompleted(b)).length
+  const cancelled = bookingsList.value.filter(b => b.status === 'Cancelled').length
+
+  return { total, confirmed, completed, autoCompleted, cancelled }
+})
+
+// Action Functions
+function openBookingDetails(booking) {
+  selectedBooking.value = booking
+  showBookingDetailsModal.value = true
+}
+
+function closeBookingDetailsModal() {
+  showBookingDetailsModal.value = false
+  selectedBooking.value = null
+}
+
+function requestCancelBooking(booking) {
+  bookingToCancel.value = booking
+  showCancelConfirmModal.value = true
+}
+
+function confirmCancelBooking() {
+  if (!bookingToCancel.value) return
+  const target = bookingsList.value.find(b => b.id === bookingToCancel.value.id)
+  if (target) {
+    target.status = 'Cancelled'
+    target.paymentStatus = 'Refunded'
+  }
+  if (selectedBooking.value && selectedBooking.value.id === bookingToCancel.value.id) {
+    selectedBooking.value.status = 'Cancelled'
+    selectedBooking.value.paymentStatus = 'Refunded'
+  }
+  showCancelConfirmModal.value = false
+  bookingToCancel.value = null
+  if (toast) toast.success('Booking cancelled successfully!')
+}
+
+function markBookingCompleted(booking) {
+  const target = bookingsList.value.find(b => b.id === booking.id)
+  if (target) {
+    target.status = 'Completed'
+  }
+  if (selectedBooking.value && selectedBooking.value.id === booking.id) {
+    selectedBooking.value.status = 'Completed'
+  }
+  if (toast) toast.success(`Booking ${booking.id} marked as Completed!`)
+}
+
+function openNewBookingModal() {
+  newBookingForm.player = ''
+  newBookingForm.email = ''
+  newBookingForm.phone = ''
+  newBookingForm.notes = ''
+  showNewBookingModal.value = true
+}
+
+function closeNewBookingModal() {
+  showNewBookingModal.value = false
+}
+
+function handleCreateNewBooking() {
+  if (!newBookingForm.player || !newBookingForm.email) {
+    if (toast) toast.error('Please enter player name and email.')
+    return
+  }
+  const newId = `BK-${100 + bookingsList.value.length + 1}`
+  const initials = newBookingForm.player.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) || 'BK'
+  
+  const createdBooking = {
+    id: newId,
+    player: newBookingForm.player,
+    email: newBookingForm.email,
+    phone: newBookingForm.phone || '+1 (555) 000-0000',
+    facility: newBookingForm.facility,
+    sport: newBookingForm.sport,
+    date: newBookingForm.date,
+    dateDisplay: newBookingForm.date,
+    time: newBookingForm.time,
+    duration: newBookingForm.duration || '1.0 hr',
+    amount: Number(newBookingForm.amount) || 0,
+    paymentStatus: newBookingForm.paymentStatus,
+    paymentMethod: 'Admin Manual Entry',
+    status: newBookingForm.status,
+    initials: initials,
+    userType: newBookingForm.userType,
+    createdAt: new Date().toLocaleString(),
+    notes: newBookingForm.notes || 'Created manually by Admin'
+  }
+
+  bookingsList.value.unshift(createdBooking)
+  showNewBookingModal.value = false
+  if (toast) toast.success(`New booking ${newId} created successfully!`)
+}
+
+function exportBookingsCSV() {
+  const headers = ['Booking ID', 'Player', 'Email', 'Facility', 'Sport', 'Date', 'Time', 'Amount', 'Payment Status', 'Booking Status']
+  const rows = filteredBookings.value.map(b => [
+    b.id,
+    `"${b.player}"`,
+    `"${b.email}"`,
+    `"${b.facility}"`,
+    b.sport,
+    b.date,
+    `"${b.time}"`,
+    b.amount,
+    b.paymentStatus,
+    b.status
+  ])
+  
+  const csvContent = [headers.join(','), ...rows.map(e => e.join(','))].join('\n')
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.setAttribute('href', url)
+  link.setAttribute('download', `clubdash_bookings_${new Date().toISOString().split('T')[0]}.csv`)
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  if (toast) toast.success('Bookings exported to CSV!')
+}
 
 // Analytics - Booking Trends mock data
 const bookingTrends = ref([
@@ -3514,5 +4231,471 @@ const upcomingEvents = ref([
   .modal-form {
     padding: 1.25rem;
   }
+}
+
+/* --- BOOKINGS TAB CUSTOM STYLES --- */
+.bookings-toolbar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.header-action-buttons {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.export-csv-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.65rem 1.1rem;
+  border-radius: 0.75rem;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.export-csv-btn:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+  color: #0f172a;
+}
+
+.add-booking-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.65rem 1.25rem;
+  border-radius: 0.75rem;
+  background: linear-gradient(135deg, #2563eb, #4f46e5);
+  color: #ffffff;
+  font-size: 0.88rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+  transition: all 0.2s ease;
+}
+
+.add-booking-btn:hover {
+  background: linear-gradient(135deg, #1d4ed8, #4338ca);
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35);
+  transform: translateY(-1px);
+}
+
+.bookings-filter-box {
+  padding: 1rem 1.25rem;
+}
+
+.filter-controls-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.search-input-wrapper {
+  position: relative;
+  flex: 1 1 260px;
+  max-width: 380px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 0.85rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1.1rem;
+  height: 1.1rem;
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+.booking-search-input {
+  width: 100%;
+  padding: 0.6rem 2.2rem 0.6rem 2.5rem;
+  border-radius: 0.65rem;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  font-size: 0.86rem;
+  color: #0f172a;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.booking-search-input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.clear-search-btn {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  font-size: 1.1rem;
+  color: #94a3b8;
+  cursor: pointer;
+}
+
+.filter-dropdowns-group {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.filter-select-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.filter-select {
+  padding: 0.6rem 2rem 0.6rem 0.8rem;
+  border-radius: 0.65rem;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  font-size: 0.84rem;
+  font-weight: 500;
+  color: #334155;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.filter-select:focus {
+  border-color: #2563eb;
+}
+
+.reset-filters-btn {
+  padding: 0.6rem 0.9rem;
+  border-radius: 0.65rem;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.reset-filters-btn:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+/* Bookings Table */
+.admin-bookings-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.88rem;
+}
+
+.admin-bookings-table th {
+  padding: 0.9rem 1.25rem;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+}
+
+.booking-table-row {
+  border-bottom: 1px solid #f1f5f9;
+  transition: background 0.15s ease;
+}
+
+.booking-table-row:hover {
+  background: #f8fafc;
+}
+
+.booking-table-row td {
+  padding: 1.15rem 1.25rem;
+  vertical-align: middle;
+}
+
+.player-info-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.player-name-line {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.booking-ref-tag {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 0.375rem;
+  background: #eff6ff;
+  color: #2563eb;
+  font-family: monospace;
+  font-size: 0.76rem;
+  font-weight: 700;
+  border: 1px solid #dbeafe;
+}
+
+.booking-ref-tag.large {
+  font-size: 0.9rem;
+  padding: 0.25rem 0.65rem;
+}
+
+.usertype-tag {
+  color: #64748b;
+  font-weight: 500;
+}
+
+.facility-head-line {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.2rem;
+}
+
+.court-info-cell {
+  display: flex;
+  flex-direction: column;
+}
+
+.court-name-txt {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.sport-badge-pill {
+  display: inline-block;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.sport-tennis { background: #eff6ff; color: #2563eb; }
+.sport-badminton { background: #ecfdf5; color: #059669; }
+.sport-squash { background: #fff7ed; color: #ea580c; }
+.sport-swimming { background: #f0f9ff; color: #0284c7; }
+
+.time-subtxt {
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.auto-completed-hint {
+  font-size: 0.7rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.payment-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.amount-txt {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.pay-status-tag {
+  font-size: 0.72rem;
+  font-weight: 600;
+  width: fit-content;
+}
+
+.pay-paid { color: #16a34a; }
+.pay-pending { color: #d97706; }
+.pay-refunded { color: #dc2626; }
+
+.booking-status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.bstatus-confirmed { background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; }
+.bstatus-completed { background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; }
+.bstatus-pending { background: #fffbeb; color: #d97706; border: 1px solid #fde68a; }
+.bstatus-cancelled { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+
+.table-actions-group {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.4rem;
+}
+
+.action-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.15s ease;
+}
+
+.action-icon-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.view-btn {
+  background: #f1f5f9;
+  color: #334155;
+  border-color: #e2e8f0;
+}
+
+.view-btn:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.complete-btn {
+  background: #eff6ff;
+  color: #2563eb;
+  border-color: #bfdbfe;
+}
+
+.complete-btn:hover {
+  background: #dbeafe;
+}
+
+.cancel-btn {
+  background: #fef2f2;
+  color: #dc2626;
+  border-color: #fecaca;
+}
+
+.cancel-btn:hover {
+  background: #fee2e2;
+}
+
+.no-bookings-empty {
+  text-align: center;
+  padding: 3rem 1.5rem;
+}
+
+.empty-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #334155;
+  margin-bottom: 0.35rem;
+}
+
+.empty-sub {
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+/* Modals for Booking Details & Confirm */
+.booking-detail-modal {
+  max-width: 620px;
+  width: 90%;
+}
+
+.booking-detail-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  max-height: 70vh;
+  overflow-y: auto;
+  padding: 1.5rem;
+}
+
+.detail-section-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  padding: 1rem;
+}
+
+.detail-section-card h4 {
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.85rem;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.detail-label {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.detail-val {
+  font-size: 0.88rem;
+  color: #0f172a;
+}
+
+.font-bold { font-weight: 700; }
+.font-semibold { font-weight: 600; }
+
+.notes-text {
+  font-size: 0.88rem;
+  color: #334155;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.danger-btn {
+  background: #dc2626 !important;
+  color: #ffffff !important;
+  border-color: #dc2626 !important;
+}
+
+.danger-btn:hover {
+  background: #b91c1c !important;
+}
+
+.success-btn {
+  background: #059669 !important;
+  color: #ffffff !important;
+  border-color: #059669 !important;
+}
+
+.success-btn:hover {
+  background: #047857 !important;
+}
+
+.small-confirm-modal {
+  max-width: 440px;
 }
 </style>
