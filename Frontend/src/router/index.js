@@ -1,27 +1,51 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
-import LandingView from '../views/LandingView.vue'
-import AuthView from '../views/AuthView.vue'
-import ProfileView from '../views/ProfileView.vue'
-import AdminDashboardView from '../views/AdminDashboardView.vue'
+// ============================================================
+// Public / Common Views
+// ============================================================
 
-// Member layout + pages
-import MemberLayout from '@/components/member/layout/AppLayout.vue'
+import LandingView from '@/views/LandingView.vue'
+import AuthView from '@/views/AuthView.vue'
+import ProfileView from '@/views/ProfileView.vue'
+
+// ============================================================
+// Admin / Owner
+// ============================================================
+
+import AdminDashboardView from '@/views/AdminDashboardView.vue'
+
+// ============================================================
+// Shared Authenticated Layout
+// ============================================================
+
+import AppLayout from '@/components/layout/AppLayout.vue'
+
+// ============================================================
+// Member
+// ============================================================
+
 import MemberDashboard from '@/views/member/Dashboard.vue'
+
+// ============================================================
+// Router
+// ============================================================
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
 
   routes: [
-    // ==========================
-    // Public Routes
-    // ==========================
+    // ========================================================
+    // PUBLIC ROUTES
+    // ========================================================
 
     {
       path: '/',
       name: 'landing',
       component: LandingView,
+      meta: {
+        title: 'ClubDash',
+      },
     },
 
     {
@@ -30,6 +54,9 @@ const router = createRouter({
       component: AuthView,
       props: {
         initialMode: 'login',
+      },
+      meta: {
+        title: 'Sign In',
       },
     },
 
@@ -40,21 +67,28 @@ const router = createRouter({
       props: {
         initialMode: 'register',
       },
+      meta: {
+        title: 'Register',
+      },
     },
 
     {
       path: '/public',
-      name: 'PublicAvailability',
-      component: () => import('../views/Availability.vue'),
+      name: 'public-availability',
+      component: () => import('@/views/Availability.vue'),
+      meta: {
+        title: 'Court Availability',
+      },
     },
 
-    // ==========================
-    // Member Routes
-    // ==========================
+    // ========================================================
+    // MEMBER / PLAYER PORTAL
+    // ========================================================
 
     {
       path: '/member',
-      component: MemberLayout,
+      component: AppLayout,
+
       meta: {
         requiresAuth: true,
         requiresRole: 'player',
@@ -63,101 +97,307 @@ const router = createRouter({
       children: [
         {
           path: '',
-          redirect: { name: 'member-dashboard' },
+          redirect: {
+            name: 'member-dashboard',
+          },
         },
 
         {
           path: 'dashboard',
           name: 'member-dashboard',
           component: MemberDashboard,
+
           meta: {
+            requiresAuth: true,
+            requiresRole: 'player',
             title: 'Dashboard',
+            subtitle: 'Member Portal',
           },
+        },
+
+        {
+          path: 'book-court',
+          name: 'member-book-court',
+          component: () =>
+            import('@/views/member/BookCourt.vue'),
+
+          meta: {
+            requiresAuth: true,
+            requiresRole: 'player',
+            title: 'Book a Court',
+            subtitle: 'Member Portal',
+          },
+        },
+
+        {
+          path: 'my-bookings',
+          name: 'member-my-bookings',
+          component: () =>
+            import('@/views/member/MyBooking.vue'),
+
+          meta: {
+            requiresAuth: true,
+            requiresRole: 'player',
+            title: 'My Bookings',
+            subtitle: 'Member Portal',
+          },
+        },
+
+        {
+          path: 'events',
+          name: 'member-events',
+          component: () => import('@/views/member/Events.vue'),
+          meta: { requiresAuth: true, requiresRole: 'player', title: 'Events', subtitle: 'Member Portal' },
         },
       ],
     },
 
-    // ==========================
-    // Owner Routes
-    // ==========================
+    // ========================================================
+    // FRONT DESK / STAFF PORTAL
+    // ========================================================
+
+    {
+      path: '/staff',
+      component: AppLayout,
+
+      meta: {
+        requiresAuth: true,
+        requiresRole: 'front-desk',
+      },
+
+      children: [
+        {
+          path: '',
+          redirect: {
+            name: 'staff-dashboard',
+          },
+        },
+
+        {
+          path: 'dashboard',
+          name: 'staff-dashboard',
+          component: () =>
+            import('@/views/staff/Dashboard.vue'),
+
+          meta: {
+            requiresAuth: true,
+            requiresRole: 'front-desk',
+            title: 'Dashboard',
+            subtitle: 'Front Desk Portal',
+          },
+        },
+
+        {
+          path: 'bookings',
+          name: 'staff-bookings',
+          component: () =>
+            import('@/views/staff/Bookings.vue'),
+
+          meta: {
+            requiresAuth: true,
+            requiresRole: 'front-desk',
+            title: 'Bookings',
+            subtitle: 'Front Desk Portal',
+          },
+        },
+
+        {
+          path: 'availability',
+          name: 'staff-availability',
+          component: () =>
+            import('@/views/staff/Availability.vue'),
+
+          meta: {
+            requiresAuth: true,
+            requiresRole: 'front-desk',
+            title: 'Court Availability',
+            subtitle: 'Front Desk Portal',
+          },
+        },
+
+        {
+          path: 'attendance',
+          name: 'staff-attendance',
+          component: () =>
+            import('@/views/staff/Attendance.vue'),
+
+          meta: {
+            requiresAuth: true,
+            requiresRole: 'front-desk',
+            title: 'Attendance',
+            subtitle: 'Front Desk Portal',
+          },
+        },
+
+        {
+          path: 'events',
+          name: 'staff-events',
+          component: () => import('@/views/staff/Events.vue'),
+          meta: { requiresAuth: true, requiresRole: 'front-desk', title: 'Events', subtitle: 'Front Desk Portal' },
+        },
+      ],
+    },
+
+    // ========================================================
+    // OWNER / ADMIN
+    // ========================================================
 
     {
       path: '/admin',
       name: 'admin',
       component: AdminDashboardView,
+
       meta: {
         requiresAuth: true,
         requiresRole: 'owner',
+        title: 'Admin Dashboard',
+        subtitle: 'Owner Portal',
       },
     },
 
-    // ==========================
-    // Existing Profile
-    // ==========================
+    // ========================================================
+    // COMMON AUTHENTICATED ROUTES
+    // ========================================================
 
     {
       path: '/profile',
       name: 'profile',
       component: ProfileView,
+
       meta: {
         requiresAuth: true,
+        title: 'Profile',
       },
+    },
+
+    // ========================================================
+    // FALLBACK
+    // ========================================================
+
+    {
+      path: '/:pathMatch(.*)*',
+      redirect: '/',
     },
   ],
 })
 
-// ==========================
-// Role Home Route
-// ==========================
+// ============================================================
+// ROLE HOME ROUTING
+// ============================================================
 
 function getHomeRouteForUser(user) {
   if (!user) {
-    return { name: 'landing' }
+    return {
+      name: 'landing',
+    }
   }
 
   switch (user.role) {
     case 'owner':
-      return { name: 'admin' }
+      return {
+        name: 'admin',
+      }
 
     case 'player':
-      return { name: 'member-dashboard' }
+      return {
+        name: 'member-dashboard',
+      }
+
+    case 'front-desk':
+      return {
+        name: 'staff-dashboard',
+      }
 
     default:
-      return { name: 'profile' }
+      return {
+        name: 'profile',
+      }
   }
 }
 
-// ==========================
-// Navigation Guard
-// ==========================
+// ============================================================
+// GLOBAL ROUTE GUARD
+// ============================================================
 
 router.beforeEach(async (to) => {
   const auth = useAuthStore()
 
-  const isAuthed = auth.isAuthenticated()
+  // ----------------------------------------------------------
+  // Restore authenticated user
+  // ----------------------------------------------------------
+  //
+  // Authentication uses cookies, so after a hard refresh
+  // Pinia may initially have no user even though the browser
+  // still has a valid authenticated session.
+  //
+  // Restore the user before evaluating RBAC.
+  // ----------------------------------------------------------
 
-  // Protected route without authentication
-  if (to.meta.requiresAuth && !isAuthed) {
-    return { name: 'login' }
+  if (!auth.initialized) {
+    try {
+      await auth.restoreUser()
+    } catch (error) {
+      console.error(
+        'Failed to restore authentication session:',
+        error,
+      )
+    }
   }
 
-  // Route requires a particular role
+  const isAuthed = auth.isAuthenticated()
+
+  // ----------------------------------------------------------
+  // Authentication Guard
+  // ----------------------------------------------------------
+
+  if (to.meta.requiresAuth && !isAuthed) {
+    return {
+      name: 'login',
+      query: {
+        redirect: to.fullPath,
+      },
+    }
+  }
+
+  // ----------------------------------------------------------
+  // Role Guard
+  // ----------------------------------------------------------
+
   if (
     to.meta.requiresRole &&
     auth.user?.role !== to.meta.requiresRole
   ) {
     return isAuthed
       ? getHomeRouteForUser(auth.user)
-      : { name: 'login' }
+      : {
+          name: 'login',
+        }
   }
 
-  // Already logged in → don't show login/register
+  // ----------------------------------------------------------
+  // Prevent authenticated users from returning to auth pages
+  // ----------------------------------------------------------
+
   if (
     (to.name === 'login' || to.name === 'register') &&
     isAuthed
   ) {
     return getHomeRouteForUser(auth.user)
   }
+
+  return true
+})
+
+// ============================================================
+// PAGE TITLE
+// ============================================================
+
+router.afterEach((to) => {
+  const title = to.meta?.title
+
+  document.title = title
+    ? `${title} | ClubDash`
+    : 'ClubDash'
 })
 
 export default router
