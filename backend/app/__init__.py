@@ -125,6 +125,9 @@ def create_app(config_class=Config):
     from app.assistant.controllers import assistant_bp
     app.register_blueprint(assistant_bp)
 
+    from app.analytics.controllers import analytics_bp
+    app.register_blueprint(analytics_bp)
+
     with app.app_context():
         from app.memberships.services import MembershipService
         MembershipService.seed_default_plans()

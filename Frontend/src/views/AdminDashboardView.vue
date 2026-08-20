@@ -3222,6 +3222,105 @@ const totalBookingsAll = computed(() => members.value.reduce((sum, m) => sum + (
 // COURTS & CLUB ACTIONS
 // =========================================================
 // Fetch data on mount
+// ---------------------------------------------------------------
+// Live backend data (replaces the placeholder figures below)
+// ---------------------------------------------------------------
+const analyticsLoading = ref(false)
+const analyticsError = ref('')
+const adminAnalytics = ref(null)
+
+const inr = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`
+
+/** Pull real KPIs from /analytics/admin and map them onto the dashboard. */
+async function loadAdminAnalytics() {
+  analyticsLoading.value = true
+  analyticsError.value = ''
+  try {
+    const days = parseInt(analyticsTimeframe.value, 10) || 30
+    const { data } = await api.get('/analytics/admin', { params: { days } })
+    adminAnalytics.value = data
+
+    kpiCards.value = [
+      {
+        title: 'Total Members', value: String(data.members.total),
+        icon: 'members', colorClass: 'blue',
+        trend: `${data.members.active} active`, trendType: 'neutral',
+      },
+      {
+        title: 'Active Courts',
+        value: `${data.courts.active} / ${data.courts.total}`,
+        icon: 'courts', colorClass: 'emerald',
+        trend: `${data.courts.utilisation_percent}% utilisation`, trendType: 'neutral',
+      },
+      {
+        title: 'Upcoming Bookings', value: String(data.bookings.upcoming),
+        icon: 'bookings', colorClass: 'purple',
+        trend: `${data.bookings.total} all-time`, trendType: 'neutral',
+      },
+      {
+        title: 'Revenue', value: inr(data.revenue.total),
+        icon: 'events', colorClass: 'orange',
+        trend: `${data.revenue.pending_payments} pending`, trendType: 'neutral',
+      },
+    ]
+
+    // Real per-court booking distribution
+    const palette = ['bar-blue', 'bar-emerald', 'bar-orange', 'bar-purple']
+    bookingTrends.value = data.courts.breakdown.map((c, i) => ({
+      sport: c.court_name,
+      count: c.bookings,
+      percentage: c.percentage,
+      colorClass: palette[i % palette.length],
+    }))
+
+    courtUtilization.value = [{
+      period: `Overall (last ${data.window_days} days)`,
+      rate: data.courts.utilisation_percent,
+      colorClass: 'bar-blue',
+    }]
+  } catch (err) {
+    analyticsError.value =
+      err?.response?.data?.message || 'Could not load analytics.'
+  } finally {
+    analyticsLoading.value = false
+  }
+}
+
+/** Real bookings for this club (owners previously could not see any). */
+async function loadClubBookings() {
+  try {
+    const { data } = await api.get('/bookings/club')
+    const statusMap = { active: 'Confirmed', released: 'Cancelled', overridden: 'Cancelled' }
+    bookingsList.value = data.bookings.map((b) => {
+      const initials = (b.member_name || '?')
+        .split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase()
+      return {
+        id: `BK-${b.id}`,
+        player: b.member_name || 'Unknown',
+        email: b.member_email || '',
+        phone: '',
+        facility: b.court_name,
+        sport: b.court_name,
+        date: b.date,
+        dateDisplay: b.date,
+        time: `${String(b.start_time).slice(0, 5)} - ${String(b.end_time).slice(0, 5)}`,
+        duration: '',
+        amount: 0,
+        paymentStatus: '',
+        paymentMethod: '',
+        status: statusMap[b.status] || b.status,
+        initials,
+        userType: 'Member',
+        createdAt: b.created_at || '',
+        notes: '',
+      }
+    })
+  } catch (err) {
+    analyticsError.value =
+      err?.response?.data?.message || 'Could not load bookings.'
+  }
+}
+
 onMounted(async () => {
   if (!auth.initialized || !auth.user) {
     try {
@@ -3232,7 +3331,10 @@ onMounted(async () => {
   checkFirstTimePhoneSetup(auth.user)
   courtStore.fetchCourts()
   notificationStore.fetchNotifications()
+  loadAdminAnalytics()
+  loadClubBookings()
 })
+
 
 watch(
   () => courtStore.club,
@@ -4144,6 +4246,8 @@ function removeParticipant(event, index) {
 // ANALYTICS TAB REACTIVE STATE & EXPORT
 // =========================================================
 const analyticsTimeframe = ref('30 Days')
+// Re-fetch real analytics when the timeframe selector changes
+watch(analyticsTimeframe, () => loadAdminAnalytics())
 const activeChartMetric = ref('revenue')
 
 const sportRevenueBreakdown = ref([
