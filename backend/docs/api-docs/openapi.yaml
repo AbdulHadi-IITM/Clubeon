@@ -922,6 +922,11 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/ErrorResponse' }
+        '409':
+          description: This item has already been paid for (ALREADY_PAID)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
         '502':
           description: Stripe gateway error
           content:
@@ -938,9 +943,21 @@ paths:
       summary: Stripe webhook (public; verified by signature)
       description: >
         Receives Stripe events. The raw request body is verified against the
-        `Stripe-Signature` header using STRIPE_WEBHOOK_SECRET. On
-        `payment_intent.succeeded` / `payment_intent.payment_failed` the matching
-        Payment is marked completed / failed.
+        `Stripe-Signature` header using STRIPE_WEBHOOK_SECRET.
+
+
+        On `payment_intent.succeeded` the Payment is marked `completed` **and
+        the purchase is fulfilled**:
+        `membership` activates the Membership for the paid plan;
+        `event` confirms the user's EventRegistration (capacity still enforced);
+        `booking` confirms the booking. A Notification is raised in each case.
+        On `payment_intent.payment_failed` / `.canceled` the Payment is marked
+        `failed` and nothing is fulfilled.
+
+
+        Fulfilment is **idempotent** — Stripe retries are safe; a repeat event
+        returns `fulfilment: already_completed`. A late failure event can never
+        downgrade an already-completed payment.
       security: []
       parameters:
         - name: Stripe-Signature
@@ -956,7 +973,7 @@ paths:
               description: Raw Stripe event payload
       responses:
         '200':
-          description: Event processed
+          description: Event processed (also returned for unknown payments so Stripe stops retrying)
           content:
             application/json:
               schema:
@@ -964,6 +981,15 @@ paths:
                 properties:
                   received: { type: boolean }
                   type: { type: string, example: payment_intent.succeeded }
+                  payment_id: { type: integer }
+                  fulfilment:
+                    type: string
+                    description: Outcome of fulfilment
+                    enum: [membership_activated, membership_already_active,
+                           registration_confirmed, registration_already_confirmed,
+                           event_full, booking_confirmed, booking_inactive,
+                           already_completed, already_failed, failed,
+                           no_matching_payment, no_handler, ignored]
         '400':
           description: Invalid payload or signature
           content:
@@ -971,6 +997,55 @@ paths:
               schema: { $ref: '#/components/schemas/ErrorResponse' }
         '503':
           description: Stripe webhook not configured
+
+  /payments/stripe/status/{paymentId}:
+    get:
+      summary: Poll a payment's status and fulfilment result (JWT required)
+      description: >
+        Used by the client after confirming the card with Stripe.js. Once the
+        webhook has been processed the status becomes `completed`, and for
+        memberships/events the resulting `membership_id` / `registration_status`
+        is included so the client can route the user onward. A user may only
+        read their own payments.
+      parameters:
+        - name: paymentId
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Payment status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  payment_id: { type: integer }
+                  status: { type: string, enum: [pending, completed, failed, refunded] }
+                  amount: { type: number, format: float }
+                  currency: { type: string }
+                  payment_type: { type: string, enum: [booking, membership, event] }
+                  reference_id: { type: integer }
+                  transaction_id: { type: string, nullable: true }
+                  created_at: { type: string, format: date-time }
+                  membership_id:
+                    type: integer
+                    nullable: true
+                    description: Present for completed membership payments
+                  registration_status:
+                    type: string
+                    nullable: true
+                    description: Present for completed event payments
+        '403':
+          description: Not authorized to view this payment
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+        '404':
+          description: Payment not found
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
 
   # ================= ATTENDANCE =================
   /attendance/check-in:

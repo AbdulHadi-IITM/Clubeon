@@ -24,6 +24,7 @@ from flask import current_app
 
 from app.extensions import db
 from app.payments.models import Payment
+from app.payments.fulfillment import FulfillmentService
 from app.bookings.models import Booking
 from app.memberships.models import MembershipPlan
 from app.events.models import Event
@@ -119,6 +120,14 @@ class StripeService:
 
         currency = (currency or current_app.config.get("STRIPE_DEFAULT_CURRENCY", "inr")).lower()
 
+        # Already paid for? Don't let the user be charged twice.
+        already_paid = Payment.query.filter_by(
+            user_id=user_id, payment_type=payment_type,
+            reference_id=reference_id, status="completed").first()
+        if already_paid:
+            return None, {"code": "ALREADY_PAID",
+                          "message": "This item has already been paid for."}
+
         # Record the pending payment first so we always have a local reference.
         payment = Payment(
             user_id=user_id,
@@ -199,13 +208,25 @@ class StripeService:
             if payment_id:
                 payment = Payment.query.get(int(payment_id))
 
-        if payment is not None:
-            if event_type == "payment_intent.succeeded":
-                payment.status = "completed"
-            elif event_type == "payment_intent.payment_failed":
-                payment.status = "failed"
-            if intent_id:
-                payment.gateway_transaction_id = intent_id
+        if payment is None:
+            # Unknown/irrelevant event — acknowledge so Stripe stops retrying.
+            return {"received": True, "type": event_type,
+                    "fulfilment": "no_matching_payment"}, None
+
+        if intent_id and not payment.gateway_transaction_id:
+            payment.gateway_transaction_id = intent_id
+
+        fulfilment = "ignored"
+        if event_type == "payment_intent.succeeded":
+            # Marks the payment completed AND delivers what was paid for
+            # (activate membership / confirm event registration / confirm
+            # booking). Idempotent across Stripe's webhook retries.
+            fulfilment, _ = FulfillmentService.mark_paid_and_fulfill(payment)
+        elif event_type in ("payment_intent.payment_failed",
+                            "payment_intent.canceled"):
+            fulfilment, _ = FulfillmentService.mark_failed(payment)
+        else:
             db.session.commit()
 
-        return {"received": True, "type": event_type}, None
+        return {"received": True, "type": event_type,
+                "payment_id": payment.id, "fulfilment": fulfilment}, None
