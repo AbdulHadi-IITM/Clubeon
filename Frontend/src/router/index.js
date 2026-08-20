@@ -130,6 +130,18 @@ const router = createRouter({
         },
 
         {
+          path: 'nearby-courts',
+          name: 'member-nearby-courts',
+          component: () => import('@/views/member/NearbyCourts.vue'),
+          meta: {
+            requiresAuth: true,
+            requiresRole: 'player',
+            title: 'Nearby Courts',
+            subtitle: 'Member Portal',
+          },
+        },
+
+        {
           path: 'my-bookings',
           name: 'member-my-bookings',
           component: () =>
@@ -148,6 +160,34 @@ const router = createRouter({
           name: 'member-events',
           component: () => import('@/views/member/Events.vue'),
           meta: { requiresAuth: true, requiresRole: 'player', title: 'Events', subtitle: 'Member Portal' },
+        },
+
+        {
+          path: 'bookings/:bookingId',
+          name: 'member-booking-details',
+          component: () => import('@/views/member/BookingDetails.vue'),
+          meta: { requiresAuth: true, requiresRole: 'player', title: 'Booking Details', subtitle: 'Member Portal' },
+        },
+
+        {
+          path: 'events/:eventId',
+          name: 'member-event-details',
+          component: () => import('@/views/member/EventDetails.vue'),
+          meta: { requiresAuth: true, requiresRole: 'player', title: 'Event Details', subtitle: 'Member Portal' },
+        },
+
+        {
+          path: 'membership',
+          name: 'member-membership',
+          component: () => import('@/views/member/MembershipPlans.vue'),
+          meta: { requiresAuth: true, requiresRole: 'player', title: 'Membership', subtitle: 'Member Portal' },
+        },
+
+        {
+          path: 'checkout',
+          name: 'member-checkout',
+          component: () => import('@/views/member/Checkout.vue'),
+          meta: { requiresAuth: true, requiresRole: 'player', title: 'Checkout', subtitle: 'Member Portal' },
         },
       ],
     },
@@ -227,6 +267,27 @@ const router = createRouter({
             title: 'Attendance',
             subtitle: 'Front Desk Portal',
           },
+        },
+
+        {
+          path: 'bookings/:bookingId',
+          name: 'staff-booking-detail',
+          component: () => import('@/views/staff/BookingDetails.vue'),
+          meta: { requiresAuth: true, requiresRole: 'front-desk', title: 'Booking Details', subtitle: 'Front Desk Portal' },
+        },
+
+        {
+          path: 'members/:userId',
+          name: 'staff-member-detail',
+          component: () => import('@/views/staff/MemberDetails.vue'),
+          meta: { requiresAuth: true, requiresRole: 'front-desk', title: 'Member Details', subtitle: 'Front Desk Portal' },
+        },
+
+        {
+          path: 'members',
+          name: 'staff-members',
+          component: () => import('@/views/staff/Members.vue'),
+          meta: { requiresAuth: true, requiresRole: 'front-desk', title: 'Members', subtitle: 'Front Desk Portal' },
         },
 
         {

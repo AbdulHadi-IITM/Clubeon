@@ -3,14 +3,35 @@
     <!-- =====================================================
          PAGE HEADING
     ====================================================== -->
-    <div>
-      <h1 class="text-2xl font-bold gradient-text">
-        Book a Court
-      </h1>
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <div>
+        <h1 class="text-2xl font-bold gradient-text">Book a Court</h1>
 
-      <p class="text-sm text-gray-500 mt-1">
-        Find an available court and reserve your preferred time slot.
-      </p>
+        <p class="text-sm text-gray-500 mt-1">
+          Find an available court and reserve your preferred time slot.
+        </p>
+      </div>
+
+      <router-link
+        to="/member/nearby-courts"
+        class="btn-secondary inline-flex items-center justify-center gap-2"
+      >
+        <svg class="h-4 w-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+          />
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+          />
+        </svg>
+        Find nearby courts
+      </router-link>
     </div>
 
     <!-- =====================================================
@@ -20,9 +41,7 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
         <!-- Club -->
         <div>
-          <label class="block text-xs text-gray-500 mb-2">
-            Select Club
-          </label>
+          <label class="block text-xs text-gray-500 mb-2"> Select Club </label>
 
           <select
             v-model="selectedClubId"
@@ -30,15 +49,9 @@
             :disabled="booking"
             @change="handleClubChange"
           >
-            <option value="">
-              Select a club
-            </option>
+            <option value="">Select a club</option>
 
-            <option
-              v-for="club in clubs"
-              :key="club.id"
-              :value="club.id"
-            >
+            <option v-for="club in clubs" :key="club.id" :value="club.id">
               {{ club.name }}
             </option>
           </select>
@@ -46,9 +59,7 @@
 
         <!-- Date -->
         <div>
-          <label class="block text-xs text-gray-500 mb-2">
-            Booking Date
-          </label>
+          <label class="block text-xs text-gray-500 mb-2"> Booking Date </label>
 
           <input
             v-model="selectedDate"
@@ -63,9 +74,7 @@
 
       <!-- Time Period -->
       <div class="mt-5">
-        <label class="block text-xs text-gray-500 mb-3">
-          Time of Day
-        </label>
+        <label class="block text-xs text-gray-500 mb-3"> Time of Day </label>
 
         <div class="flex flex-wrap gap-2">
           <button
@@ -75,8 +84,7 @@
             class="period-button"
             :disabled="booking"
             :class="{
-              'period-button-active':
-                selectedPeriod === period.value,
+              'period-button-active': selectedPeriod === period.value,
             }"
             @click="selectPeriod(period.value)"
           >
@@ -89,21 +97,10 @@
     <!-- =====================================================
          ERROR
     ====================================================== -->
-    <div
-      v-if="error"
-      class="glass p-5 border border-red-500/20"
-    >
+    <div v-if="error" class="glass p-5 border border-red-500/20">
       <div class="flex items-start gap-3">
-        <div
-          class="w-9 h-9 rounded-lg bg-red-500/10
-                 flex items-center justify-center shrink-0"
-        >
-          <svg
-            class="w-5 h-5 text-red-400"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
+        <div class="w-9 h-9 rounded-lg bg-red-500/10 flex items-center justify-center shrink-0">
+          <svg class="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
               stroke-linecap="round"
               stroke-linejoin="round"
@@ -118,11 +115,7 @@
             {{ error }}
           </p>
 
-          <button
-            type="button"
-            class="text-xs text-primary-400 mt-2"
-            @click="refreshData"
-          >
+          <button type="button" class="text-xs text-primary-400 mt-2" @click="refreshData">
             Try Again
           </button>
         </div>
@@ -132,35 +125,18 @@
     <!-- =====================================================
          LOADING
     ====================================================== -->
-    <div
-      v-if="loading"
-      class="glass p-12 text-center"
-    >
+    <div v-if="loading" class="glass p-12 text-center">
       <div class="loader mx-auto mb-4"></div>
 
-      <p class="text-sm text-gray-500">
-        Checking court availability...
-      </p>
+      <p class="text-sm text-gray-500">Checking court availability...</p>
     </div>
 
     <!-- =====================================================
          NO CLUB SELECTED
     ====================================================== -->
-    <div
-      v-else-if="!selectedClubId"
-      class="glass p-12 text-center"
-    >
-      <div
-        class="w-14 h-14 mx-auto rounded-xl
-               bg-primary-500/10
-               flex items-center justify-center"
-      >
-        <svg
-          class="w-7 h-7 text-primary-400"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
+    <div v-else-if="!selectedClubId" class="glass p-12 text-center">
+      <div class="w-14 h-14 mx-auto rounded-xl bg-primary-500/10 flex items-center justify-center">
+        <svg class="w-7 h-7 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
             stroke-linecap="round"
             stroke-linejoin="round"
@@ -170,13 +146,9 @@
         </svg>
       </div>
 
-      <h3 class="font-semibold text-gray-200 mt-4">
-        Select a Club
-      </h3>
+      <h3 class="font-semibold text-gray-200 mt-4">Select a Club</h3>
 
-      <p class="text-sm text-gray-500 mt-2">
-        Choose a club to view its available courts.
-      </p>
+      <p class="text-sm text-gray-500 mt-2">Choose a club to view its available courts.</p>
     </div>
 
     <!-- =====================================================
@@ -185,9 +157,7 @@
     <template v-else-if="!loading">
       <div class="flex items-center justify-between">
         <div>
-          <h2 class="text-lg font-semibold text-gray-200">
-            Available Courts
-          </h2>
+          <h2 class="text-lg font-semibold text-gray-200">Available Courts</h2>
 
           <p class="text-xs text-gray-500 mt-1">
             {{ activeCourts.length }}
@@ -207,14 +177,9 @@
       </div>
 
       <!-- No Active Courts -->
-      <div
-        v-if="activeCourts.length === 0"
-        class="glass p-12 text-center"
-      >
+      <div v-if="activeCourts.length === 0" class="glass p-12 text-center">
         <div
-          class="w-14 h-14 mx-auto rounded-xl
-                 bg-primary-500/10
-                 flex items-center justify-center"
+          class="w-14 h-14 mx-auto rounded-xl bg-primary-500/10 flex items-center justify-center"
         >
           <svg
             class="w-7 h-7 text-primary-400"
@@ -222,31 +187,25 @@
             stroke="currentColor"
             viewBox="0 0 24 24"
           >
-            <path
-              stroke-width="1.5"
-              d="M5 5h14v14H5zM5 12h14M12 5v14"
-            />
+            <path stroke-width="1.5" d="M5 5h14v14H5zM5 12h14M12 5v14" />
           </svg>
         </div>
 
-        <h3 class="font-semibold text-gray-300 mt-4">
-          No Active Courts
-        </h3>
+        <h3 class="font-semibold text-gray-300 mt-4">No Active Courts</h3>
 
-        <p class="text-sm text-gray-500 mt-2">
-          This club currently has no active courts.
-        </p>
+        <p class="text-sm text-gray-500 mt-2">This club currently has no active courts.</p>
       </div>
 
       <!-- Court Grid -->
-      <div
-        v-else
-        class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5"
-      >
+      <div v-else class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
         <div
           v-for="court in activeCourts"
+          :id="'court-card-' + court.id"
           :key="court.id"
-          class="glass overflow-hidden"
+          class="glass overflow-hidden transition-all duration-300"
+          :class="{
+            'ring-2 ring-indigo-500 shadow-lg': String(selectedSlot?.courtId) === String(court.id),
+          }"
         >
           <!-- Sport-specific court visual -->
           <div class="court-image-shell">
@@ -273,11 +232,7 @@
               </div>
 
               <span
-                class="px-2.5 py-1 rounded-full
-                       text-[11px]
-                       bg-emerald-500/10
-                       text-emerald-400
-                       whitespace-nowrap"
+                class="px-2.5 py-1 rounded-full text-[11px] bg-emerald-500/10 text-emerald-400 whitespace-nowrap"
               >
                 Available
               </span>
@@ -285,47 +240,39 @@
 
             <!-- Slot Count -->
             <div class="flex justify-between mt-5 mb-3">
-              <span class="text-xs text-gray-500">
-                Available Slots
-              </span>
+              <span class="text-xs text-gray-500"> Available Slots </span>
 
-              <span class="text-xs text-gray-400">
-                {{ availableSlotCount(court) }} available
-              </span>
+              <span class="text-xs text-gray-400"> {{ availableSlotCount(court) }} available </span>
             </div>
 
             <!-- =================================================
                  TIME SLOTS
             ================================================== -->
-            <div
-              v-if="getVisibleSlots(court).length > 0"
-              class="grid grid-cols-2 gap-2"
-            >
+            <div v-if="getVisibleSlots(court).length > 0" class="grid grid-cols-2 gap-2">
               <button
                 v-for="slot in getVisibleSlots(court)"
                 :key="`${court.id}-${slot.start_time}-${slot.end_time}`"
                 type="button"
                 class="slot-button"
                 :class="{
-                  'slot-selected':
-                    isSelectedSlot(court, slot),
+                  'slot-selected': isSelectedSlot(court, slot),
 
                   'slot-unavailable':
-                    !slot.available,
+                    !slot.available || isSlotInPast(selectedDate, slot.start_time),
                 }"
-                :disabled="!slot.available || booking"
+                :disabled="
+                  !slot.available || isSlotInPast(selectedDate, slot.start_time) || booking
+                "
                 @click.stop.prevent="selectSlot(court, slot)"
               >
                 <div>
                   {{ formatTime(slot.start_time) }}
                 </div>
 
-                <div class="text-[10px] opacity-50 mt-0.5">
-                  to {{ formatTime(slot.end_time) }}
-                </div>
+                <div class="text-[10px] opacity-50 mt-0.5">to {{ formatTime(slot.end_time) }}</div>
 
                 <div
-                  v-if="!slot.available"
+                  v-if="!slot.available || isSlotInPast(selectedDate, slot.start_time)"
                   class="text-[9px] mt-1 opacity-70"
                 >
                   {{ slotStatusText(slot) }}
@@ -334,15 +281,8 @@
             </div>
 
             <!-- No Slots -->
-            <div
-              v-else
-              class="rounded-lg border border-white/5
-                     bg-white/[0.02]
-                     p-5 text-center"
-            >
-              <p class="text-xs text-gray-500">
-                No slots available for the selected time period.
-              </p>
+            <div v-else class="rounded-lg border border-white/5 bg-white/[0.02] p-5 text-center">
+              <p class="text-xs text-gray-500">No slots available for the selected time period.</p>
             </div>
 
             <!-- =================================================
@@ -352,39 +292,25 @@
               type="button"
               class="btn-primary w-full mt-5"
               :disabled="
-                booking ||
-                !selectedSlot ||
-                String(selectedSlot?.courtId) !== String(court.id)
+                booking || !selectedSlot || String(selectedSlot?.courtId) !== String(court.id)
               "
               :class="{
                 'opacity-50 cursor-not-allowed':
-                  booking ||
-                  !selectedSlot ||
-                  String(selectedSlot?.courtId) !== String(court.id),
+                  booking || !selectedSlot || String(selectedSlot?.courtId) !== String(court.id),
               }"
               @click.stop.prevent="bookCourt(court)"
             >
-              <template
-                v-if="
-                  booking &&
-                  String(selectedSlot?.courtId) === String(court.id)
-                "
-              >
+              <template v-if="booking && String(selectedSlot?.courtId) === String(court.id)">
                 Booking...
               </template>
 
               <template
-                v-else-if="
-                  selectedSlot &&
-                  String(selectedSlot?.courtId) === String(court.id)
-                "
+                v-else-if="selectedSlot && String(selectedSlot?.courtId) === String(court.id)"
               >
                 Book {{ formatTime(selectedSlot.start_time) }}
               </template>
 
-              <template v-else>
-                Select a Time Slot
-              </template>
+              <template v-else> Select a Time Slot </template>
             </button>
           </div>
         </div>
@@ -396,16 +322,12 @@
     ====================================================== -->
     <div
       v-if="successMessage"
-      class="fixed inset-0 z-50
-             flex items-center justify-center
-             bg-black/70 px-4"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4"
       @click.self="closeSuccess"
     >
       <div class="glass max-w-md w-full p-7 text-center">
         <div
-          class="w-14 h-14 mx-auto rounded-full
-                 bg-emerald-500/10
-                 flex items-center justify-center"
+          class="w-14 h-14 mx-auto rounded-full bg-emerald-500/10 flex items-center justify-center"
         >
           <svg
             class="w-7 h-7 text-emerald-400"
@@ -422,30 +344,16 @@
           </svg>
         </div>
 
-        <h3 class="text-xl font-semibold text-white mt-4">
-          Booking Confirmed
-        </h3>
+        <h3 class="text-xl font-semibold text-white mt-4">Booking Confirmed</h3>
 
         <p class="text-sm text-gray-400 mt-2">
           {{ successMessage }}
         </p>
 
         <div class="grid grid-cols-2 gap-3 mt-6">
-          <button
-            type="button"
-            class="btn-secondary"
-            @click="closeSuccess"
-          >
-            Book Another
-          </button>
+          <button type="button" class="btn-secondary" @click="closeSuccess">Book Another</button>
 
-          <button
-            type="button"
-            class="btn-primary"
-            @click="goToBookings"
-          >
-            My Bookings
-          </button>
+          <button type="button" class="btn-primary" @click="goToBookings">My Bookings</button>
         </div>
       </div>
     </div>
@@ -453,13 +361,9 @@
 </template>
 
 <script setup>
-import {
-  computed,
-  onMounted,
-  ref,
-} from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
 
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import api from '@/api/axios'
 import { useBookingStore } from '@/stores/bookings'
 
@@ -474,6 +378,7 @@ import squashCourtImage from '@/assets/courts/squash.webp'
 import volleyballCourtImage from '@/assets/courts/volleyball.webp'
 import multiPurposeCourtImage from '@/assets/courts/multi-purpose.webp'
 
+const route = useRoute()
 const router = useRouter()
 const bookingStore = useBookingStore()
 
@@ -546,6 +451,9 @@ const booking = ref(false)
 const error = ref('')
 const successMessage = ref('')
 
+const currentTime = ref(new Date())
+let currentTimeInterval = null
+
 // =========================================================
 // TIME PERIODS
 // =========================================================
@@ -576,18 +484,11 @@ const periods = [
 const today = computed(() => {
   const date = new Date()
 
-  const year =
-    date.getFullYear()
+  const year = date.getFullYear()
 
-  const month =
-    String(
-      date.getMonth() + 1,
-    ).padStart(2, '0')
+  const month = String(date.getMonth() + 1).padStart(2, '0')
 
-  const day =
-    String(
-      date.getDate(),
-    ).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
 
   return `${year}-${month}-${day}`
 })
@@ -597,9 +498,7 @@ const today = computed(() => {
 // =========================================================
 
 const activeCourts = computed(() => {
-  return courts.value.filter(
-    (court) => court.isActive,
-  )
+  return courts.value.filter((court) => court.isActive)
 })
 
 // =========================================================
@@ -635,38 +534,20 @@ function normalizeList(data) {
 // =========================================================
 
 function normalizeCourt(court) {
-  const status =
-    String(
-      court.status ?? '',
-    ).toLowerCase()
+  const status = String(court.status ?? '').toLowerCase()
 
   return {
     ...court,
 
-    id:
-      court.id ??
-      court.court_id,
+    id: court.id ?? court.court_id,
 
-    name:
-      court.name ??
-      court.court_name ??
-      `Court ${court.id ?? court.court_id ?? ''}`,
+    name: court.name ?? court.court_name ?? `Court ${court.id ?? court.court_id ?? ''}`,
 
-    sport_type:
-      court.sport_type ??
-      court.sport ??
-      '',
+    sport_type: court.sport_type ?? court.sport ?? '',
 
-    isActive:
-      court.is_active !== false &&
-      court.active !== false &&
-      status !== 'inactive',
+    isActive: court.is_active !== false && court.active !== false && status !== 'inactive',
 
-    price:
-      court.price_per_hour ??
-      court.hourly_rate ??
-      court.price ??
-      null,
+    price: court.price_per_hour ?? court.hourly_rate ?? court.price ?? null,
   }
 }
 
@@ -678,27 +559,15 @@ async function loadClubs() {
   try {
     error.value = ''
 
-    const response =
-      await api.get('/clubs')
+    const response = await api.get('/clubs')
 
-    clubs.value =
-      normalizeList(response.data)
+    clubs.value = normalizeList(response.data)
 
-    console.log(
-      'CLUBS:',
-      clubs.value,
-    )
+    console.log('CLUBS:', clubs.value)
   } catch (err) {
-    console.error(
-      'Failed to load clubs:',
-      err,
-    )
+    console.error('Failed to load clubs:', err)
 
-    error.value =
-      getApiError(
-        err,
-        'Unable to load clubs.',
-      )
+    error.value = getApiError(err, 'Unable to load clubs.')
   }
 }
 
@@ -715,32 +584,17 @@ async function loadCourts() {
   try {
     error.value = ''
 
-    const response =
-      await api.get(
-        `/clubs/${selectedClubId.value}/courts`,
-      )
+    const response = await api.get(`/clubs/${selectedClubId.value}/courts`)
 
-    courts.value =
-      normalizeList(response.data)
-        .map(normalizeCourt)
+    courts.value = normalizeList(response.data).map(normalizeCourt)
 
-    console.log(
-      'COURTS:',
-      courts.value,
-    )
+    console.log('COURTS:', courts.value)
   } catch (err) {
-    console.error(
-      'Failed to load courts:',
-      err,
-    )
+    console.error('Failed to load courts:', err)
 
     courts.value = []
 
-    error.value =
-      getApiError(
-        err,
-        'Unable to load courts.',
-      )
+    error.value = getApiError(err, 'Unable to load courts.')
   }
 }
 
@@ -754,10 +608,7 @@ async function loadAvailability() {
    */
   selectedSlot.value = null
 
-  if (
-    !selectedClubId.value ||
-    !selectedDate.value
-  ) {
+  if (!selectedClubId.value || !selectedDate.value) {
     availability.value = []
     return
   }
@@ -766,24 +617,15 @@ async function loadAvailability() {
     loading.value = true
     error.value = ''
 
-    const response =
-      await api.get(
-        '/availability/matrix',
-        {
-          params: {
-            club_id:
-              selectedClubId.value,
+    const response = await api.get('/availability/matrix', {
+      params: {
+        club_id: selectedClubId.value,
 
-            date:
-              selectedDate.value,
-          },
-        },
-      )
+        date: selectedDate.value,
+      },
+    })
 
-    console.log(
-      'AVAILABILITY API RESPONSE:',
-      response.data,
-    )
+    console.log('AVAILABILITY API RESPONSE:', response.data)
 
     /*
      * Confirmed backend response:
@@ -798,30 +640,15 @@ async function loadAvailability() {
      *   ]
      * }
      */
-    availability.value =
-      Array.isArray(
-        response.data?.courts,
-      )
-        ? response.data.courts
-        : []
+    availability.value = Array.isArray(response.data?.courts) ? response.data.courts : []
 
-    console.log(
-      'AVAILABILITY COURTS:',
-      availability.value,
-    )
+    console.log('AVAILABILITY COURTS:', availability.value)
   } catch (err) {
-    console.error(
-      'Failed to load availability:',
-      err,
-    )
+    console.error('Failed to load availability:', err)
 
     availability.value = []
 
-    error.value =
-      getApiError(
-        err,
-        'Unable to load court availability.',
-      )
+    error.value = getApiError(err, 'Unable to load court availability.')
   } finally {
     loading.value = false
   }
@@ -859,19 +686,11 @@ async function handleClubChange() {
 // =========================================================
 
 function getCourtAvailability(courtId) {
-  const courtAvailability =
-    availability.value.find(
-      (entry) =>
-        String(entry.court_id) ===
-        String(courtId),
-    )
+  const courtAvailability = availability.value.find(
+    (entry) => String(entry.court_id) === String(courtId),
+  )
 
-  if (
-    !courtAvailability ||
-    !Array.isArray(
-      courtAvailability.slots,
-    )
-  ) {
+  if (!courtAvailability || !Array.isArray(courtAvailability.slots)) {
     return []
   }
 
@@ -883,10 +702,7 @@ function getCourtAvailability(courtId) {
 // =========================================================
 
 function normalizeSlot(slot) {
-  const status =
-    String(
-      slot?.status ?? '',
-    ).toLowerCase()
+  const status = String(slot?.status ?? '').toLowerCase()
 
   const unavailableStatuses = [
     'booked',
@@ -897,33 +713,20 @@ function normalizeSlot(slot) {
     'inactive',
   ]
 
-  const availableStatuses = [
-    'available',
-    'free',
-    'open',
-  ]
+  const availableStatuses = ['available', 'free', 'open']
 
-  const available =
-    availableStatuses.includes(
-      status,
-    ) &&
-    !unavailableStatuses.includes(
-      status,
-    )
+  const available = availableStatuses.includes(status) && !unavailableStatuses.includes(status)
 
   return {
     ...slot,
 
-    start_time:
-      slot?.start_time ?? '',
+    start_time: slot?.start_time ?? '',
 
-    end_time:
-      slot?.end_time ?? '',
+    end_time: slot?.end_time ?? '',
 
     status,
 
-    reason:
-      slot?.reason ?? null,
+    reason: slot?.reason ?? null,
 
     available,
   }
@@ -934,15 +737,9 @@ function normalizeSlot(slot) {
 // =========================================================
 
 function getAllCourtSlots(court) {
-  return getCourtAvailability(
-    court.id,
-  )
+  return getCourtAvailability(court.id)
     .map(normalizeSlot)
-    .filter(
-      (slot) =>
-        slot.start_time &&
-        slot.end_time,
-    )
+    .filter((slot) => slot.start_time && slot.end_time)
 }
 
 // =========================================================
@@ -950,49 +747,45 @@ function getAllCourtSlots(court) {
 // =========================================================
 
 function getVisibleSlots(court) {
-  const slots =
-    getAllCourtSlots(court)
+  const slots = getAllCourtSlots(court)
 
-  if (
-    selectedPeriod.value === 'all'
-  ) {
+  if (selectedPeriod.value === 'all') {
     return slots
   }
 
   return slots.filter((slot) => {
-    const hour =
-      Number(
-        String(
-          slot.start_time,
-        ).split(':')[0],
-      )
+    const hour = Number(String(slot.start_time).split(':')[0])
 
-    if (
-      selectedPeriod.value ===
-      'morning'
-    ) {
+    if (selectedPeriod.value === 'morning') {
       return hour < 12
     }
 
-    if (
-      selectedPeriod.value ===
-      'afternoon'
-    ) {
-      return (
-        hour >= 12 &&
-        hour < 17
-      )
+    if (selectedPeriod.value === 'afternoon') {
+      return hour >= 12 && hour < 17
     }
 
-    if (
-      selectedPeriod.value ===
-      'evening'
-    ) {
+    if (selectedPeriod.value === 'evening') {
       return hour >= 17
     }
 
     return true
   })
+}
+
+// =========================================================
+// PAST SLOT CHECK
+// =========================================================
+
+function isSlotInPast(date, startTime) {
+  if (!date || !startTime) return false
+
+  const [hours, minutes] = String(startTime).split(':').map(Number)
+  if (Number.isNaN(hours) || Number.isNaN(minutes)) return false
+
+  const slotStart = new Date(`${String(date).slice(0, 10)}T00:00:00`)
+  slotStart.setHours(hours, minutes, 0, 0)
+
+  return slotStart <= currentTime.value
 }
 
 // =========================================================
@@ -1018,11 +811,9 @@ function selectPeriod(period) {
 // =========================================================
 
 function availableSlotCount(court) {
-  return getVisibleSlots(court)
-    .filter(
-      (slot) => slot.available,
-    )
-    .length
+  return getVisibleSlots(court).filter(
+    (slot) => slot.available && !isSlotInPast(selectedDate.value, slot.start_time),
+  ).length
 }
 
 // =========================================================
@@ -1030,13 +821,15 @@ function availableSlotCount(court) {
 // =========================================================
 
 function slotStatusText(slot) {
+  if (isSlotInPast(selectedDate.value, slot.start_time)) {
+    return 'Past'
+  }
+
   if (slot.available) {
     return 'Available'
   }
 
-  if (
-    slot.reason === 'admin_block'
-  ) {
+  if (slot.reason === 'admin_block') {
     return 'Blocked'
   }
 
@@ -1069,22 +862,18 @@ function selectSlot(court, slot) {
     return
   }
 
-  if (!slot.available) {
+  if (!slot.available || isSlotInPast(selectedDate.value, slot.start_time)) {
     return
   }
 
   selectedSlot.value = {
-    courtId:
-      court.id,
+    courtId: court.id,
 
-    courtName:
-      court.name,
+    courtName: court.name,
 
-    start_time:
-      slot.start_time,
+    start_time: slot.start_time,
 
-    end_time:
-      slot.end_time,
+    end_time: slot.end_time,
   }
 }
 
@@ -1092,21 +881,11 @@ function selectSlot(court, slot) {
 // CHECK SELECTED SLOT
 // =========================================================
 
-function isSelectedSlot(
-  court,
-  slot,
-) {
+function isSelectedSlot(court, slot) {
   return (
-    String(
-      selectedSlot.value?.courtId,
-    ) ===
-      String(court.id) &&
-
-    selectedSlot.value?.start_time ===
-      slot.start_time &&
-
-    selectedSlot.value?.end_time ===
-      slot.end_time
+    String(selectedSlot.value?.courtId) === String(court.id) &&
+    selectedSlot.value?.start_time === slot.start_time &&
+    selectedSlot.value?.end_time === slot.end_time
   )
 }
 
@@ -1127,19 +906,18 @@ async function bookCourt(court) {
    * the first request is still running.
    */
   if (booking.value) {
-    console.warn(
-      'Duplicate booking request prevented.',
-    )
+    console.warn('Duplicate booking request prevented.')
 
     return
   }
 
-  if (
-    !selectedSlot.value ||
-    String(
-      selectedSlot.value.courtId,
-    ) !== String(court.id)
-  ) {
+  if (!selectedSlot.value || String(selectedSlot.value.courtId) !== String(court.id)) {
+    return
+  }
+
+  if (isSlotInPast(selectedDate.value, selectedSlot.value.start_time)) {
+    selectedSlot.value = null
+    error.value = 'This time slot has already passed. Please select another slot.'
     return
   }
 
@@ -1150,17 +928,13 @@ async function bookCourt(court) {
    * selectedSlot after success.
    */
   const slot = {
-    courtId:
-      selectedSlot.value.courtId,
+    courtId: selectedSlot.value.courtId,
 
-    courtName:
-      selectedSlot.value.courtName,
+    courtName: selectedSlot.value.courtName,
 
-    start_time:
-      selectedSlot.value.start_time,
+    start_time: selectedSlot.value.start_time,
 
-    end_time:
-      selectedSlot.value.end_time,
+    end_time: selectedSlot.value.end_time,
   }
 
   const bookingDate = selectedDate.value
@@ -1187,40 +961,23 @@ async function bookCourt(court) {
      * Therefore slice(0, 5).
      */
     const payload = {
-      court_id:
-        Number(court.id),
+      court_id: Number(court.id),
 
-      booking_date:
-        bookingDate,
+      booking_date: bookingDate,
 
-      start_time:
-        String(
-          slot.start_time,
-        ).slice(0, 5),
+      start_time: String(slot.start_time).slice(0, 5),
 
-      end_time:
-        String(
-          slot.end_time,
-        ).slice(0, 5),
+      end_time: String(slot.end_time).slice(0, 5),
     }
 
-    console.log(
-      'BOOKING PAYLOAD:',
-      payload,
-    )
+    console.log('BOOKING PAYLOAD:', payload)
 
     /*
      * EXACTLY ONE POST.
      */
-    const createdBooking =
-      await bookingStore.createBooking(
-        payload,
-      )
+    const createdBooking = await bookingStore.createBooking(payload)
 
-    console.log(
-      'BOOKING CREATED:',
-      createdBooking,
-    )
+    console.log('BOOKING CREATED:', createdBooking)
 
     /*
      * Build success message using the
@@ -1247,21 +1004,16 @@ async function bookCourt(court) {
      */
     await loadAvailability()
   } catch (err) {
-    console.error(
-      'Booking failed:',
-      err,
-    )
+    console.error('Booking failed:', err)
 
-    const status =
-      err?.response?.status
+    const status = err?.response?.status
 
     /*
      * 409 means another booking already
      * occupies this time range.
      */
     if (status === 409) {
-      error.value =
-        'This time slot is no longer available. Please select another slot.'
+      error.value = 'This time slot is no longer available. Please select another slot.'
 
       selectedSlot.value = null
 
@@ -1278,20 +1030,12 @@ async function bookCourt(court) {
      * Backend validation errors.
      */
     if (status === 400) {
-      error.value =
-        getApiError(
-          err,
-          'The booking information is invalid.',
-        )
+      error.value = getApiError(err, 'The booking information is invalid.')
 
       return
     }
 
-    error.value =
-      getApiError(
-        err,
-        'Unable to create booking.',
-      )
+    error.value = getApiError(err, 'Unable to create booking.')
   } finally {
     /*
      * Always unlock the booking button.
@@ -1305,10 +1049,7 @@ async function bookCourt(court) {
 // =========================================================
 
 async function refreshData() {
-  if (
-    booking.value ||
-    !selectedClubId.value
-  ) {
+  if (booking.value || !selectedClubId.value) {
     return
   }
 
@@ -1327,26 +1068,14 @@ async function refreshData() {
 // API ERROR MESSAGE
 // =========================================================
 
-function getApiError(
-  err,
-  fallback,
-) {
-  const data =
-    err?.response?.data
+function getApiError(err, fallback) {
+  const data = err?.response?.data
 
-  if (
-    typeof data === 'string'
-  ) {
+  if (typeof data === 'string') {
     return data
   }
 
-  return (
-    data?.message ||
-    data?.error ||
-    data?.msg ||
-    data?.detail ||
-    fallback
-  )
+  return data?.message || data?.error || data?.msg || data?.detail || fallback
 }
 
 // =========================================================
@@ -1358,28 +1087,15 @@ function formatTime(time) {
     return ''
   }
 
-  const [
-    hourString,
-    minuteString,
-  ] = String(time)
-    .split(':')
+  const [hourString, minuteString] = String(time).split(':')
 
-  const hour =
-    Number(hourString)
+  const hour = Number(hourString)
 
-  const period =
-    hour >= 12
-      ? 'PM'
-      : 'AM'
+  const period = hour >= 12 ? 'PM' : 'AM'
 
-  const displayHour =
-    hour % 12 || 12
+  const displayHour = hour % 12 || 12
 
-  return (
-    `${displayHour}:` +
-    `${minuteString || '00'} ` +
-    period
-  )
+  return `${displayHour}:` + `${minuteString || '00'} ` + period
 }
 
 // =========================================================
@@ -1391,18 +1107,11 @@ function formatDate(date) {
     return ''
   }
 
-  return new Intl.DateTimeFormat(
-    'en-IN',
-    {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-    },
-  ).format(
-    new Date(
-      `${date}T00:00:00`,
-    ),
-  )
+  return new Intl.DateTimeFormat('en-IN', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  }).format(new Date(`${date}T00:00:00`))
 }
 
 // =========================================================
@@ -1433,25 +1142,42 @@ onMounted(async () => {
   /*
    * Default to today's date.
    */
-  selectedDate.value =
-    today.value
+  selectedDate.value = today.value
+
+  currentTime.value = new Date()
+  currentTimeInterval = setInterval(() => {
+    currentTime.value = new Date()
+  }, 30000)
 
   /*
    * Load real clubs.
    */
   await loadClubs()
 
-  /*
-   * Your current test environment has
-   * one club, so automatically select it.
-   */
-  if (
-    clubs.value.length === 1
-  ) {
-    selectedClubId.value =
-      clubs.value[0].id
+  const targetClubId = route.query.club_id || route.query.club
+  const targetCourtId = route.query.court_id || route.query.court
 
+  if (targetClubId && clubs.value.some((c) => String(c.id) === String(targetClubId))) {
+    selectedClubId.value = Number(targetClubId) || targetClubId
     await handleClubChange()
+
+    if (targetCourtId) {
+      await nextTick()
+      const targetEl = document.getElementById(`court-card-${targetCourtId}`)
+      if (targetEl) {
+        targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
+    }
+  } else if (clubs.value.length === 1) {
+    selectedClubId.value = clubs.value[0].id
+    await handleClubChange()
+  }
+})
+
+onUnmounted(() => {
+  if (currentTimeInterval) {
+    clearInterval(currentTimeInterval)
+    currentTimeInterval = null
   }
 })
 </script>
@@ -1471,27 +1197,39 @@ onMounted(async () => {
   font-weight: 600;
   color: #172033;
   outline: none;
-  transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    background 0.18s ease;
 }
-.field:hover { border-color: #c7d2e2; background: #fff; }
+.field:hover {
+  border-color: #c7d2e2;
+  background: #fff;
+}
 .field:focus {
   border-color: #7c89e8;
   background: #fff;
-  box-shadow: 0 0 0 4px rgba(79,95,215,.10);
+  box-shadow: 0 0 0 4px rgba(79, 95, 215, 0.1);
 }
-.field:disabled { opacity: .65; cursor: not-allowed; }
-.field option { background: #fff; color: #172033; }
+.field:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+.field option {
+  background: #fff;
+  color: #172033;
+}
 
 .period-button {
   min-height: 40px;
   border: 1px solid #dfe6f0;
   border-radius: 11px;
   background: #f8faff;
-  padding: .55rem 1rem;
-  font-size: .75rem;
+  padding: 0.55rem 1rem;
+  font-size: 0.75rem;
   font-weight: 700;
   color: #667085;
-  transition: all .18s ease;
+  transition: all 0.18s ease;
 }
 .period-button:hover:not(:disabled) {
   border-color: #bdc7ef;
@@ -1503,14 +1241,14 @@ onMounted(async () => {
   border-color: #aeb8f4;
   background: #eef1ff;
   color: #4656cc;
-  box-shadow: 0 4px 12px rgba(79,95,215,.08);
+  box-shadow: 0 4px 12px rgba(79, 95, 215, 0.08);
 }
 
 /* Court cards */
 .glass {
   border: 1px solid #dfe6f0 !important;
   background: #fff !important;
-  box-shadow: 0 10px 28px rgba(38,55,88,.055) !important;
+  box-shadow: 0 10px 28px rgba(38, 55, 88, 0.055) !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
   color: #172033;
@@ -1518,12 +1256,24 @@ onMounted(async () => {
 
 /* Override legacy dark Tailwind utility colors inside this page. */
 .glass .text-gray-200,
-.glass .text-gray-300 { color: #172033 !important; }
-.glass .text-gray-400 { color: #526078 !important; }
-.glass .text-gray-500 { color: #667085 !important; }
-.glass .text-white { color: #172033 !important; }
-.glass .border-white\/5 { border-color: #e4e9f1 !important; }
-.glass .bg-white\/\[0\.02\] { background: #f8faff !important; }
+.glass .text-gray-300 {
+  color: #172033 !important;
+}
+.glass .text-gray-400 {
+  color: #526078 !important;
+}
+.glass .text-gray-500 {
+  color: #667085 !important;
+}
+.glass .text-white {
+  color: #172033 !important;
+}
+.glass .border-white\/5 {
+  border-color: #e4e9f1 !important;
+}
+.glass .bg-white\/\[0\.02\] {
+  background: #f8faff !important;
+}
 
 /* The old page looked "blurry" because disabled/unavailable slots used
    very low opacity. Keep every label crisp and encode state with color. */
@@ -1532,25 +1282,28 @@ onMounted(async () => {
   border: 1px solid #bfe4d7;
   border-radius: 12px;
   background: #f0faf6;
-  padding: .7rem .55rem;
-  font-size: .75rem;
+  padding: 0.7rem 0.55rem;
+  font-size: 0.75rem;
   font-weight: 700;
   color: #213047;
   opacity: 1;
-  transition: border-color .16s ease, background .16s ease,
-              box-shadow .16s ease, transform .16s ease;
+  transition:
+    border-color 0.16s ease,
+    background 0.16s ease,
+    box-shadow 0.16s ease,
+    transform 0.16s ease;
 }
 .slot-button:hover:not(:disabled) {
   border-color: #69c4a5;
   background: #e8f7f1;
-  box-shadow: 0 6px 15px rgba(21,150,111,.09);
+  box-shadow: 0 6px 15px rgba(21, 150, 111, 0.09);
   transform: translateY(-1px);
 }
 .slot-selected {
   border-color: #6574e5 !important;
   background: #e9edff !important;
   color: #3445c2 !important;
-  box-shadow: 0 0 0 3px rgba(79,95,215,.09);
+  box-shadow: 0 0 0 3px rgba(79, 95, 215, 0.09);
 }
 .slot-unavailable {
   border-color: #e1e6ee !important;
@@ -1560,9 +1313,17 @@ onMounted(async () => {
   cursor: not-allowed;
   box-shadow: none !important;
 }
-.slot-unavailable div { color: #9aa5b4 !important; opacity: 1 !important; }
-.slot-button > div:nth-child(2) { color: #758298; opacity: 1 !important; }
-.slot-selected > div:nth-child(2) { color: #6876d4 !important; }
+.slot-unavailable div {
+  color: #9aa5b4 !important;
+  opacity: 1 !important;
+}
+.slot-button > div:nth-child(2) {
+  color: #758298;
+  opacity: 1 !important;
+}
+.slot-selected > div:nth-child(2) {
+  color: #6876d4 !important;
+}
 
 /* Available badge */
 .bg-emerald-500\/10 {
@@ -1574,7 +1335,7 @@ onMounted(async () => {
 
 /* Court visual: subtle soft-blue header, not washed out. */
 .bg-primary-500\/10 {
-  background: linear-gradient(135deg,#eef1ff,#f6f8ff) !important;
+  background: linear-gradient(135deg, #eef1ff, #f6f8ff) !important;
 }
 .text-primary-400 {
   color: #4f5fd7 !important;
@@ -1585,15 +1346,15 @@ onMounted(async () => {
   min-height: 46px;
   border: 1px solid #4f5fd7 !important;
   border-radius: 12px !important;
-  background: linear-gradient(135deg,#5969df,#4858cf) !important;
+  background: linear-gradient(135deg, #5969df, #4858cf) !important;
   color: #fff !important;
   font-weight: 800 !important;
-  box-shadow: 0 8px 18px rgba(79,95,215,.16) !important;
-  transition: all .18s ease;
+  box-shadow: 0 8px 18px rgba(79, 95, 215, 0.16) !important;
+  transition: all 0.18s ease;
 }
 .btn-primary:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 11px 22px rgba(79,95,215,.22) !important;
+  box-shadow: 0 11px 22px rgba(79, 95, 215, 0.22) !important;
 }
 .btn-primary:disabled,
 .btn-primary.opacity-50 {
@@ -1615,17 +1376,23 @@ onMounted(async () => {
 }
 .fixed .glass {
   border-radius: 20px !important;
-  box-shadow: 0 30px 70px rgba(20,32,56,.22) !important;
+  box-shadow: 0 30px 70px rgba(20, 32, 56, 0.22) !important;
 }
-.fixed.inset-0 { backdrop-filter: blur(4px); }
+.fixed.inset-0 {
+  backdrop-filter: blur(4px);
+}
 
 /* Error */
 .border-red-500\/20 {
   border-color: #f0cbd0 !important;
   background: #fffafa !important;
 }
-.text-red-400 { color: #c94c59 !important; }
-.bg-red-500\/10 { background: #fff0f1 !important; }
+.text-red-400 {
+  color: #c94c59 !important;
+}
+.bg-red-500\/10 {
+  background: #fff0f1 !important;
+}
 
 /* Loader */
 .loader {
@@ -1634,14 +1401,22 @@ onMounted(async () => {
   border: 3px solid #e3e8f0;
   border-top-color: #4f5fd7;
   border-radius: 9999px;
-  animation: spin .75s linear infinite;
+  animation: spin 0.75s linear infinite;
 }
 
-@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 
 @media (max-width: 767px) {
-  .glass { border-radius: 16px !important; }
-  .slot-button { min-height: 68px; }
+  .glass {
+    border-radius: 16px !important;
+  }
+  .slot-button {
+    min-height: 68px;
+  }
 }
 
 /* Sport-specific court image: complete frame remains visible */
@@ -1683,9 +1458,10 @@ onMounted(async () => {
 }
 
 @media (max-width: 767px) {
-  .court-image-shell { height: 175px; }
+  .court-image-shell {
+    height: 175px;
+  }
 }
-
 
 /* Restored compact court header hierarchy */
 .court-name {
@@ -1707,5 +1483,4 @@ onMounted(async () => {
   font-weight: 600;
   line-height: 1;
 }
-
 </style>

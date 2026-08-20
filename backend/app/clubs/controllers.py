@@ -64,6 +64,7 @@ def get_courts(club_id):
             "id": court.id,
             "club_id": court.club_id,
             "name": court.name,
+            "sport_type": court.sport_type,
             "is_active": court.is_active,
             "operating_hours_override": {
                 "open_time": court.open_time_override,
@@ -92,6 +93,7 @@ def list_courts():
         "courts": [{
             "id": c.id,
             "name": c.name,
+            "sport_type": c.sport_type,
             "is_active": c.is_active,
             "open_time_override": c.open_time_override,
             "close_time_override": c.close_time_override,
@@ -111,11 +113,12 @@ def create_court():
         owner_id=user_id,
         court_name=court_name,
         club_name=data.get('club_name'),
-        club_address=data.get('club_address')
+        club_address=data.get('club_address'),
+        sport_type=data.get('sport_type', 'multi-purpose')
     )
     if error:
-        return jsonify(error), 400 if error['code'] == 'CLUB_REQUIRED' else 500
-    return jsonify({"message": "Court created", "court": {"id": court.id, "name": court.name, "is_active": court.is_active}}), 201
+        return jsonify(error), 400 if error['code'] in ('CLUB_REQUIRED', 'VALIDATION_ERROR') else 500
+    return jsonify({"message": "Court created", "court": {"id": court.id, "name": court.name, "sport_type": court.sport_type, "is_active": court.is_active}}), 201
 
 @clubs_bp.route('/courts/<int:court_id>', methods=['PUT'])
 @role_required('owner')
@@ -131,12 +134,13 @@ def update_court(court_id):
         owner_id=user_id,
         court_name=court_name,
         is_active=data.get('is_active', True),
+        sport_type=data.get('sport_type', 'multi-purpose'),
         open_time_override=data.get('open_time_override'),
         close_time_override=data.get('close_time_override'),
         slot_duration_override=data.get('slot_duration_override')
     )
     if error:
-        return jsonify(error), 404 if error['code'] == 'NOT_FOUND' else 500
+        return jsonify(error), 404 if error['code'] == 'NOT_FOUND' else 400 if error['code'] == 'VALIDATION_ERROR' else 500
     return jsonify({"message": "Court updated successfully"}), 200
 
 @clubs_bp.route('/courts/<int:court_id>', methods=['DELETE'])

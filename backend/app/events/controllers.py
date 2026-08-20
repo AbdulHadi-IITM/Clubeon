@@ -1,14 +1,18 @@
 from flask import Blueprint, request, jsonify
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_jwt_extended import jwt_required, get_jwt_identity, verify_jwt_in_request
 from app.auth.decorators import role_required
 from app.events.services import EventService
+from app.events.models import EventRegistration
 
 events_bp = Blueprint('events', __name__, url_prefix='/api/v1/events')
 
 @events_bp.route('', methods=['GET'])
+@jwt_required(optional=True)
 def get_events():
     club_id = request.args.get('club_id', type=int)
     events = EventService.get_events(club_id)
+    identity = get_jwt_identity()
+    user_id = int(identity) if identity is not None else None
     
     result = []
     for e in events:
@@ -22,7 +26,13 @@ def get_events():
             "end_time": str(e.end_time),
             "max_attendees": e.max_attendees,
             "registration_fee": e.registration_fee,
-            "status": e.status
+            "status": e.status,
+            "registered_count": EventRegistration.query.filter_by(event_id=e.id, status='registered').count(),
+            "my_registration_status": (
+                (EventRegistration.query.filter_by(event_id=e.id, user_id=user_id).first().status
+                 if EventRegistration.query.filter_by(event_id=e.id, user_id=user_id).first() else None)
+                if user_id else None
+            )
         })
     return jsonify(result), 200
 
@@ -90,3 +100,14 @@ def cancel_registration(event_id):
         return jsonify(error), status_code
         
     return jsonify({"message": "Registration cancelled successfully"}), 200
+
+
+@events_bp.route('/my-registrations', methods=['GET'])
+@jwt_required()
+def my_registrations():
+    user_id = int(get_jwt_identity())
+    rows = EventRegistration.query.filter_by(user_id=user_id).all()
+    return jsonify([{
+        'id': r.id, 'event_id': r.event_id, 'status': r.status,
+        'registered_at': str(r.registered_at) if r.registered_at else None
+    } for r in rows]), 200

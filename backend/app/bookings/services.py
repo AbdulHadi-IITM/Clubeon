@@ -16,6 +16,13 @@ class BookingService:
         if start_time >= end_time:
             return None, {"code": "VALIDATION_ERROR", "message": "Start time must be before end time."}
 
+        booking_start = datetime.combine(booking_date, start_time)
+        if booking_start <= datetime.now():
+            return None, {
+                "code": "VALIDATION_ERROR",
+                "message": "This time slot has already passed. Please choose a future slot.",
+            }
+
         court = Court.query.get(court_id)
         if not court or not court.is_active:
             return None, {"code": "NOT_FOUND", "message": "Court not found or inactive."}

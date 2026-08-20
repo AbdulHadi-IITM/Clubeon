@@ -18,7 +18,7 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       const res = await api.get('/auth/me') // backend reads cookie and returns user
       user.value = res.data?.user ?? null
-    } catch (err) {
+    } catch {
       user.value = null
       // ignore error; user is not authenticated
     } finally {
@@ -64,7 +64,7 @@ export const useAuthStore = defineStore('auth', () => {
     loading.value = true
     try {
       await api.post('/auth/logout')
-    } catch (err) {
+    } catch {
       // ignore
     } finally {
       user.value = null

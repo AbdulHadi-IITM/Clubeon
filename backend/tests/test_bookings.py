@@ -7,18 +7,44 @@ def test_create_booking_success(client, auth_headers, sample_club, db_session):
     client.set_cookie('access_token_cookie', token)
     
     court_id = sample_club.courts[0].id
-    today = date.today().strftime("%Y-%m-%d")
-    
+    future_start = datetime.combine(
+        date.today() + timedelta(days=1),
+        time(12, 0),
+    )
+    future_end = future_start + timedelta(hours=1)
+
     payload = {
         "court_id": court_id,
-        "booking_date": today,
-        "start_time": "12:00",
-        "end_time": "13:00"
+        "booking_date": future_start.strftime("%Y-%m-%d"),
+        "start_time": future_start.strftime("%H:%M"),
+        "end_time": future_end.strftime("%H:%M"),
     }
     
     response = client.post('/api/v1/bookings', json=payload)
     assert response.status_code == 201
     assert 'booking_id' in response.json
+
+def test_create_booking_rejects_past_slot(client, auth_headers, sample_club, db_session):
+    token = auth_headers()
+    client.set_cookie('access_token_cookie', token)
+
+    court_id = sample_club.courts[0].id
+    past_start = (datetime.now() - timedelta(hours=2)).replace(second=0, microsecond=0)
+    past_end = past_start + timedelta(hours=1)
+
+    payload = {
+        "court_id": court_id,
+        "booking_date": past_start.strftime("%Y-%m-%d"),
+        "start_time": past_start.strftime("%H:%M"),
+        "end_time": past_end.strftime("%H:%M"),
+    }
+
+    response = client.post('/api/v1/bookings', json=payload)
+
+    assert response.status_code == 400
+    assert response.json['code'] == 'VALIDATION_ERROR'
+    assert 'already passed' in response.json['message']
+
 
 def test_create_booking_conflict(client, auth_headers, sample_club, db_session, make_player):
     # Setup an existing booking
