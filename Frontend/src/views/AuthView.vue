@@ -503,6 +503,10 @@ const redirectAfterAuth = (user) => {
       router.push({ name: 'member-dashboard' })
       break
 
+    case 'front-desk':
+      router.push({ name: 'staff-dashboard' })
+      break
+
     default:
       router.push({ name: 'profile' })
   }

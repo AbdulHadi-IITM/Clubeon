@@ -1,715 +1,230 @@
 <template>
   <div class="space-y-6">
-
-    <!-- Welcome -->
     <div>
-      <h1 class="text-2xl font-bold gradient-text">
-        Welcome back, {{ firstName }}
-      </h1>
-      <p class="text-sm text-gray-500 mt-1">
-        Here is what's happening at the club today.
+      <p class="kicker">Member workspace</p>
+      <h1 class="title mt-1">Welcome back, {{ firstName }}</h1>
+      <p class="muted mt-2 text-sm">
+        Your next reservation, activity and club events in one place.
       </p>
     </div>
-
-    <!-- Stats -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-
-      <!-- Total Bookings -->
-      <div class="glass card-hover p-5 fade-up">
-        <div class="flex items-center gap-3 mb-3">
-          <div
-            class="w-10 h-10 rounded-xl bg-primary-500/10 flex items-center justify-center"
-          >
-            <svg
-              class="w-5 h-5 text-primary-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="1.5"
-                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-              />
-            </svg>
+    <div v-if="error" class="panel p-4 text-sm text-red-600">{{ error }}</div>
+    <section class="panel overflow-hidden">
+      <div class="p-6 md:p-7 bg-gradient-to-r from-indigo-50 to-emerald-50">
+        <p class="kicker">Next booking</p>
+        <div
+          v-if="nextBooking"
+          class="mt-3 flex flex-col gap-4 md:flex-row md:items-end md:justify-between"
+        >
+          <div>
+            <h2 class="text-xl font-extrabold text-slate-900">{{ nextBooking.court_name }}</h2>
+            <p class="mt-1 text-sm text-slate-600">{{ nextBooking.club_name }}</p>
+            <p class="mt-3 text-sm font-semibold text-slate-700">
+              {{ formatDate(nextBooking.date) }} · {{ formatTime(nextBooking.start_time) }} –
+              {{ formatTime(nextBooking.end_time) }}
+            </p>
           </div>
-
-          <span class="text-xs text-gray-500 uppercase tracking-wider">
-            Total Bookings
-          </span>
+          <router-link to="/member/my-bookings" class="btn btn-primary2 text-center"
+            >View booking</router-link
+          >
         </div>
-
-        <p class="text-3xl font-bold text-white">
-          {{ bookings.length }}
-        </p>
+        <div v-else class="mt-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <p class="text-sm text-slate-600">You have no upcoming court reservation.</p>
+          <router-link to="/member/book-court" class="btn btn-primary2 text-center"
+            >Book a court</router-link
+          >
+        </div>
       </div>
-
-      <!-- Days Left -->
-      <div
-        class="glass card-hover p-5 fade-up"
-        style="animation-delay: 0.1s"
-      >
-        <div class="flex items-center gap-3 mb-3">
-          <div
-            class="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center"
-          >
-            <svg
-              class="w-5 h-5 text-emerald-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="1.5"
-                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-          </div>
-
-          <span class="text-xs text-gray-500 uppercase tracking-wider">
-            Days Left
-          </span>
-        </div>
-
-        <p class="text-3xl font-bold text-white">
-          {{ daysLeft }}
-        </p>
+    </section>
+    <div class="grid gap-4 sm:grid-cols-3">
+      <div class="stat">
+        <p class="kicker">Upcoming</p>
+        <p class="mt-2 text-3xl font-extrabold text-slate-900">{{ upcoming.length }}</p>
+        <p class="muted mt-1 text-xs">court bookings</p>
       </div>
-
-      <!-- Upcoming -->
-      <div
-        class="glass card-hover p-5 fade-up"
-        style="animation-delay: 0.2s"
-      >
-        <div class="flex items-center gap-3 mb-3">
-          <div
-            class="w-10 h-10 rounded-xl bg-accent-500/10 flex items-center justify-center"
-          >
-            <svg
-              class="w-5 h-5 text-accent-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="1.5"
-                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-              />
-            </svg>
-          </div>
-
-          <span class="text-xs text-gray-500 uppercase tracking-wider">
-            Upcoming
-          </span>
-        </div>
-
-        <p class="text-3xl font-bold text-white">
-          {{ upcomingBookings.length }}
-        </p>
+      <div class="stat">
+        <p class="kicker">Total bookings</p>
+        <p class="mt-2 text-3xl font-extrabold text-slate-900">{{ bookings.length }}</p>
+        <p class="muted mt-1 text-xs">all reservations</p>
       </div>
-
-      <!-- Membership -->
-      <div
-        class="glass card-hover p-5 fade-up"
-        style="animation-delay: 0.3s"
-      >
-        <div class="flex items-center gap-3 mb-3">
-          <div
-            class="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center"
-          >
-            <svg
-              class="w-5 h-5 text-amber-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="1.5"
-                d="M12 3l7 4v5c0 5-3 8-7 9-4-1-7-4-7-9V7l7-4z"
-              />
-            </svg>
-          </div>
-
-          <span class="text-xs text-gray-500 uppercase tracking-wider">
-            Membership
-          </span>
-        </div>
-
-        <p class="text-xl font-bold text-white capitalize">
-          {{ activeMembership?.plan_name || 'No Plan' }}
-        </p>
+      <div class="stat">
+        <p class="kicker">Upcoming events</p>
+        <p class="mt-2 text-3xl font-extrabold text-slate-900">{{ events.length }}</p>
+        <p class="muted mt-1 text-xs">club activities</p>
       </div>
     </div>
-
-    <!-- Main dashboard -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-      <!-- Left -->
-      <div class="lg:col-span-2 space-y-6">
-
-        <!-- Membership Status -->
-        <div
-          class="glass p-5 fade-up"
-          style="animation-delay: 0.2s"
-        >
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="text-base font-semibold text-gray-200">
-              Membership Status
-            </h3>
-
-            <span
-              class="px-3 py-1 rounded-full text-xs font-medium capitalize"
-              :class="
-                activeMembership
-                  ? 'bg-emerald-500/10 text-emerald-400'
-                  : 'bg-red-500/10 text-red-400'
-              "
-            >
-              {{ activeMembership ? 'Active' : 'Inactive' }}
-            </span>
+    <div class="grid gap-5 lg:grid-cols-[1.35fr_.65fr]">
+      <section class="panel p-5">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="font-bold text-slate-900">Upcoming bookings</h2>
+            <p class="muted mt-1 text-xs">Your nearest reservations</p>
           </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-
-            <div>
-              <p class="text-xs text-gray-500 mb-1">
-                Plan Type
-              </p>
-
-              <p class="text-sm font-medium text-gray-200">
-                {{ activeMembership?.plan_name || 'No active membership' }}
-              </p>
-            </div>
-
-            <div>
-              <p class="text-xs text-gray-500 mb-1">
-                Start Date
-              </p>
-
-              <p class="text-sm font-medium text-gray-200">
-                {{ activeMembership?.start_date || 'N/A' }}
-              </p>
-            </div>
-
-            <div>
-              <p class="text-xs text-gray-500 mb-1">
-                Expiry Date
-              </p>
-
-              <p class="text-sm font-medium text-gray-200">
-                {{ activeMembership?.end_date || 'N/A' }}
-              </p>
-            </div>
-
-          </div>
+          <router-link to="/member/my-bookings" class="text-xs font-bold text-indigo-600"
+            >View all</router-link
+          >
         </div>
-
-        <!-- Upcoming bookings -->
-        <div
-          class="glass p-5 fade-up"
-          style="animation-delay: 0.3s"
-        >
-          <div class="flex items-center justify-between mb-4">
-
-            <h3 class="text-base font-semibold text-gray-200">
-              Upcoming Bookings
-            </h3>
-
-            <router-link
-              to="/member/my-bookings"
-              class="text-xs text-primary-400 hover:text-primary-300"
-            >
-              View all
-            </router-link>
-
-          </div>
-
-          <!-- Loading -->
+        <div class="mt-4 space-y-3">
           <div
-            v-if="loading"
-            class="py-10 text-center text-sm text-gray-500"
+            v-for="b in upcoming.slice(0, 4)"
+            :key="b.id"
+            class="rounded-xl border border-slate-200 bg-slate-50/70 p-4 flex items-center justify-between gap-4"
           >
-            Loading bookings...
+            <div>
+              <p class="text-sm font-bold text-slate-900">{{ b.court_name }}</p>
+              <p class="mt-1 text-xs text-slate-500">
+                {{ formatDate(b.date) }} · {{ formatTime(b.start_time) }}
+              </p>
+            </div>
+            <span class="pill bg-emerald-50 text-emerald-700">Confirmed</span>
           </div>
-
-          <!-- Error -->
-          <div
-            v-else-if="error"
-            class="py-10 text-center"
+          <p v-if="!upcoming.length" class="py-8 text-center text-sm text-slate-500">
+            No upcoming bookings.
+          </p>
+        </div>
+      </section>
+      <section class="panel p-5">
+        <div class="flex items-center justify-between">
+          <h2 class="font-bold text-slate-900">Quick actions</h2>
+        </div>
+        <div class="mt-4 grid gap-2">
+          <router-link to="/member/book-court" class="btn btn-primary2 text-center"
+            >Book a Court</router-link
+          ><router-link to="/member/my-bookings" class="btn btn-soft text-center"
+            >My Bookings</router-link
+          ><router-link to="/member/events" class="btn btn-soft text-center"
+            >Explore Events</router-link
           >
-            <p class="text-sm text-red-400">
-              {{ error }}
+        </div>
+        <div class="mt-6 border-t border-slate-100 pt-5">
+          <h3 class="text-sm font-bold text-slate-900">Next club event</h3>
+          <div v-if="events[0]" class="mt-3">
+            <p class="text-sm font-semibold text-slate-800">{{ events[0].title }}</p>
+            <p class="mt-1 text-xs text-slate-500">
+              {{ formatDate(events[0].date) }} · {{ formatTime(events[0].start_time) }}
             </p>
           </div>
-
-          <!-- Empty -->
-          <div
-            v-else-if="upcomingBookings.length === 0"
-            class="py-10 text-center"
-          >
-            <div
-              class="w-12 h-12 mx-auto mb-3 rounded-xl bg-primary-500/10 flex items-center justify-center"
-            >
-              <svg
-                class="w-6 h-6 text-primary-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="1.5"
-                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                />
-              </svg>
-            </div>
-
-            <p class="text-sm font-medium text-gray-300">
-              No upcoming bookings
-            </p>
-
-            <p class="text-xs text-gray-500 mt-1">
-              You have no upcoming court bookings.
-            </p>
-
-            <button
-              class="btn-primary mt-4"
-              @click="goTo('/member/book-court')"
-            >
-              Book a Court
-            </button>
-          </div>
-
-          <!-- Booking list -->
-          <div
-            v-else
-            class="space-y-3"
-          >
-            <div
-              v-for="booking in upcomingBookings"
-              :key="booking.id"
-              class="flex items-center justify-between p-3 rounded-xl bg-white/[0.02] border border-white/5 hover:border-primary-500/20 transition-all duration-200"
-            >
-              <div class="flex items-center gap-3">
-
-                <div
-                  class="w-10 h-10 rounded-lg bg-primary-500/10 flex items-center justify-center"
-                >
-                  <svg
-                    class="w-5 h-5 text-primary-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="1.5"
-                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                    />
-                  </svg>
-                </div>
-
-                <div>
-                  <p class="text-sm font-medium text-gray-200">
-                    {{ booking.court_name }}
-                  </p>
-
-                  <p class="text-xs text-gray-500">
-                    {{ booking.club_name }}
-                  </p>
-
-                  <p class="text-xs text-gray-500 mt-1">
-                    {{ booking.date }}
-                    |
-                    {{ formatTime(booking.start_time) }}
-                    -
-                    {{ formatTime(booking.end_time) }}
-                  </p>
-                </div>
-
-              </div>
-
-              <span
-                class="px-2.5 py-1 rounded-full text-xs font-medium capitalize"
-                :class="statusClass(booking.status)"
-              >
-                {{ booking.status }}
-              </span>
-
-            </div>
-          </div>
+          <p v-else class="mt-3 text-xs text-slate-500">No upcoming events.</p>
         </div>
-      </div>
-
-      <!-- Right -->
-      <div class="space-y-6">
-
-        <!-- Quick Actions -->
-        <div
-          class="glass p-5 fade-up"
-          style="animation-delay: 0.1s"
-        >
-          <h3 class="text-base font-semibold text-gray-200 mb-4">
-            Quick Actions
-          </h3>
-
-          <div class="space-y-2">
-
-            <button
-              @click="goTo('/member/book-court')"
-              class="btn-primary w-full flex items-center gap-3 justify-center"
-            >
-              <svg
-                class="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                />
-              </svg>
-
-              Book a Court
-            </button>
-
-            <button
-              @click="goTo('/member/my-bookings')"
-              class="btn-secondary w-full flex items-center gap-3 justify-center"
-            >
-              <svg
-                class="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                />
-              </svg>
-
-              My Bookings
-            </button>
-
-            <button
-              @click="goTo('/profile')"
-              class="btn-secondary w-full flex items-center gap-3 justify-center"
-            >
-              <svg
-                class="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M12 12a4 4 0 100-8 4 4 0 000 8zm-7 8a7 7 0 0114 0"
-                />
-              </svg>
-
-              Manage Profile
-            </button>
-
-          </div>
-        </div>
-
-        <!-- Club Activity -->
-        <div
-          class="glass p-5 fade-up"
-          style="animation-delay: 0.4s"
-        >
-          <h3 class="text-base font-semibold text-gray-200 mb-4">
-            Club Activity
-          </h3>
-
-          <div class="space-y-4">
-
-            <div
-              class="flex items-center justify-between p-3 rounded-xl bg-white/[0.02] border border-white/5"
-            >
-              <div>
-                <p class="text-xs text-gray-500">
-                  Upcoming bookings
-                </p>
-
-                <p class="text-lg font-semibold text-gray-200 mt-1">
-                  {{ upcomingBookings.length }}
-                </p>
-              </div>
-
-              <div
-                class="w-9 h-9 rounded-lg bg-primary-500/10 flex items-center justify-center"
-              >
-                <svg
-                  class="w-4 h-4 text-primary-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="1.5"
-                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-              </div>
-            </div>
-
-            <div
-              class="flex items-center justify-between p-3 rounded-xl bg-white/[0.02] border border-white/5"
-            >
-              <div>
-                <p class="text-xs text-gray-500">
-                  Membership
-                </p>
-
-                <p
-                  class="text-sm font-semibold mt-1 capitalize"
-                  :class="
-                    activeMembership
-                      ? 'text-emerald-400'
-                      : 'text-gray-400'
-                  "
-                >
-                  {{ activeMembership?.status || 'Inactive' }}
-                </p>
-              </div>
-
-              <div
-                class="w-9 h-9 rounded-lg bg-emerald-500/10 flex items-center justify-center"
-              >
-                <svg
-                  class="w-4 h-4 text-emerald-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="1.5"
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
-              </div>
-            </div>
-
-          </div>
-        </div>
-
-      </div>
+      </section>
     </div>
-
   </div>
 </template>
-
 <script setup>
 import { computed, onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
 import api from '@/api/axios'
-
-const router = useRouter()
-const authStore = useAuthStore()
-
-const bookings = ref([])
-const memberships = ref([])
-
-const loading = ref(true)
-const error = ref('')
-
-const firstName = computed(() => {
-  const user = authStore.user
-
-  if (!user) return 'Member'
-
-  const name =
-    user.name ||
-    user.full_name ||
-    user.username ||
-    user.email ||
-    'Member'
-
-  return String(name).split(' ')[0]
-})
-
-const activeMembership = computed(() => {
-  if (!memberships.value.length) return null
-
-  return (
-    memberships.value.find(
-      (membership) =>
-        String(membership.status).toLowerCase() === 'active'
-    ) || null
-  )
-})
-
-const daysLeft = computed(() => {
-  if (!activeMembership.value?.end_date) return 0
-
-  const end = new Date(
-    `${activeMembership.value.end_date}T23:59:59`
-  )
-
-  const today = new Date()
-
-  const difference = Math.ceil(
-    (end.getTime() - today.getTime()) /
-      (1000 * 60 * 60 * 24)
-  )
-
-  return Math.max(0, difference)
-})
-
-const upcomingBookings = computed(() => {
-  const now = new Date()
-
-  return bookings.value
-    .filter((booking) => {
-      if (!booking.date) return false
-
-      const status = String(
-        booking.status || ''
-      ).toLowerCase()
-
-      if (
-        status === 'cancelled' ||
-        status === 'released' ||
-        status === 'overridden'
-      ) {
-        return false
-      }
-
-      const time =
-        booking.start_time ||
-        '00:00:00'
-
-      const bookingDate = new Date(
-        `${booking.date}T${time}`
-      )
-
-      return bookingDate >= now
-    })
-    .sort((a, b) => {
-      const first = new Date(
-        `${a.date}T${a.start_time || '00:00:00'}`
-      )
-
-      const second = new Date(
-        `${b.date}T${b.start_time || '00:00:00'}`
-      )
-
-      return first - second
-    })
-    .slice(0, 5)
-})
-
-async function loadDashboard() {
-  loading.value = true
+import { useAuthStore } from '@/stores/auth'
+const auth = useAuthStore(),
+  bookings = ref([]),
+  events = ref([]),
+  error = ref('')
+const firstName = computed(
+  () => String(auth.user?.name || auth.user?.username || 'Member').split(' ')[0],
+)
+function dt(b) {
+  return new Date(`${b.date}T${String(b.start_time || '00:00').slice(0, 8)}`)
+}
+const upcoming = computed(() =>
+  bookings.value
+    .filter((b) => b.status === 'active' && dt(b) >= new Date())
+    .sort((a, b) => dt(a) - dt(b)),
+)
+const nextBooking = computed(() => upcoming.value[0] || null)
+function formatDate(v) {
+  if (!v) return '—'
+  return new Intl.DateTimeFormat('en-IN', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  }).format(new Date(`${v}T00:00:00`))
+}
+function formatTime(v) {
+  if (!v) return '—'
+  const [h, m] = String(v).split(':')
+  const d = new Date()
+  d.setHours(+h, +m || 0)
+  return new Intl.DateTimeFormat('en-IN', { hour: 'numeric', minute: '2-digit' }).format(d)
+}
+async function load() {
   error.value = ''
-
   try {
-    const [bookingResponse, membershipResponse] =
-      await Promise.all([
-        api.get('/bookings'),
-        api.get('/memberships/my-memberships'),
-      ])
-
-    bookings.value = Array.isArray(bookingResponse.data)
-      ? bookingResponse.data
-      : []
-
-    memberships.value = Array.isArray(
-      membershipResponse.data
-    )
-      ? membershipResponse.data
-      : []
+    const [b, e] = await Promise.all([api.get('/bookings'), api.get('/events')])
+    bookings.value = Array.isArray(b.data) ? b.data : []
+    events.value = Array.isArray(e.data) ? e.data : []
   } catch (err) {
-    console.error(
-      'Failed to load member dashboard:',
-      err
-    )
-
-    error.value =
-      err?.response?.data?.message ||
-      'Unable to load dashboard data.'
-  } finally {
-    loading.value = false
+    error.value = err?.response?.data?.message || 'Unable to load dashboard.'
   }
 }
-
-function formatTime(time) {
-  if (!time) return ''
-
-  return String(time).slice(0, 5)
-}
-
-function statusClass(status) {
-  const value = String(status || '').toLowerCase()
-
-  if (
-    value === 'active' ||
-    value === 'confirmed'
-  ) {
-    return 'bg-emerald-500/10 text-emerald-400'
-  }
-
-  if (
-    value === 'cancelled' ||
-    value === 'released' ||
-    value === 'overridden'
-  ) {
-    return 'bg-red-500/10 text-red-400'
-  }
-
-  return 'bg-amber-500/10 text-amber-400'
-}
-
-function goTo(path) {
-  router.push(path)
-}
-
 onMounted(async () => {
-  if (!authStore.user) {
-    await authStore.restoreUser()
-  }
-
-  await loadDashboard()
+  if (!auth.user) await auth.restoreUser()
+  await load()
 })
 </script>
-
 <style scoped>
-.fade-up {
-  animation: fade-up-in 0.5s ease-out both;
+.panel {
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid #dfe7f1;
+  border-radius: 18px;
+  box-shadow: 0 12px 35px rgba(51, 65, 85, 0.06);
 }
-
-@keyframes fade-up-in {
-  from {
-    opacity: 0;
-    transform: translateY(24px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.kicker {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+.title {
+  font-size: 28px;
+  line-height: 1.15;
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  color: #172033;
+}
+.muted {
+  color: #64748b;
+}
+.stat {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 18px;
+}
+.pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.btn {
+  border-radius: 11px;
+  padding: 10px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  transition: 0.2s;
+}
+.btn-primary2 {
+  background: #4f46e5;
+  color: white;
+  box-shadow: 0 8px 18px rgba(79, 70, 229, 0.18);
+}
+.btn-soft {
+  background: #f8fafc;
+  color: #475569;
+  border: 1px solid #dfe7f1;
+}
+.field2 {
+  width: 100%;
+  border: 1px solid #dbe4ef;
+  border-radius: 11px;
+  background: #f8fafc;
+  padding: 10px 12px;
+  color: #172033;
+  outline: none;
+}
+.field2:focus {
+  border-color: #818cf8;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
 }
 </style>

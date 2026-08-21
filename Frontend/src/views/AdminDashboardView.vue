@@ -945,6 +945,7 @@
                     </span>
                   </div>
                   <h4 class="event-card-title">{{ court.name }}</h4>
+                  <div class="court-sport-type">{{ sportLabel(court.sport_type) }}</div>
 
                   <!-- Default/Custom Badge -->
                   <div class="court-settings-badge">
@@ -1904,6 +1905,17 @@
                   </div>
                 </div>
 
+                <div class="form-row">
+                  <div class="form-group">
+                    <label>Sport / Court Type</label>
+                    <select v-model="courtForm.sport_type" required>
+                      <option v-for="sport in courtStore.sportsTypes" :key="sport.value" :value="sport.value">
+                        {{ sport.icon }} {{ sport.label }}
+                      </option>
+                    </select>
+                  </div>
+                </div>
+
                 <!-- Show Club setup fields only if this is the first court (courts array is empty) -->
                 <div v-if="!courtStore.club" class="form-row">
                   <div class="form-group">
@@ -1948,6 +1960,16 @@
                   <div class="form-group">
                     <label>Court Name</label>
                     <input type="text" v-model="courtForm.court_name" required />
+                  </div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label>Sport / Court Type</label>
+                    <select v-model="courtForm.sport_type" required>
+                      <option v-for="sport in courtStore.sportsTypes" :key="sport.value" :value="sport.value">
+                        {{ sport.icon }} {{ sport.label }}
+                      </option>
+                    </select>
                   </div>
                 </div>
                 <div class="form-row">
@@ -2608,6 +2630,7 @@ const clubForm = ref({
 
 const courtForm = ref({
   court_name: '',
+  sport_type: 'tennis',
   is_active: true,
   use_defaults: true, // new
   open_time_override: '',
@@ -2647,7 +2670,16 @@ watch(
 
 // Modal Handlers
 const openAddCourtModal = () => {
-  courtForm.value = { court_name: '', club_name: '', club_address: '', is_active: true }
+  courtForm.value = {
+    court_name: '',
+    sport_type: 'tennis',
+    is_active: true,
+    use_defaults: true,
+    open_time_override: '',
+    close_time_override: '',
+    slot_duration_override: '',
+  }
+
   showAddCourtModal.value = true
 }
 
@@ -2673,6 +2705,7 @@ const closeEditCourtModal = () => {
 const handleUpdateCourt = async () => {
   const payload = {
     court_name: courtForm.value.court_name,
+    sport_type: courtForm.value.sport_type,
     is_active: courtForm.value.is_active,
     open_time_override: courtForm.value.use_defaults
       ? null
@@ -2749,6 +2782,7 @@ const openEditCourtModal = (court) => {
     court.open_time_override || court.close_time_override || court.slot_duration_override
   courtForm.value = {
     court_name: court.name,
+    sport_type: court.sport_type || 'multi-purpose',
     is_active: court.is_active,
     use_defaults: !hasOverrides,
     open_time_override: court.open_time_override || '',
@@ -2756,6 +2790,11 @@ const openEditCourtModal = (court) => {
     slot_duration_override: court.slot_duration_override || '',
   }
   showEditCourtModal.value = true
+}
+
+const sportLabel = (value) => {
+  const sport = courtStore.sportsTypes.find((item) => item.value === value)
+  return sport ? `${sport.icon} ${sport.label}` : '🏟️ Multi-purpose'
 }
 
 // Header title and subtitle reactive computation based on active sidebar tab
@@ -4988,8 +5027,11 @@ function handleAvatarUpload(event) {
   border: 1px solid rgba(226, 232, 240, 0.8);
   box-shadow: 0 24px 60px rgba(15, 23, 42, 0.15);
   width: 100%;
-  max-width: 38rem;
+  max-width: 42rem;
+  max-height: calc(100dvh - 3rem);
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
   animation: scaleUp 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
@@ -4997,8 +5039,13 @@ function handleAvatarUpload(event) {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1.5rem 2rem;
+  padding: 1.25rem 1.75rem;
   border-bottom: 1px solid rgba(226, 232, 240, 0.6);
+  background: #ffffff;
+  flex: 0 0 auto;
+  position: sticky;
+  top: 0;
+  z-index: 2;
 }
 
 .modal-header h3 {
@@ -5025,10 +5072,14 @@ function handleAvatarUpload(event) {
 }
 
 .modal-form {
-  padding: 2rem;
+  padding: 1.5rem 1.75rem;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1.15rem;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
 }
 
 .form-row {
@@ -5071,11 +5122,35 @@ function handleAvatarUpload(event) {
   box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
 }
 
+/* Keep long court forms fully inside the viewport. */
+.modal-form::-webkit-scrollbar {
+  width: 8px;
+}
+.modal-form::-webkit-scrollbar-track {
+  background: transparent;
+}
+.modal-form::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border: 2px solid #ffffff;
+  border-radius: 999px;
+}
+
+.toggle-section {
+  padding-top: 0.15rem;
+}
+
 .modal-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 1rem;
-  margin-top: 1rem;
+  gap: 0.75rem;
+  margin: 0.35rem -1.75rem -1.5rem;
+  padding: 1rem 1.75rem;
+  position: sticky;
+  bottom: -1.5rem;
+  z-index: 2;
+  background: rgba(255, 255, 255, 0.97);
+  border-top: 1px solid #e8edf4;
+  backdrop-filter: blur(8px);
 }
 
 .cancel-modal-btn {
@@ -5359,6 +5434,21 @@ function handleAvatarUpload(event) {
 }
 
 /* Responsive Rules */
+
+.court-sport-type {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  margin: .35rem 0 .15rem;
+  padding: .28rem .55rem;
+  border: 1px solid #dfe6f0;
+  border-radius: 999px;
+  background: #f6f8fc;
+  color: #526078;
+  font-size: .72rem;
+  font-weight: 700;
+}
+
 @media (max-width: 1024px) {
   .admin-sidebar {
     transform: translateX(-100%);
@@ -5423,13 +5513,27 @@ function handleAvatarUpload(event) {
 
   .modal-card {
     max-width: 100%;
-    margin: 0 1rem;
+    max-height: calc(100dvh - 1rem);
+    margin: 0;
+    border-radius: 1.25rem;
+  }
+  .modal-overlay {
+    padding: 0.5rem;
+  }
+  .modal-header {
+    padding: 1rem 1.25rem;
   }
   .form-row {
     grid-template-columns: 1fr;
   }
   .modal-form {
     padding: 1.25rem;
+    gap: 1rem;
+  }
+  .modal-actions {
+    margin: 0.25rem -1.25rem -1.25rem;
+    padding: 0.9rem 1.25rem;
+    bottom: -1.25rem;
   }
 }
 
