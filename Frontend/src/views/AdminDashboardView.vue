@@ -287,26 +287,6 @@
             <span>{{ currentDate }}</span>
           </div>
 
-          <!-- Notification Bell -->
-          <button class="header-action-btn" aria-label="Notifications" @click="handleNotifications">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              stroke-width="2"
-              width="20"
-              height="20"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 01-6 0v-1m6 0H9"
-              />
-            </svg>
-            <span class="unread-dot">3</span>
-          </button>
-
           <!-- Top Header Logout Button -->
           <button class="top-header-logout-btn" @click="handleLogout" title="Logout of Admin Panel">
             <svg
@@ -622,7 +602,7 @@
               <!-- Recent Announcements -->
               <div class="dual-column">
                 <div class="card-box">
-                  <div class="box-header">
+                  <div class="box-header flex-between">
                     <div class="header-title">
                       <div class="icon-bubble orange">
                         <svg
@@ -643,14 +623,33 @@
                       </div>
                       <h3>Recent Announcements</h3>
                     </div>
+                    <button 
+                      class="view-all-link-btn" 
+                      @click="activeNav = 'Announcements'"
+                      style="background: none; border: none; font-size: 0.82rem; font-weight: 600; color: #2563eb; cursor: pointer; padding: 0.25rem 0.5rem;"
+                    >
+                      View All →
+                    </button>
                   </div>
 
-                  <div class="announcements-list">
-                    <div v-for="item in announcements" :key="item.id" class="announcement-item">
+                  <div v-if="announcements.length === 0" style="padding: 1.5rem 1rem; text-align: center; color: #94a3b8; font-size: 0.88rem;">
+                    No announcements published yet.
+                  </div>
+                  <div v-else class="announcements-list">
+                    <div 
+                      v-for="item in announcements.slice(0, 3)" 
+                      :key="item.id" 
+                      class="announcement-item"
+                      style="cursor: pointer;"
+                      @click="openAnnouncementDetails(item)"
+                    >
                       <div class="announcement-top">
-                        <span class="announcement-badge" :class="item.categoryClass">{{
-                          item.category
-                        }}</span>
+                        <div style="display: flex; align-items: center; gap: 0.4rem;">
+                          <span class="announcement-badge" :class="item.categoryClass">{{
+                            item.category
+                          }}</span>
+                          <span v-if="!item.is_read" class="unread-indicator-dot" title="Unread"></span>
+                        </div>
                         <span class="announcement-date">{{ item.date }}</span>
                       </div>
                       <h4 class="announcement-title">{{ item.title }}</h4>
@@ -1450,26 +1449,153 @@
           <!-- TAB 6: ANNOUNCEMENTS PREVIEW -->
           <div v-else-if="activeNav === 'Announcements'" class="tab-pane">
             <section class="section-block">
-              <div class="block-header flex-between">
+              <div class="block-header flex-between flex-wrap gap-4">
                 <div>
-                  <h3>Broadcast Announcements</h3>
-                  <span class="subtext">Facility updates, policy changes, and tournament news</span>
+                  <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span style="font-size: 1.5rem;">📢</span>
+                    <h3 style="margin: 0;">Broadcast & Announcements Hub</h3>
+                  </div>
+                  <span class="subtext">Facility updates, tournament schedules, policy notices, and court maintenance</span>
                 </div>
-                <button class="btn-primary-action" @click="handleCreateAnnouncement">
-                  + Create Announcement
-                </button>
+                <div class="header-action-buttons" style="display: flex; gap: 0.75rem; align-items: center;">
+                  <button 
+                    class="btn-secondary-action" 
+                    title="Refresh Announcements"
+                    @click="refreshAnnouncements"
+                    :disabled="notificationStore.isLoading"
+                    style="display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.55rem 0.95rem;"
+                  >
+                    <svg :class="{ 'spin-animate': notificationStore.isLoading }" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    <span>Refresh</span>
+                  </button>
+                  <button 
+                    class="btn-primary-action" 
+                    @click="handleCreateAnnouncement"
+                    style="display: inline-flex; align-items: center; gap: 0.4rem; background: linear-gradient(135deg, #2563eb, #4f46e5); box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="16" height="16">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                    </svg>
+                    <span>+ Create Announcement</span>
+                  </button>
+                </div>
               </div>
 
-              <div class="card-box">
-                <div class="announcements-list">
-                  <div v-for="item in announcements" :key="item.id" class="announcement-item">
-                    <div class="announcement-top">
-                      <span class="announcement-badge" :class="item.categoryClass">{{
-                        item.category
-                      }}</span>
-                      <span class="announcement-date">{{ item.date }}</span>
+              <!-- Filter & Search Toolbar -->
+              <div class="announcements-toolbar" style="margin-bottom: 1.25rem; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem; background: #ffffff; padding: 1rem 1.25rem; border-radius: 1rem; border: 1px solid #e2e8f0; box-shadow: 0 2px 6px rgba(15, 23, 42, 0.02);">
+                <!-- Category Filter Pills -->
+                <div class="filter-pills-group" style="display: flex; flex-wrap: wrap; gap: 0.45rem;">
+                  <button 
+                    v-for="cat in [
+                      { name: 'All', icon: '✨' },
+                      { name: 'General', icon: '📢' },
+                      { name: 'Broadcast', icon: '📣' },
+                      { name: 'Tournament', icon: '🏆' },
+                      { name: 'Policy', icon: '📜' },
+                      { name: 'Maintenance', icon: '🛠️' }
+                    ]" 
+                    :key="cat.name"
+                    class="filter-pill-btn"
+                    :class="{ active: announcementsCategoryFilter === cat.name }"
+                    @click="announcementsCategoryFilter = cat.name"
+                  >
+                    <span>{{ cat.icon }} {{ cat.name }}</span>
+                    <span v-if="cat.name === 'All'" class="pill-count">({{ announcements.length }})</span>
+                    <span v-else class="pill-count">({{ announcements.filter(a => a.category.toLowerCase() === cat.name.toLowerCase()).length }})</span>
+                  </button>
+                </div>
+
+                <!-- Search Input -->
+                <div class="search-input-wrapper" style="position: relative; min-width: 280px;">
+                  <svg style="position: absolute; left: 0.85rem; top: 50%; transform: translateY(-50%); color: #94a3b8;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  <input 
+                    v-model="announcementsSearchQuery" 
+                    type="text" 
+                    placeholder="Search announcements..." 
+                    class="announcement-search-input"
+                    style="width: 100%; padding: 0.55rem 0.85rem 0.55rem 2.4rem; border: 1px solid #cbd5e1; border-radius: 0.6rem; font-size: 0.88rem; outline: none; transition: border-color 0.2s;"
+                  />
+                  <button 
+                    v-if="announcementsSearchQuery"
+                    @click="announcementsSearchQuery = ''"
+                    style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 0.9rem;"
+                  >✕</button>
+                </div>
+              </div>
+
+              <div class="card-box" style="padding: 1.25rem;">
+                <!-- Loading State -->
+                <div v-if="notificationStore.isLoading && announcements.length === 0" class="announcements-loading" style="padding: 3.5rem; text-align: center; color: #64748b;">
+                  <div class="spinner-sm" style="margin: 0 auto 1rem;"></div>
+                  <p style="font-weight: 500;">Fetching facility announcements...</p>
+                </div>
+
+                <!-- Empty State -->
+                <div v-else-if="filteredAnnouncements.length === 0" class="empty-announcements-state" style="padding: 3.5rem 2rem; text-align: center;">
+                  <div style="width: 64px; height: 64px; margin: 0 auto 1.25rem; border-radius: 999px; background: linear-gradient(135deg, #eff6ff, #dbeafe); color: #2563eb; display: grid; place-items: center; font-size: 1.8rem; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);">
+                    📢
+                  </div>
+                  <h4 style="font-size: 1.15rem; font-weight: 700; color: #0f172a; margin-bottom: 0.35rem;">No Announcements Found</h4>
+                  <p style="font-size: 0.9rem; color: #64748b; margin-bottom: 1.5rem; max-width: 420px; margin-left: auto; margin-right: auto; line-height: 1.5;">
+                    {{ announcementsSearchQuery || announcementsCategoryFilter !== 'All' ? 'No announcements match your search or filter criteria. Try changing filters or clearing search.' : 'Keep your players and club members informed by broadcasting your first facility announcement.' }}
+                  </p>
+                  <button class="btn-primary-action" @click="handleCreateAnnouncement" style="padding: 0.65rem 1.25rem;">
+                    + Create First Announcement
+                  </button>
+                </div>
+
+                <!-- Announcements List -->
+                <div v-else class="announcements-list-rich">
+                  <div 
+                    v-for="item in filteredAnnouncements" 
+                    :key="item.id" 
+                    class="announcement-item-rich"
+                    :style="{
+                      borderLeftWidth: '5px',
+                      borderLeftColor: item.category === 'Maintenance' ? '#ef4444' : item.category === 'Policy' ? '#f59e0b' : item.category === 'Tournament' ? '#10b981' : item.category === 'Broadcast' ? '#8b5cf6' : '#2563eb'
+                    }"
+                    @click="openAnnouncementDetails(item)"
+                  >
+                    <div class="announcement-item-main">
+                      <div class="announcement-top" style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.5rem;">
+                        <span class="announcement-badge" :class="item.categoryClass">
+                          {{ item.icon }} {{ item.category }}
+                        </span>
+                        <span class="announcement-date" style="font-size: 0.82rem; color: #64748b; font-weight: 500;">
+                          {{ item.date }}
+                        </span>
+                      </div>
+                      <h4 class="announcement-title" style="font-size: 1.05rem; font-weight: 700; color: #0f172a; margin: 0 0 0.4rem; line-height: 1.35;">
+                        {{ item.title }}
+                      </h4>
+                      <p v-if="item.body" class="announcement-body-preview" style="font-size: 0.88rem; color: #475569; line-height: 1.55; margin: 0;">
+                        {{ item.body }}
+                      </p>
                     </div>
-                    <h4 class="announcement-title">{{ item.title }}</h4>
+
+                    <div class="announcement-item-actions" style="display: flex; align-items: center; gap: 0.5rem;" @click.stop>
+                      <button 
+                        class="btn-view-announcement" 
+                        @click="openAnnouncementDetails(item)"
+                        style="display: inline-flex; align-items: center; gap: 0.35rem;"
+                      >
+                        <span>View Details</span>
+                        <span>→</span>
+                      </button>
+                      <button 
+                        class="btn-icon-trash"
+                        title="Delete Announcement"
+                        @click="handleDeleteAnnouncement(item)"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="16" height="16">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -2595,6 +2721,178 @@
             </div>
           </div>
         </div>
+
+        <!-- CREATE ANNOUNCEMENT MODAL -->
+        <div v-if="showCreateAnnouncementModal" class="modal-overlay" @click.self="closeCreateAnnouncementModal">
+          <div class="modal-card" style="max-width: 640px; width: 95vw; max-height: 90vh; overflow-y: auto;">
+            <!-- Modern Header -->
+            <div class="modal-header" style="background: linear-gradient(135deg, #1e293b, #0f172a); color: #ffffff; border-radius: 1rem 1rem 0 0; padding: 1.25rem 1.5rem;">
+              <div style="display: flex; align-items: center; gap: 0.85rem;">
+                <div style="width: 42px; height: 42px; border-radius: 12px; background: linear-gradient(135deg, #3b82f6, #6366f1); display: grid; place-items: center; font-size: 1.35rem; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);">
+                  📢
+                </div>
+                <div>
+                  <h3 style="margin: 0; font-size: 1.2rem; font-weight: 800; color: #ffffff; letter-spacing: -0.02em;">Broadcast New Announcement</h3>
+                  <span style="font-size: 0.82rem; color: #94a3b8;">Publish facility updates, tournament alerts, and court maintenance notices</span>
+                </div>
+              </div>
+              <button class="close-modal-btn" @click="closeCreateAnnouncementModal" style="color: #94a3b8; background: rgba(255,255,255,0.08); border-radius: 999px; width: 32px; height: 32px; display: grid; place-items: center; border: none; font-size: 1rem;">✕</button>
+            </div>
+
+            <!-- Quick Template Bar -->
+            <div style="background: #f8fafc; border-bottom: 1px solid #e2e8f0; padding: 0.75rem 1.5rem; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+              <span style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Quick Starters:</span>
+              <button type="button" class="quick-template-btn" @click="applyAnnouncementTemplate('maintenance')">
+                🛠️ Maintenance
+              </button>
+              <button type="button" class="quick-template-btn" @click="applyAnnouncementTemplate('tournament')">
+                🏆 Tournament
+              </button>
+              <button type="button" class="quick-template-btn" @click="applyAnnouncementTemplate('policy')">
+                📜 Policy
+              </button>
+              <button type="button" class="quick-template-btn" @click="applyAnnouncementTemplate('broadcast')">
+                📣 Hours Flash
+              </button>
+            </div>
+
+            <div class="modal-body" style="padding: 1.5rem;">
+              <!-- Title Input -->
+              <div class="form-group" style="margin-bottom: 1.25rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+                  <label class="form-label font-bold" style="font-size: 0.85rem; color: #1e293b; margin: 0;">
+                    Announcement Title / Headline <span style="color: #ef4444;">*</span>
+                  </label>
+                  <span style="font-size: 0.75rem; color: #94a3b8;">{{ announcementForm.title.length }}/100</span>
+                </div>
+                <input 
+                  v-model="announcementForm.title" 
+                  type="text" 
+                  maxlength="100"
+                  class="form-control broadcast-input" 
+                  placeholder="e.g., Scheduled Synthetic Court Resurfacing & Lighting Upgrade"
+                  required
+                />
+              </div>
+
+              <!-- Category Selector Cards -->
+              <div class="form-group" style="margin-bottom: 1.25rem;">
+                <label class="form-label font-bold" style="display: block; font-size: 0.85rem; color: #1e293b; margin-bottom: 0.5rem;">
+                  Category
+                </label>
+                <div class="category-selector-grid">
+                  <button 
+                    v-for="cat in [
+                      { name: 'General', icon: '📢', color: 'blue' },
+                      { name: 'Broadcast', icon: '📣', color: 'purple' },
+                      { name: 'Tournament', icon: '🏆', color: 'emerald' },
+                      { name: 'Policy', icon: '📜', color: 'orange' },
+                      { name: 'Maintenance', icon: '🛠️', color: 'rose' }
+                    ]"
+                    :key="cat.name"
+                    type="button"
+                    class="category-card-btn"
+                    :class="[{ active: announcementForm.category === cat.name }, 'cat-' + cat.color]"
+                    @click="announcementForm.category = cat.name"
+                    style="justify-content: center; padding: 0.65rem 0.5rem;"
+                  >
+                    <span class="cat-icon">{{ cat.icon }}</span>
+                    <span class="cat-name">{{ cat.name }}</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Message / Body Textarea -->
+              <div class="form-group">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+                  <label class="form-label font-bold" style="font-size: 0.85rem; color: #1e293b; margin: 0;">
+                    Announcement Message Content <span style="color: #ef4444;">*</span>
+                  </label>
+                  <span style="font-size: 0.75rem; color: #94a3b8;">{{ announcementForm.body.length }}/500</span>
+                </div>
+                <textarea 
+                  v-model="announcementForm.body" 
+                  rows="5" 
+                  maxlength="500"
+                  class="form-control broadcast-textarea" 
+                  placeholder="Provide comprehensive details, operational timings, affected courts, or rules..."
+                  required
+                ></textarea>
+              </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="modal-footer" style="display: flex; justify-content: flex-end; align-items: center; gap: 0.85rem; padding: 1.25rem 1.5rem; background: #f8fafc; border-top: 1px solid #e2e8f0; border-radius: 0 0 1rem 1rem;">
+              <button type="button" class="cancel-modal-btn" @click="closeCreateAnnouncementModal">Cancel</button>
+              <button 
+                type="button"
+                class="submit-modal-btn broadcast-submit-btn" 
+                :disabled="isSubmittingAnnouncement"
+                @click="submitCreateAnnouncement"
+              >
+                <span v-if="isSubmittingAnnouncement" class="spinner-xs"></span>
+                <span v-else style="font-size: 1rem;">🚀</span>
+                <span>{{ isSubmittingAnnouncement ? 'Publishing...' : 'Publish Announcement' }}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ANNOUNCEMENT DETAILS MODAL -->
+        <div v-if="showAnnouncementDetailsModal && selectedAnnouncement" class="modal-overlay" @click.self="closeAnnouncementDetails">
+          <div class="modal-card modal-card-details" style="max-width: 580px; width: 95vw;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #1e293b, #0f172a); color: #ffffff; border-radius: 1rem 1rem 0 0; padding: 1.25rem 1.5rem;">
+              <div style="display: flex; align-items: center; gap: 0.6rem;">
+                <span class="announcement-badge" :class="selectedAnnouncement.categoryClass" style="font-size: 0.82rem; padding: 0.35rem 0.75rem;">
+                  {{ selectedAnnouncement.icon || '📢' }} {{ selectedAnnouncement.category }}
+                </span>
+                <span style="font-size: 0.82rem; color: #94a3b8;">
+                  {{ selectedAnnouncement.date }}
+                </span>
+              </div>
+              <button class="close-modal-btn" @click="closeAnnouncementDetails" style="color: #94a3b8; background: rgba(255,255,255,0.08); border-radius: 999px; width: 32px; height: 32px; display: grid; place-items: center; border: none; font-size: 1rem;">✕</button>
+            </div>
+
+            <div class="modal-body" style="padding: 1.5rem;">
+              <h3 style="font-size: 1.25rem; font-weight: 800; color: #0f172a; margin: 0 0 1rem; line-height: 1.35; letter-spacing: -0.01em;">
+                {{ selectedAnnouncement.title }}
+              </h3>
+
+              <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.85rem; padding: 1.25rem; margin-bottom: 1.25rem;">
+                <h5 style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; margin: 0 0 0.5rem; font-weight: 700;">Announcement Details</h5>
+                <p style="font-size: 0.95rem; color: #334155; line-height: 1.65; white-space: pre-wrap; margin: 0;">
+                  {{ selectedAnnouncement.body || 'No detailed message description provided.' }}
+                </p>
+              </div>
+
+              <div class="announcement-meta-grid" style="grid-template-columns: 1fr 1fr;">
+                <div class="meta-card">
+                  <span class="meta-label">Category</span>
+                  <span class="meta-val font-bold">{{ selectedAnnouncement.category }}</span>
+                </div>
+                <div class="meta-card">
+                  <span class="meta-label">Date Published</span>
+                  <span class="meta-val">{{ selectedAnnouncement.date }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; padding: 1.25rem 1.5rem; background: #f8fafc; border-top: 1px solid #e2e8f0; border-radius: 0 0 1rem 1rem;">
+              <button 
+                type="button"
+                class="cancel-modal-btn danger-btn" 
+                style="background: #fef2f2; color: #ef4444; border: 1px solid #fecaca; display: inline-flex; align-items: center; gap: 0.35rem;"
+                @click="handleDeleteAnnouncement(selectedAnnouncement)"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="15" height="15">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                <span>Delete Announcement</span>
+              </button>
+              <button type="button" class="cancel-modal-btn" @click="closeAnnouncementDetails">Close</button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 </template>
@@ -2604,11 +2902,13 @@ import { ref, computed, onMounted, inject, watch, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useCourtStore } from '@/stores/courts'
+import { useNotificationStore } from '@/stores/notifications'
 import api from '@/api/axios'
 import { getSportImage } from '@/utils/sportImages'
 
 const toast = inject('toast')
 const courtStore = useCourtStore()
+const notificationStore = useNotificationStore()
 const showAddCourtModal = ref(false)
 const showEditCourtModal = ref(false)
 const currentEditCourt = ref(null)
@@ -2655,6 +2955,7 @@ onMounted(async () => {
     await auth.restoreUser()
   }
   courtStore.fetchCourts()
+  notificationStore.fetchNotifications()
 })
 
 watch(
@@ -2876,16 +3177,8 @@ const handleLogout = async () => {
   router.push({ name: 'login' })
 }
 
-const handleNotifications = () => {
-  alert('3 New Notifications: 1 system update, 2 event registrations')
-}
-
 const handleMemberAction = (action, name) => {
   alert(`${action} request for ${name}`)
-}
-
-const handleCreateAnnouncement = () => {
-  alert('Open Create Announcement modal')
 }
 
 // KPI Cards mock data
@@ -3408,30 +3701,142 @@ const courtUtilization = ref([
   { period: 'Morning (6 AM - 12 PM)', rate: 54, colorClass: 'bar-purple' },
 ])
 
-// Announcements mock data
-const announcements = ref([
-  {
-    id: 1,
-    title: 'Annual Facility Maintenance Shutdown Schedule Announced',
-    date: 'July 20, 2026',
+
+// Announcements & Broadcasts Live State & CRUD logic
+const announcementsSearchQuery = ref('')
+const announcementsCategoryFilter = ref('All')
+const showCreateAnnouncementModal = ref(false)
+const showAnnouncementDetailsModal = ref(false)
+const selectedAnnouncement = ref(null)
+const isSubmittingAnnouncement = ref(false)
+
+const announcementForm = ref({
+  title: '',
+  category: 'General',
+  body: '',
+})
+
+// Bind announcements reactively from notificationStore
+const announcements = computed(() => notificationStore.announcements)
+
+const filteredAnnouncements = computed(() => {
+  let list = announcements.value
+  if (announcementsCategoryFilter.value !== 'All') {
+    list = list.filter(
+      (item) => item.category.toLowerCase() === announcementsCategoryFilter.value.toLowerCase(),
+    )
+  }
+  if (announcementsSearchQuery.value.trim()) {
+    const q = announcementsSearchQuery.value.toLowerCase()
+    list = list.filter(
+      (item) =>
+        (item.title && item.title.toLowerCase().includes(q)) ||
+        (item.body && item.body.toLowerCase().includes(q)),
+    )
+  }
+  return list
+})
+
+const openCreateAnnouncementModal = () => {
+  announcementForm.value = {
+    title: '',
     category: 'General',
-    categoryClass: 'blue',
-  },
-  {
-    id: 2,
-    title: 'Updated Peak-Hour Court Reservation Policy & Guidelines',
-    date: 'July 15, 2026',
-    category: 'Policy',
-    categoryClass: 'orange',
-  },
-  {
-    id: 3,
-    title: 'Registration Open for Fall Junior Championship Series',
-    date: 'July 10, 2026',
-    category: 'Tournament',
-    categoryClass: 'emerald',
-  },
-])
+    body: '',
+  }
+  showCreateAnnouncementModal.value = true
+}
+
+const applyAnnouncementTemplate = (templateType) => {
+  if (templateType === 'maintenance') {
+    announcementForm.value = {
+      title: 'Scheduled Court Maintenance & Surface Care',
+      category: 'Maintenance',
+      body: 'Courts 1 and 2 will be temporarily unavailable on Thursday from 08:00 AM to 02:00 PM for deep surface cleaning and line recoating. Regular reservations resume at 02:30 PM.',
+    }
+  } else if (templateType === 'tournament') {
+    announcementForm.value = {
+      title: 'Registrations Open: Club Summer Grand Slam 2026',
+      category: 'Tournament',
+      body: 'Sign-ups are officially live for our annual summer championship! Singles and doubles brackets available with trophies, medal awards, and ₹50,000 cash prize pool.',
+    }
+  } else if (templateType === 'policy') {
+    announcementForm.value = {
+      title: 'Updated Court Booking Rules & Footwear Guidelines',
+      category: 'Policy',
+      body: 'All players are kindly reminded to check in with front desk reception prior to slot start time. Strict non-marking sports shoes are required on all indoor synthetic courts.',
+    }
+  } else if (templateType === 'broadcast') {
+    announcementForm.value = {
+      title: 'Flash Alert: Evening Facility Hours Extended',
+      category: 'Broadcast',
+      body: 'Due to overwhelming demand, court floodlight operating hours are extended until 11:00 PM throughout this weekend. Slots are now open on the booking calendar.',
+    }
+  }
+  toast ? toast.success('Template loaded!') : null
+}
+
+const handleCreateAnnouncement = () => {
+  openCreateAnnouncementModal()
+}
+
+const closeCreateAnnouncementModal = () => {
+  showCreateAnnouncementModal.value = false
+}
+
+const submitCreateAnnouncement = async () => {
+  if (!announcementForm.value.title.trim()) {
+    toast ? toast.error('Please enter an announcement title') : alert('Please enter an announcement title')
+    return
+  }
+  if (!announcementForm.value.body.trim()) {
+    toast ? toast.error('Please enter announcement message content') : alert('Please enter announcement message content')
+    return
+  }
+
+  isSubmittingAnnouncement.value = true
+  const result = await notificationStore.createAnnouncement({
+    title: announcementForm.value.title.trim(),
+    body: announcementForm.value.body.trim(),
+    category: announcementForm.value.category,
+  })
+  isSubmittingAnnouncement.value = false
+
+  if (result.success) {
+    closeCreateAnnouncementModal()
+    toast ? toast.success('Announcement broadcasted successfully! 📢') : alert('Announcement broadcasted!')
+  } else {
+    toast ? toast.error(result.error || 'Failed to broadcast announcement') : alert(result.error || 'Failed to broadcast')
+  }
+}
+
+const openAnnouncementDetails = (item) => {
+  selectedAnnouncement.value = item
+  showAnnouncementDetailsModal.value = true
+  if (!item.is_read) {
+    notificationStore.markAsRead(item.id)
+  }
+}
+
+const closeAnnouncementDetails = () => {
+  showAnnouncementDetailsModal.value = false
+  selectedAnnouncement.value = null
+}
+
+const refreshAnnouncements = async () => {
+  await notificationStore.fetchNotifications()
+  toast ? toast.success('Announcements refreshed') : null
+}
+
+const handleDeleteAnnouncement = (item) => {
+  if (!item) return
+  if (confirm(`Are you sure you want to delete "${item.title}"?`)) {
+    notificationStore.deleteAnnouncement(item.id)
+    if (selectedAnnouncement.value && selectedAnnouncement.value.id === item.id) {
+      closeAnnouncementDetails()
+    }
+    toast ? toast.success('Announcement removed') : null
+  }
+}
 
 // --- EVENTS MANAGEMENT STATE & CRUD LOGIC ---
 const eventViewMode = ref('grid') // 'grid' | 'table'
@@ -3778,6 +4183,50 @@ const financialSummary = ref({
   netProfit: '₹3,32,000',
   profitMargin: '+68.8%'
 })
+
+function exportAnalyticsCSV() {
+  const headers = ['Report Metric / Category', 'Value / Details', 'Timeframe / Period']
+  const rows = [
+    ['Report Title', 'Apex Club Revenue & Performance Analytics Report', `Generated: ${new Date().toLocaleDateString()}`],
+    ['Selected Timeframe', analyticsTimeframe.value, ''],
+    ['Total Revenue', 'INR 4,82,500', '+14.2% YoY'],
+    ['Peak Booking Hour', '06:00 PM - 08:00 PM', '96% Peak Occupancy'],
+    ['Membership Growth', '+64 Members', 'This Month'],
+    ['Retention Rate', '94.8%', 'Member Satisfaction'],
+    ['---', '---', '---'],
+    ['Monthly Revenue Trend', 'Revenue (INR)', 'Booking Volume'],
+    ['Jan', '2,45,000', '320'],
+    ['Feb', '2,80,000', '380'],
+    ['Mar', '3,10,000', '420'],
+    ['Apr', '2,90,000', '390'],
+    ['May', '3,60,000', '490'],
+    ['Jun', '4,20,000', '560'],
+    ['Jul', '4,50,000', '610'],
+    ['Aug', '4,82,000', '648'],
+    ['---', '---', '---'],
+    ['Sport Revenue Breakdown', 'Percentage', 'Revenue (INR)'],
+    ['Tennis Courts', '45%', '2,17,125'],
+    ['Badminton Arenas', '30%', '1,44,750'],
+    ['Squash Courts', '15%', '72,375'],
+    ['Swimming Lanes', '10%', '48,250'],
+    ['---', '---', '---'],
+    ['Court Utilization', 'Occupancy Rate', 'Period'],
+    ['Prime Hours (5 PM - 10 PM)', '92%', 'Evening'],
+    ['Afternoon (12 PM - 5 PM)', '68%', 'Afternoon'],
+    ['Morning (6 AM - 12 PM)', '54%', 'Morning'],
+  ]
+
+  const csvContent = [headers.join(','), ...rows.map(e => e.map(cell => `"${cell}"`).join(','))].join('\n')
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.setAttribute('href', url)
+  link.setAttribute('download', `clubdash_analytics_report_${new Date().toISOString().split('T')[0]}.csv`)
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  if (toast) toast.success('Analytics report downloaded successfully! 📊')
+}
 
 // --- MEMBERS DIRECTORY REACTIVE STATE ---
 const memberSearchQuery = ref('')
@@ -6708,4 +7157,522 @@ function handleAvatarUpload(event) {
   opacity: 0;
   transform: translateY(10px) scale(0.95);
 }
+
+/* Announcements & Broadcasts Component Styles */
+.filter-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 0.4rem 0.85rem;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.filter-pill-btn:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.filter-pill-btn.active {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+}
+
+.pill-count {
+  font-size: 0.75rem;
+  opacity: 0.85;
+}
+
+.quick-template-btn {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+  font-size: 0.76rem;
+  font-weight: 600;
+  padding: 0.3rem 0.65rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.quick-template-btn:hover {
+  background: #eff6ff;
+  border-color: #3b82f6;
+  color: #2563eb;
+  transform: translateY(-1px);
+}
+
+.broadcast-modal-grid {
+  display: grid;
+  grid-template-columns: 1.25fr 0.95fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+@media (max-width: 768px) {
+  .broadcast-modal-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.broadcast-input,
+.broadcast-textarea {
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.6rem;
+  font-size: 0.9rem;
+  font-family: inherit;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  outline: none;
+}
+
+.broadcast-input:focus,
+.broadcast-textarea:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+/* Category Selector Cards */
+.category-selector-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 0.5rem;
+}
+
+.category-card-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 0.75rem;
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 0.65rem;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s ease;
+}
+
+.category-card-btn:hover {
+  border-color: #94a3b8;
+  background: #f8fafc;
+}
+
+.category-card-btn .cat-icon {
+  font-size: 1.2rem;
+}
+
+.category-card-btn .cat-name {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.2;
+}
+
+.category-card-btn .cat-desc {
+  display: block;
+  font-size: 0.68rem;
+  color: #64748b;
+}
+
+.category-card-btn.active.cat-blue {
+  border-color: #2563eb;
+  background: #eff6ff;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+}
+
+.category-card-btn.active.cat-purple {
+  border-color: #8b5cf6;
+  background: #f5f3ff;
+  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.15);
+}
+
+.category-card-btn.active.cat-emerald {
+  border-color: #10b981;
+  background: #ecfdf5;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.15);
+}
+
+.category-card-btn.active.cat-orange {
+  border-color: #f59e0b;
+  background: #fffbeb;
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.15);
+}
+
+.category-card-btn.active.cat-rose {
+  border-color: #ef4444;
+  background: #fef2f2;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.15);
+}
+
+/* Audience and Priority Stacks */
+.audience-selector-stack,
+.priority-selector-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.audience-radio-card,
+.priority-radio-card {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.75rem;
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #334155;
+  transition: all 0.15s ease;
+}
+
+.audience-radio-card:hover,
+.priority-radio-card:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.audience-radio-card.active {
+  border-color: #2563eb;
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.priority-radio-card .prio-label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.priority-radio-card .prio-desc {
+  display: block;
+  font-size: 0.68rem;
+  color: #64748b;
+}
+
+.priority-radio-card.active.prio-normal {
+  border-color: #10b981;
+  background: #ecfdf5;
+}
+
+.priority-radio-card.active.prio-high {
+  border-color: #f59e0b;
+  background: #fffbeb;
+}
+
+.priority-radio-card.active.prio-urgent {
+  border-color: #ef4444;
+  background: #fef2f2;
+}
+
+/* Priority & Audience Pills */
+.priority-pill {
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.priority-pill.urgent {
+  background: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #fca5a5;
+  animation: pulse-glow 2s infinite;
+}
+
+.priority-pill.high {
+  background: #fef3c7;
+  color: #d97706;
+  border: 1px solid #fde68a;
+}
+
+.audience-pill {
+  font-size: 0.72rem;
+  font-weight: 600;
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.15);
+  }
+}
+
+/* Live Preview Mockup */
+.broadcast-preview-col {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.85rem;
+  padding: 1.25rem;
+}
+
+.preview-header-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 0.85rem;
+}
+
+.live-pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25);
+  animation: spin 3s linear infinite;
+}
+
+.preview-phone-mockup {
+  background: #0f172a;
+  border-radius: 1rem;
+  padding: 1rem;
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.18);
+}
+
+.preview-notification-card {
+  background: #ffffff;
+  border-radius: 0.75rem;
+  padding: 1rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.preview-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.preview-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+}
+
+.preview-badge.cat-general { background: #dbeafe; color: #1d4ed8; }
+.preview-badge.cat-broadcast { background: #ede9fe; color: #6d28d9; }
+.preview-badge.cat-tournament { background: #d1fae5; color: #047857; }
+.preview-badge.cat-policy { background: #fef3c7; color: #b45309; }
+.preview-badge.cat-maintenance { background: #fee2e2; color: #b91c1c; }
+
+.preview-time {
+  font-size: 0.7rem;
+  color: #94a3b8;
+}
+
+.preview-title {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 0.35rem;
+  line-height: 1.35;
+}
+
+.preview-body {
+  font-size: 0.8rem;
+  color: #475569;
+  line-height: 1.5;
+  margin: 0 0 0.75rem;
+}
+
+.preview-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 0.5rem;
+  border-top: 1px solid #f1f5f9;
+  font-size: 0.72rem;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.broadcast-submit-btn {
+  background: linear-gradient(135deg, #2563eb, #4f46e5);
+  color: #ffffff;
+  font-weight: 700;
+  padding: 0.65rem 1.35rem;
+  border-radius: 0.6rem;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+  transition: all 0.2s ease;
+}
+
+.broadcast-submit-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.45);
+}
+
+.broadcast-submit-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-icon-trash {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #ef4444;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-icon-trash:hover {
+  background: #fee2e2;
+  border-color: #ef4444;
+  transform: scale(1.05);
+}
+
+.announcement-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.meta-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.6rem;
+  padding: 0.75rem;
+}
+
+.meta-label {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.25rem;
+}
+
+.meta-val {
+  font-size: 0.88rem;
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.announcements-list-rich {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.announcement-item-rich {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1.25rem 1.5rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 1rem;
+  background: #ffffff;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.02);
+}
+
+.announcement-item-rich:hover {
+  border-color: #93c5fd;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.07);
+}
+
+.announcement-item-rich.unread {
+  background: #f8faff;
+}
+
+.announcement-item-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.announcement-body-preview {
+  font-size: 0.88rem;
+  color: #475569;
+  margin: 0.35rem 0 0;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.unread-indicator-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #2563eb;
+  display: inline-block;
+  box-shadow: 0 0 0 3px #dbeafe;
+}
+
+.btn-view-announcement {
+  background: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  color: #1e293b;
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 0.45rem 0.95rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.btn-view-announcement:hover {
+  background: #eff6ff;
+  border-color: #2563eb;
+  color: #2563eb;
+}
+
+.spin-animate {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
 </style>
+
