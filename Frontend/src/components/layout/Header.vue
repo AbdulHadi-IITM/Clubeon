@@ -102,6 +102,7 @@
             </div>
           </div>
         </div>
+
         <button
           @click="logout"
           type="button"

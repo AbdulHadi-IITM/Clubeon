@@ -170,7 +170,6 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import api from '@/api/axios'
-import { useAuthStore } from '@/stores/auth'
 import { getSportImage } from '@/utils/sportImages'
 import { useNotificationStore } from '@/stores/notifications'
 
