@@ -13,11 +13,13 @@
         </router-view>
       </main>
     </div>
+    <ClubAssistant />
   </div>
 </template>
 <script setup>
 import Sidebar from './Sidebar.vue'
 import Header from './Header.vue'
+import ClubAssistant from '@/components/assistant/ClubAssistant.vue'
 </script>
 <style scoped>
 .page-enter-active,
