@@ -33,3 +33,12 @@ class Config:
     STRIPE_DEFAULT_CURRENCY = os.environ.get('STRIPE_DEFAULT_CURRENCY', 'inr')
     # Flat fee charged for a court booking (no per-court pricing exists in the model yet)
     BOOKING_FEE = float(os.environ.get('BOOKING_FEE', '500'))
+
+    # AI Assistant Model (<provider>/<model_name> loaded from .env)
+    ASSISTANT_MODEL = os.environ.get('ASSISTANT_MODEL', 'google/gemini-2.0-flash-lite').strip()
+
+    # Sync Google / Gemini API keys if set under either name
+    if os.environ.get('GOOGLE_API_KEY') and not os.environ.get('GEMINI_API_KEY'):
+        os.environ['GEMINI_API_KEY'] = os.environ['GOOGLE_API_KEY']
+    elif os.environ.get('GEMINI_API_KEY') and not os.environ.get('GOOGLE_API_KEY'):
+        os.environ['GOOGLE_API_KEY'] = os.environ['GEMINI_API_KEY']

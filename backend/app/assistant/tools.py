@@ -3,11 +3,12 @@ from app.events.services import EventService
 from app.availability.services import AvailabilityService
 from app.memberships.services import MembershipService
 from app.clubs.models import Club, Court
-from app.bookings.models import Booking
+from app.bookings.models import Booking, BookingIntent
 from app.attendance.models import AttendanceRecord
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from flask import g
 import json
+import re
 from mirascope import llm
 
 def _get_current_user_id() -> int:
@@ -102,7 +103,7 @@ def get_staff_dashboard(target_date_str: str = "") -> str:
     active_courts = Court.query.filter_by(club_id=club_id, is_active=True).count()
     bookings_today = Booking.query.join(Court).filter(Court.club_id == club_id, Booking.booking_date == target_date).all()
     active_bookings = len([b for b in bookings_today if b.status == 'confirmed'])
-    checked_in = AttendanceRecord.query.filter(AttendanceRecord.check_out_time == None).count()
+    checked_in = AttendanceRecord.query.filter(AttendanceRecord.check_out_at == None).count()
     
     return json.dumps({
         "total_courts": total_courts,
@@ -140,8 +141,8 @@ def get_staff_attendance() -> str:
     for r in records:
         result.append({
             "user": r.user.name if getattr(r, "user", None) else "Unknown",
-            "check_in": str(r.check_in_time),
-            "check_out": str(r.check_out_time) if r.check_out_time else None
+            "check_in": str(r.check_in_at) if r.check_in_at else None,
+            "check_out": str(r.check_out_at) if r.check_out_at else None
         })
     return json.dumps(result)
 
@@ -191,7 +192,7 @@ def get_club_details(club_id: int = 1) -> str:
 @llm.tool
 def get_available_slots_for_club(club_id: int = 1, target_date_str: str = "") -> str:
     """Get all available booking slots grouped by court for a specific club on a given date (YYYY-MM-DD)."""
-    dt_str = target_date_str if target_date_str else str(date.today())
+    dt_str = _parse_human_date(target_date_str) if target_date_str else str(date.today())
     matrix = AvailabilityService.get_availability_matrix(club_id, dt_str)
     if isinstance(matrix, tuple) and matrix[1]:
         return json.dumps(matrix[1])
@@ -199,15 +200,20 @@ def get_available_slots_for_club(club_id: int = 1, target_date_str: str = "") ->
     data = matrix[0] if isinstance(matrix, tuple) else matrix
     summary = {}
     for court in (data or {}).get("courts", []):
-        available_slots = [s["time"] for s in court.get("slots", []) if s.get("status") == "available"]
-        summary[court["name"]] = available_slots
+        c_name = court.get("court_name") or court.get("name", "Court")
+        available_slots = [
+            f"{s.get('start_time')} - {s.get('end_time')}"
+            for s in court.get("slots", [])
+            if s.get("status") == "available"
+        ]
+        summary[c_name] = available_slots
     return json.dumps({"date": dt_str, "available_slots_by_court": summary})
 
 @llm.tool
 def get_court_status(target_date_str: str = "") -> str:
     """Get court availability summary and occupancy count."""
     club_id = _get_current_club_id()
-    dt_str = target_date_str if target_date_str else str(date.today())
+    dt_str = _parse_human_date(target_date_str) if target_date_str else str(date.today())
     matrix = AvailabilityService.get_availability_matrix(club_id, dt_str)
     if isinstance(matrix, tuple) and matrix[1]:
         return json.dumps(matrix[1])
@@ -215,41 +221,54 @@ def get_court_status(target_date_str: str = "") -> str:
     matrix_data = matrix[0] if isinstance(matrix, tuple) else matrix
     summary = {}
     for court in (matrix_data or {}).get('courts', []):
+        c_name = court.get('court_name') or court.get('name', 'Court')
         available = sum(1 for slot in court.get('slots', []) if slot['status'] == 'available')
         booked = sum(1 for slot in court.get('slots', []) if slot['status'] == 'booked')
         blocked = sum(1 for slot in court.get('slots', []) if slot['status'] == 'blocked')
-        summary[court['name']] = {
+        summary[c_name] = {
             "available": available,
             "booked": booked,
             "blocked": blocked
         }
     return json.dumps(summary)
 
-import re
-
 def _parse_human_date(date_str: str) -> str:
     if not date_str:
         return str(date.today())
     raw = date_str.strip().lower()
     today = date.today()
-    if raw == "today":
+    
+    # Common slang and abbreviations
+    if raw in ["today", "tdy", "tod"]:
         return str(today)
-    if raw == "tomorrow":
+    if raw in ["tomorrow", "tmrw", "tmr", "tom", "tomm", "next day"]:
         return str(today + timedelta(days=1))
-    if raw == "yesterday":
+    if raw in ["day after tomorrow", "day after tmrw"]:
+        return str(today + timedelta(days=2))
+    if raw in ["yesterday"]:
         return str(today - timedelta(days=1))
 
-    # Match DD.MM.YYYY or DD/MM/YYYY
-    dmy_match = re.match(r"^(\d{1,2})[./\-](\d{1,2})[./\-](\d{4})$", raw)
-    if dmy_match:
-        d, m, y = int(dmy_match.group(1)), int(dmy_match.group(2)), int(dmy_match.group(3))
-        try:
-            return str(date(y, m, d))
-        except ValueError:
-            pass
+    # Day of week (e.g. "monday", "next tuesday", "this friday")
+    weekdays = {
+        "monday": 0, "mon": 0,
+        "tuesday": 1, "tue": 1, "tues": 1,
+        "wednesday": 2, "wed": 2,
+        "thursday": 3, "thu": 3, "thur": 3, "thurs": 3,
+        "friday": 4, "fri": 4,
+        "saturday": 5, "sat": 5,
+        "sunday": 6, "sun": 6,
+    }
+    for day_name, target_weekday in weekdays.items():
+        if day_name in raw:
+            days_ahead = target_weekday - today.weekday()
+            if days_ahead <= 0:
+                days_ahead += 7
+            if "next" in raw and days_ahead < 7:
+                days_ahead += 7
+            return str(today + timedelta(days=days_ahead))
 
     # Match YYYY-MM-DD
-    ymd_match = re.match(r"^(\d{4})[./\-](\d{1,2})[./\-](\d{1,2})$", raw)
+    ymd_match = re.search(r"(\d{4})[./\-](\d{1,2})[./\-](\d{1,2})", raw)
     if ymd_match:
         y, m, d = int(ymd_match.group(1)), int(ymd_match.group(2)), int(ymd_match.group(3))
         try:
@@ -257,40 +276,98 @@ def _parse_human_date(date_str: str) -> str:
         except ValueError:
             pass
 
-    return str(today)
-
-def _parse_human_time(time_str: str) -> str:
-    if not time_str:
-        return "09:00"
-    raw = time_str.strip().lower().replace(" ", "")
-    pm_match = re.match(r"^(\d{1,2})(?::(\d{2}))?pm$", raw)
-    if pm_match:
-        hour = int(pm_match.group(1))
-        minute = int(pm_match.group(2) or 0)
-        hour = (hour % 12) + 12
-        return f"{hour:02d}:{minute:02d}"
-
-    am_match = re.match(r"^(\d{1,2})(?::(\d{2}))?am$", raw)
-    if am_match:
-        hour = int(am_match.group(1))
-        minute = int(am_match.group(2) or 0)
-        hour = hour % 12
-        return f"{hour:02d}:{minute:02d}"
-
-    if ":" in raw:
-        parts = raw.split(":")
+    # Match DD-MM-YYYY or DD/MM/YYYY
+    dmy_match = re.search(r"(\d{1,2})[./\-](\d{1,2})[./\-](\d{4})", raw)
+    if dmy_match:
+        d, m, y = int(dmy_match.group(1)), int(dmy_match.group(2)), int(dmy_match.group(3))
         try:
-            return f"{int(parts[0]):02d}:{int(parts[1]):02d}"
+            return str(date(y, m, d))
         except ValueError:
             pass
-    elif raw.isdigit():
-        return f"{int(raw):02d}:00"
 
-    return "09:00"
+    # Match named months (e.g., "24 Aug", "Aug 24", "24th August")
+    months = {
+        "jan": 1, "january": 1, "feb": 2, "february": 2, "mar": 3, "march": 3,
+        "apr": 4, "april": 4, "may": 5, "jun": 6, "june": 6, "jul": 7, "july": 7,
+        "aug": 8, "august": 8, "sep": 9, "september": 9, "oct": 10, "october": 10,
+        "nov": 11, "november": 11, "dec": 12, "december": 12
+    }
+    for m_name, m_num in months.items():
+        if m_name in raw:
+            d_match = re.search(r"\b(\d{1,2})(?:st|nd|rd|th)?\b", raw)
+            if d_match:
+                d = int(d_match.group(1))
+                y = today.year
+                y_match = re.search(r"\b(20\d{2})\b", raw)
+                if y_match:
+                    y = int(y_match.group(1))
+                try:
+                    return str(date(y, m_num, d))
+                except ValueError:
+                    pass
+
+    return str(today)
+
+def _parse_human_time(time_str: str) -> tuple[str, str]:
+    """Parse time string into (start_time_HH:MM, end_time_HH:MM)."""
+    if not time_str:
+        return "06:00", "07:00"
+    raw = time_str.strip().lower()
+
+    parts = None
+    for sep in [" to ", " - ", "-", "–", "—", " until ", " till "]:
+        if sep in raw:
+            split_parts = [p.strip() for p in raw.split(sep, 1)]
+            if len(split_parts) == 2 and split_parts[0] and split_parts[1]:
+                parts = split_parts
+                break
+
+    def _parse_single_time(t_str: str, fallback_am_pm: str = None) -> tuple[int, int]:
+        s = t_str.strip().lower()
+        is_pm = any(k in s for k in ["pm", "p.m.", "evening", "night", "afternoon"])
+        is_am = any(k in s for k in ["am", "a.m.", "morning"])
+        
+        if not is_pm and not is_am and fallback_am_pm:
+            is_pm = (fallback_am_pm == "pm")
+            is_am = (fallback_am_pm == "am")
+
+        clean = re.sub(r"[^\d:]", "", s)
+        if ":" in clean:
+            h_str, m_str = clean.split(":", 1)
+            hour = int(h_str) if h_str else 6
+            minute = int(m_str) if m_str else 0
+        elif clean.isdigit():
+            hour = int(clean)
+            minute = 0
+        else:
+            return 6, 0
+
+        if is_pm and hour < 12:
+            hour += 12
+        elif is_am and hour == 12:
+            hour = 0
+
+        return hour, minute
+
+    if parts:
+        second_part = parts[1]
+        shared_period = "pm" if ("pm" in second_part or "evening" in second_part) else ("am" if "am" in second_part else None)
+        
+        s_h, s_m = _parse_single_time(parts[0], fallback_am_pm=shared_period)
+        e_h, e_m = _parse_single_time(parts[1], fallback_am_pm=shared_period)
+        
+        if (e_h, e_m) <= (s_h, s_m):
+            e_h = (s_h + 1) % 24
+        
+        return f"{s_h:02d}:{s_m:02d}", f"{e_h:02d}:{e_m:02d}"
+    else:
+        s_h, s_m = _parse_single_time(raw)
+        e_h = (s_h + 1) % 24
+        return f"{s_h:02d}:{s_m:02d}", f"{e_h:02d}:{e_m:02d}"
 
 @llm.tool
 def prepare_court_booking(court_name: str = "", court_id: int = 0, target_date: str = "", start_time: str = "") -> str:
-    """Prepare a temporary 5-minute booking draft hold for a court. Does NOT finalize without user confirmation. Provide court name or id, date (supports 'today', 'tomorrow', 'YYYY-MM-DD', 'DD.MM.YYYY'), and start time ('6 PM', '18:00', '9 AM'). Returns draft details or available alternatives if unavailable."""
+    """Prepare a temporary 5-minute booking draft hold for a court. Does NOT finalize without user confirmation. Provide court name or id, date (supports 'today', 'tomorrow', 'tmrw', 'YYYY-MM-DD', weekday names), and start time ('6 PM', '18:00', '6am to 7am'). Returns draft details or available alternatives if unavailable."""
     user_id = _get_current_user_id()
     c_id = court_id
     court_obj = None
@@ -300,6 +377,9 @@ def prepare_court_booking(court_name: str = "", court_id: int = 0, target_date: 
     elif court_name:
         court_obj = Court.query.filter(Court.name.ilike(f"%{court_name.strip()}%"), Court.is_active == True).first()
         if not court_obj:
+            clean_name = court_name.lower().replace("court", "").strip()
+            court_obj = Court.query.filter(Court.name.ilike(f"%{clean_name}%"), Court.is_active == True).first()
+        if not court_obj:
             court_obj = Court.query.filter(Court.sport_type.ilike(f"%{court_name.strip()}%"), Court.is_active == True).first()
 
     if not court_obj:
@@ -307,23 +387,33 @@ def prepare_court_booking(court_name: str = "", court_id: int = 0, target_date: 
 
     c_id = court_obj.id if court_obj else 1
     dt_str = _parse_human_date(target_date)
-    st_str = _parse_human_time(start_time)
+    st_str, et_str = _parse_human_time(start_time)
 
     intent, error = BookingService.prepare_intent(
         user_id=user_id,
         court_id=c_id,
         booking_date_str=dt_str,
-        start_time_str=st_str
+        start_time_str=st_str,
+        end_time_str=et_str
     )
 
     if error:
         # Get alternative available slots on this court for the user
-        matrix = AvailabilityService.get_availability_matrix(court_obj.club_id if court_obj else 1, dt_str)
-        data = matrix[0] if isinstance(matrix, tuple) else matrix
+        matrix_res = AvailabilityService.get_availability_matrix(court_obj.club_id if court_obj else 1, dt_str)
+        data = matrix_res[0] if isinstance(matrix_res, tuple) else matrix_res
         available_slots = []
         for c in (data or {}).get("courts", []):
-            if c.get("id") == c_id or (court_obj and c.get("name") == court_obj.name):
-                available_slots = [s["time"] for s in c.get("slots", []) if s.get("status") == "available"]
+            is_matching_court = (
+                c.get("court_id") == c_id or 
+                c.get("id") == c_id or 
+                (court_obj and c.get("court_name", "").lower() == court_obj.name.lower())
+            )
+            if is_matching_court:
+                available_slots = [
+                    f"{s.get('start_time')} - {s.get('end_time')}"
+                    for s in c.get("slots", [])
+                    if s.get("status") == "available"
+                ]
                 break
 
         return json.dumps({
@@ -331,6 +421,7 @@ def prepare_court_booking(court_name: str = "", court_id: int = 0, target_date: 
             "error": error.get("message", "This slot is unavailable."),
             "court_name": court_obj.name if court_obj else "Court",
             "date": dt_str,
+            "requested_time": f"{st_str} - {et_str}",
             "available_slots": available_slots,
             "requires_confirmation": False
         })

@@ -3,6 +3,7 @@ import json
 import traceback
 from flask import g
 from mirascope import llm
+from app.config import Config
 from app.assistant.tools import (
     get_my_bookings,
     get_events,
@@ -80,14 +81,12 @@ class AssistantService:
         current_time = now.strftime('%H:%M')
 
         # Determine allowed tools based on role
-        if role == 'player':
-            allowed_tools = MEMBER_TOOLS
-            system_prompt = SYSTEM_PROMPT_MEMBER.format(today_str=today_str, tomorrow_str=tomorrow_str, current_time=current_time)
-        elif role == 'front-desk':
+        if role in ['front-desk', 'staff']:
             allowed_tools = STAFF_TOOLS
             system_prompt = SYSTEM_PROMPT_STAFF.format(today_str=today_str, tomorrow_str=tomorrow_str, current_time=current_time)
         else:
-            return {"error": "Role not permitted"}, 403
+            allowed_tools = MEMBER_TOOLS
+            system_prompt = SYSTEM_PROMPT_MEMBER.format(today_str=today_str, tomorrow_str=tomorrow_str, current_time=current_time)
 
         if thread_messages and len(thread_messages) > 0:
             messages = list(thread_messages)
@@ -99,39 +98,8 @@ class AssistantService:
             messages = [{"role": "system", "content": system_prompt}]
 
         messages.append({"role": "user", "content": message})
-        
-        # Determine model and provider:
-        provider = os.environ.get("MODEL_PROVIDER", "").strip().lower()
-        raw_model = os.environ.get("ASSISTANT_MODEL") or os.environ.get("OPENAI_ASSISTANT_MODEL", "gemini-2.0-flash-lite").strip()
 
-        # Handle Gemini Flash Lite naming variants
-        if "flash-lite" in raw_model.lower() or "flash_lite" in raw_model.lower():
-            raw_model = "gemini-2.0-flash-lite"
-
-        if provider:
-            model_name = raw_model.split("/", 1)[1] if "/" in raw_model else raw_model
-            model = f"{provider}/{model_name}"
-        elif "/" in raw_model:
-            model = raw_model
-        elif raw_model.startswith("gemini"):
-            model = f"google/{raw_model}"
-        elif raw_model.startswith("claude"):
-            model = f"anthropic/{raw_model}"
-        else:
-            model = f"openai/{raw_model}"
-
-        # Ensure Google API key sync if using google/gemini models
-        if os.environ.get("GOOGLE_API_KEY") and not os.environ.get("GEMINI_API_KEY"):
-            os.environ["GEMINI_API_KEY"] = os.environ["GOOGLE_API_KEY"]
-        elif os.environ.get("GEMINI_API_KEY") and not os.environ.get("GOOGLE_API_KEY"):
-            os.environ["GOOGLE_API_KEY"] = os.environ["GEMINI_API_KEY"]
-        elif not os.environ.get("GEMINI_API_KEY") and not os.environ.get("GOOGLE_API_KEY"):
-            key = os.environ.get("OPENAI_API_KEY", "")
-            if key.startswith("AIzaSy"):
-                os.environ["GEMINI_API_KEY"] = key
-                os.environ["GOOGLE_API_KEY"] = key
-
-        @llm.call(model, tools=allowed_tools)
+        @llm.call(Config.ASSISTANT_MODEL, tools=allowed_tools)
         def run_agent(msgs: list):
             mirascope_msgs = []
             for m in msgs:
