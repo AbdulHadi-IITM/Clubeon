@@ -5,7 +5,11 @@ load_dotenv()
 
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-key-32-bytes-minimum-for-security')
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
+    # Database: Supports SQLite (sqlite:///...) and PostgreSQL (postgresql://...)
+    _db_url = os.environ.get('DATABASE_URL', 'sqlite:///db.sqlite3')
+    if _db_url and _db_url.startswith('postgres://'):
+        _db_url = _db_url.replace('postgres://', 'postgresql://', 1)
+    SQLALCHEMY_DATABASE_URI = _db_url
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # JWT Cookie Configuration
