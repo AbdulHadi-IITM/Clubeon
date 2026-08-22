@@ -1377,7 +1377,9 @@
                         ✎ Edit
                       </button>
                       <button class="action-icon-btn cancel-btn" @click="requestDeleteEvent(evt)" title="Delete Event">
-                        🗑
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
                       </button>
                     </div>
                   </div>
@@ -1434,9 +1436,13 @@
                       </td>
                       <td style="text-align: right;">
                         <div class="table-actions-group">
-                          <button class="action-icon-btn view-btn" @click="openEventDetails(evt)">Details</button>
-                          <button class="action-icon-btn complete-btn" @click="openEditEventModal(evt)">Edit</button>
-                          <button class="action-icon-btn cancel-btn" @click="requestDeleteEvent(evt)">✕</button>
+                          <button class="action-icon-btn view-btn" @click="openEventDetails(evt)" title="View Details">Details</button>
+                          <button class="action-icon-btn complete-btn" @click="openEditEventModal(evt)" title="Edit Event">Edit</button>
+                          <button class="action-icon-btn cancel-btn" @click="requestDeleteEvent(evt)" title="Delete Event">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;">
+                              <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -2652,7 +2658,12 @@
             <div class="modal-footer">
               <div style="display: flex; gap: 0.75rem;">
                 <button class="action-icon-btn complete-btn" @click="openEditEventModal(selectedEvent)">✎ Edit Event</button>
-                <button class="action-icon-btn cancel-btn" @click="requestDeleteEvent(selectedEvent)">🗑 Delete Event</button>
+                <button class="action-icon-btn cancel-btn" @click="requestDeleteEvent(selectedEvent)" style="display: inline-flex; align-items: center; gap: 0.4rem;">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  <span>Delete Event</span>
+                </button>
               </div>
               <button class="cancel-modal-btn" @click="closeEventDetailsModal">Close</button>
             </div>
@@ -2661,18 +2672,29 @@
 
         <!-- DELETE EVENT CONFIRMATION MODAL -->
         <div v-if="showDeleteEventModal && eventToDelete" class="modal-overlay" @click.self="showDeleteEventModal = false">
-          <div class="modal-card small-confirm-modal">
-            <div class="modal-header">
-              <h3 style="color: #ef4444; margin: 0;">Delete Event</h3>
+          <div class="modal-card small-confirm-modal" style="max-width: 460px; width: 92vw; padding: 1.5rem; border-radius: 1.25rem; box-shadow: 0 20px 45px rgba(15, 23, 42, 0.22); overflow: hidden;">
+            <div class="modal-header" style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #f1f5f9; padding-bottom: 0.85rem;">
+              <div style="display: flex; align-items: center; gap: 0.55rem;">
+                <div style="width: 32px; height: 32px; border-radius: 8px; background: #fee2e2; color: #ef4444; display: grid; place-items: center; font-size: 1rem;">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </div>
+                <h3 style="color: #0f172a; margin: 0; font-size: 1.1rem; font-weight: 800;">Cancel & Delete Event</h3>
+              </div>
               <button class="close-modal-btn" @click="showDeleteEventModal = false">✕</button>
             </div>
-            <div class="modal-body" style="padding: 1.5rem 0;">
-              <p>Are you sure you want to delete event <strong>"{{ eventToDelete.title }}"</strong>?</p>
-              <p style="font-size: 0.85rem; color: #64748b; margin-top: 0.5rem;">This action will remove the event schedule and notify all {{ eventToDelete.registered }} registered attendees.</p>
+            <div class="modal-body" style="padding: 1.25rem 0; overflow-wrap: break-word; word-break: break-word; white-space: normal;">
+              <p style="font-size: 0.95rem; color: #334155; line-height: 1.5; margin: 0;">
+                Are you sure you want to delete event <strong style="color: #0f172a;">"{{ eventToDelete.title }}"</strong>?
+              </p>
+              <div style="margin-top: 0.85rem; padding: 0.75rem 0.95rem; background: #fef2f2; border: 1px solid #fecaca; border-radius: 0.75rem; color: #b91c1c; font-size: 0.82rem; line-height: 1.5; overflow-wrap: break-word; word-break: break-word;">
+                📢 This action will cancel the event and automatically broadcast an announcement notice to all {{ eventToDelete.registered || 0 }} registered attendees.
+              </div>
             </div>
-            <div class="modal-footer">
+            <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 0.75rem; border-top: 1px solid #f1f5f9; padding-top: 0.85rem; margin-top: 0.25rem;">
               <button class="cancel-modal-btn" @click="showDeleteEventModal = false">Keep Event</button>
-              <button class="submit-modal-btn danger-btn" @click="confirmDeleteEvent">Confirm Delete</button>
+              <button class="submit-modal-btn danger-btn" @click="confirmDeleteEvent" style="background: linear-gradient(135deg, #ef4444, #dc2626); color: #ffffff; padding: 0.55rem 1.2rem; border-radius: 0.6rem; font-weight: 700; border: none; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);">Confirm Delete</button>
             </div>
           </div>
         </div>

@@ -151,8 +151,21 @@ export const useNotificationStore = defineStore('notifications', {
       this.isLoading = true
       this.error = null
       try {
-        // Try admin announcements endpoint first, fallback to notifications
-        let response = await api.get('/admin/announcements').catch(() => null)
+        let isOwner = false
+        try {
+          const rawUser = localStorage.getItem('user')
+          if (rawUser) {
+            const parsed = JSON.parse(rawUser)
+            isOwner = parsed?.role === 'owner' || parsed?.role === 'admin'
+          }
+        } catch {
+          // ignore
+        }
+
+        let response = null
+        if (isOwner) {
+          response = await api.get('/admin/announcements').catch(() => null)
+        }
         if (!response || !Array.isArray(response.data) || response.data.length === 0) {
           response = await api.get('/notifications').catch(() => null)
         }
