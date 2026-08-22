@@ -16,6 +16,9 @@ from app.assistant.tools import (
     find_facilities,
     get_club_details,
     get_available_slots_for_club,
+    prepare_court_booking,
+    confirm_court_booking,
+    cancel_my_booking,
 )
 
 MEMBER_TOOLS = [
@@ -27,6 +30,9 @@ MEMBER_TOOLS = [
     find_facilities,
     get_club_details,
     get_available_slots_for_club,
+    prepare_court_booking,
+    confirm_court_booking,
+    cancel_my_booking,
 ]
 
 STAFF_TOOLS = MEMBER_TOOLS + [
@@ -36,22 +42,26 @@ STAFF_TOOLS = MEMBER_TOOLS + [
     get_court_status,
 ]
 
-SYSTEM_PROMPT_MEMBER = """You are an intelligent sports facility and club assistant for ClubDash.
-You can answer questions about bookings, memberships, and events, AND provide smart recommendations based on user preferences.
-When a user asks to find facilities, courts, or pools (e.g. chlorine-free, kid-friendly, heated, indoor, parking, distance, sport type), use the `find_facilities` tool.
-If specific available slots are requested for a club, use `get_available_slots_for_club`.
+from datetime import datetime, timedelta
 
-Format recommendations in structured Markdown:
-- Numbered facility name and distance (e.g. "1. **[Club Name]** — [X.X] km away")
-- Sport type, address, and operating hours
-- Matching highlights (amenities & tags)
-- Available time slots if requested
+SYSTEM_PROMPT_MEMBER = """You are an intelligent sports facility and concierge assistant for ClubDash.
+Current Context: Today is {today_str}. Tomorrow is {tomorrow_str}. Current local time is {current_time}.
 
-If no facilities match all criteria, explain why and suggest relaxing one filter.
-You are read-only and cannot perform direct booking transactions."""
+You can:
+1. Answer questions about bookings, memberships, and events.
+2. Recommend facilities and courts based on preferences (amenities like chlorine-free/heated/parking, sport, distance).
+3. BOOK COURTS via a safe 2-step confirmation process:
+   - Step 1 (Draft Hold): When a user asks to book or reserve a court (e.g. "Book Badminton Court 1 for tomorrow 6 PM"), call `prepare_court_booking`.
+     * If the slot is available, present the court name, date, time slot, and notify them of the 5-minute hold. Ask them to confirm.
+     * If `prepare_court_booking` returns 'status': 'unavailable', do NOT ask for confirmation. Inform the user that the requested slot is taken or passed, and list the available alternative slots returned in 'available_slots'.
+   - Step 2 (Confirmation): When the user confirms (e.g. "Yes", "Confirm", "Go ahead", "Yes, please confirm and finalize this booking"), IMMEDIATELY call `confirm_court_booking(intent_id="")`. You do not need to ask for or know the intent_id; calling `confirm_court_booking(intent_id="")` automatically confirms their active hold. Provide the confirmed booking ID and receipt summary.
+4. CANCEL bookings: When requested to cancel a booking, call `cancel_my_booking`.
 
-SYSTEM_PROMPT_STAFF = """You are a helpful assistant for ClubDash front-desk staff.
-You can access operational summaries, staff bookings, attendance, court status, and search facility recommendations."""
+Always format responses in structured, readable Markdown with bullet points, bold highlights, and clear next steps."""
+
+SYSTEM_PROMPT_STAFF = """You are an assistant for ClubDash front-desk staff.
+Current Context: Today is {today_str}. Tomorrow is {tomorrow_str}. Current local time is {current_time}.
+You can view operational summaries, staff bookings, attendance, court status, search facility recommendations, and assist with booking reservations via `prepare_court_booking` and `confirm_court_booking`."""
 
 class AssistantService:
     @staticmethod
@@ -64,22 +74,39 @@ class AssistantService:
         g.assistant_user_lat = user_lat
         g.assistant_user_lon = user_lon
 
+        now = datetime.now()
+        today_str = now.strftime('%Y-%m-%d (%A)')
+        tomorrow_str = (now + timedelta(days=1)).strftime('%Y-%m-%d (%A)')
+        current_time = now.strftime('%H:%M')
+
         # Determine allowed tools based on role
         if role == 'player':
             allowed_tools = MEMBER_TOOLS
-            system_prompt = SYSTEM_PROMPT_MEMBER
+            system_prompt = SYSTEM_PROMPT_MEMBER.format(today_str=today_str, tomorrow_str=tomorrow_str, current_time=current_time)
         elif role == 'front-desk':
             allowed_tools = STAFF_TOOLS
-            system_prompt = SYSTEM_PROMPT_STAFF
+            system_prompt = SYSTEM_PROMPT_STAFF.format(today_str=today_str, tomorrow_str=tomorrow_str, current_time=current_time)
         else:
             return {"error": "Role not permitted"}, 403
 
-        messages = thread_messages or [{"role": "system", "content": system_prompt}]
+        if thread_messages and len(thread_messages) > 0:
+            messages = list(thread_messages)
+            if messages[0].get("role") == "system":
+                messages[0]["content"] = system_prompt
+            else:
+                messages.insert(0, {"role": "system", "content": system_prompt})
+        else:
+            messages = [{"role": "system", "content": system_prompt}]
+
         messages.append({"role": "user", "content": message})
         
         # Determine model and provider:
         provider = os.environ.get("MODEL_PROVIDER", "").strip().lower()
-        raw_model = os.environ.get("ASSISTANT_MODEL") or os.environ.get("OPENAI_ASSISTANT_MODEL", "gemini-2.0-flash").strip()
+        raw_model = os.environ.get("ASSISTANT_MODEL") or os.environ.get("OPENAI_ASSISTANT_MODEL", "gemini-2.0-flash-lite").strip()
+
+        # Handle Gemini Flash Lite naming variants
+        if "flash-lite" in raw_model.lower() or "flash_lite" in raw_model.lower():
+            raw_model = "gemini-2.0-flash-lite"
 
         if provider:
             model_name = raw_model.split("/", 1)[1] if "/" in raw_model else raw_model
@@ -93,8 +120,12 @@ class AssistantService:
         else:
             model = f"openai/{raw_model}"
 
-        # Ensure Google API key fallback if using google/gemini models
-        if (model.startswith("google/") or model.startswith("gemini")) and not os.environ.get("GEMINI_API_KEY") and not os.environ.get("GOOGLE_API_KEY"):
+        # Ensure Google API key sync if using google/gemini models
+        if os.environ.get("GOOGLE_API_KEY") and not os.environ.get("GEMINI_API_KEY"):
+            os.environ["GEMINI_API_KEY"] = os.environ["GOOGLE_API_KEY"]
+        elif os.environ.get("GEMINI_API_KEY") and not os.environ.get("GOOGLE_API_KEY"):
+            os.environ["GOOGLE_API_KEY"] = os.environ["GEMINI_API_KEY"]
+        elif not os.environ.get("GEMINI_API_KEY") and not os.environ.get("GOOGLE_API_KEY"):
             key = os.environ.get("OPENAI_API_KEY", "")
             if key.startswith("AIzaSy"):
                 os.environ["GEMINI_API_KEY"] = key

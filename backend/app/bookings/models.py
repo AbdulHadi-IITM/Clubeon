@@ -1,3 +1,4 @@
+from datetime import datetime
 from app.extensions import db
 
 class Booking(db.Model):
@@ -26,3 +27,20 @@ class CourtBlock(db.Model):
     title = db.Column(db.String(200))
     created_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     created_at = db.Column(db.DateTime, server_default=db.func.now())
+
+class BookingIntent(db.Model):
+    __tablename__ = 'booking_intents'
+
+    id = db.Column(db.String(36), primary_key=True)  # uuid string
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    court_id = db.Column(db.Integer, db.ForeignKey('courts.id'), nullable=False)
+    booking_date = db.Column(db.Date, nullable=False)
+    start_time = db.Column(db.Time, nullable=False)
+    end_time = db.Column(db.Time, nullable=False)
+    status = db.Column(db.String(20), default='pending', nullable=False)  # pending, confirmed, expired, cancelled
+    expires_at = db.Column(db.DateTime, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.now)
+
+    user = db.relationship('User', backref='booking_intents', lazy=True)
+    court = db.relationship('Court', backref='booking_intents', lazy=True)
+

@@ -13,11 +13,12 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # JWT Cookie Configuration
-    JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY', 'jwt-dev-key-must-be-at-least-32-chars-long')
-    JWT_TOKEN_LOCATION = ['cookies']
+    JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY', os.environ.get('SECRET_KEY', 'jwt-dev-key-must-be-at-least-32-chars-long'))
+    JWT_TOKEN_LOCATION = ['cookies', 'headers']
     JWT_COOKIE_SECURE = os.environ.get('JWT_COOKIE_SECURE', 'False') == 'True'
     JWT_COOKIE_CSRF_PROTECT = False
     JWT_COOKIE_SAMESITE = 'Lax'
+    JWT_ACCESS_COOKIE_NAME = 'access_token_cookie'
     JWT_COOKIE_NAME = 'access_token_cookie'
     JWT_COOKIE_MAX_AGE = 24 * 60 * 60
 

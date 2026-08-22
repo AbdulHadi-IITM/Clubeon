@@ -225,5 +225,180 @@ def get_court_status(target_date_str: str = "") -> str:
         }
     return json.dumps(summary)
 
+import re
+
+def _parse_human_date(date_str: str) -> str:
+    if not date_str:
+        return str(date.today())
+    raw = date_str.strip().lower()
+    today = date.today()
+    if raw == "today":
+        return str(today)
+    if raw == "tomorrow":
+        return str(today + timedelta(days=1))
+    if raw == "yesterday":
+        return str(today - timedelta(days=1))
+
+    # Match DD.MM.YYYY or DD/MM/YYYY
+    dmy_match = re.match(r"^(\d{1,2})[./\-](\d{1,2})[./\-](\d{4})$", raw)
+    if dmy_match:
+        d, m, y = int(dmy_match.group(1)), int(dmy_match.group(2)), int(dmy_match.group(3))
+        try:
+            return str(date(y, m, d))
+        except ValueError:
+            pass
+
+    # Match YYYY-MM-DD
+    ymd_match = re.match(r"^(\d{4})[./\-](\d{1,2})[./\-](\d{1,2})$", raw)
+    if ymd_match:
+        y, m, d = int(ymd_match.group(1)), int(ymd_match.group(2)), int(ymd_match.group(3))
+        try:
+            return str(date(y, m, d))
+        except ValueError:
+            pass
+
+    return str(today)
+
+def _parse_human_time(time_str: str) -> str:
+    if not time_str:
+        return "09:00"
+    raw = time_str.strip().lower().replace(" ", "")
+    pm_match = re.match(r"^(\d{1,2})(?::(\d{2}))?pm$", raw)
+    if pm_match:
+        hour = int(pm_match.group(1))
+        minute = int(pm_match.group(2) or 0)
+        hour = (hour % 12) + 12
+        return f"{hour:02d}:{minute:02d}"
+
+    am_match = re.match(r"^(\d{1,2})(?::(\d{2}))?am$", raw)
+    if am_match:
+        hour = int(am_match.group(1))
+        minute = int(am_match.group(2) or 0)
+        hour = hour % 12
+        return f"{hour:02d}:{minute:02d}"
+
+    if ":" in raw:
+        parts = raw.split(":")
+        try:
+            return f"{int(parts[0]):02d}:{int(parts[1]):02d}"
+        except ValueError:
+            pass
+    elif raw.isdigit():
+        return f"{int(raw):02d}:00"
+
+    return "09:00"
+
+@llm.tool
+def prepare_court_booking(court_name: str = "", court_id: int = 0, target_date: str = "", start_time: str = "") -> str:
+    """Prepare a temporary 5-minute booking draft hold for a court. Does NOT finalize without user confirmation. Provide court name or id, date (supports 'today', 'tomorrow', 'YYYY-MM-DD', 'DD.MM.YYYY'), and start time ('6 PM', '18:00', '9 AM'). Returns draft details or available alternatives if unavailable."""
+    user_id = _get_current_user_id()
+    c_id = court_id
+    court_obj = None
+
+    if c_id:
+        court_obj = Court.query.get(c_id)
+    elif court_name:
+        court_obj = Court.query.filter(Court.name.ilike(f"%{court_name.strip()}%"), Court.is_active == True).first()
+        if not court_obj:
+            court_obj = Court.query.filter(Court.sport_type.ilike(f"%{court_name.strip()}%"), Court.is_active == True).first()
+
+    if not court_obj:
+        court_obj = Court.query.filter_by(is_active=True).first()
+
+    c_id = court_obj.id if court_obj else 1
+    dt_str = _parse_human_date(target_date)
+    st_str = _parse_human_time(start_time)
+
+    intent, error = BookingService.prepare_intent(
+        user_id=user_id,
+        court_id=c_id,
+        booking_date_str=dt_str,
+        start_time_str=st_str
+    )
+
+    if error:
+        # Get alternative available slots on this court for the user
+        matrix = AvailabilityService.get_availability_matrix(court_obj.club_id if court_obj else 1, dt_str)
+        data = matrix[0] if isinstance(matrix, tuple) else matrix
+        available_slots = []
+        for c in (data or {}).get("courts", []):
+            if c.get("id") == c_id or (court_obj and c.get("name") == court_obj.name):
+                available_slots = [s["time"] for s in c.get("slots", []) if s.get("status") == "available"]
+                break
+
+        return json.dumps({
+            "status": "unavailable",
+            "error": error.get("message", "This slot is unavailable."),
+            "court_name": court_obj.name if court_obj else "Court",
+            "date": dt_str,
+            "available_slots": available_slots,
+            "requires_confirmation": False
+        })
+
+    court = intent.court
+    return json.dumps({
+        "status": "draft_prepared",
+        "intent_id": intent.id,
+        "court_id": court.id,
+        "court_name": court.name,
+        "club_name": court.club.name if court.club else "ClubDash Arena",
+        "booking_date": str(intent.booking_date),
+        "start_time": str(intent.start_time),
+        "end_time": str(intent.end_time),
+        "expires_in_minutes": 5,
+        "requires_confirmation": True
+    })
+
+@llm.tool
+def confirm_court_booking(intent_id: str = "") -> str:
+    """Confirm and finalize a booking draft. If intent_id is empty or unknown, leave it empty—the system will automatically confirm the user's latest active hold."""
+    user_id = _get_current_user_id()
+    intent_to_confirm = intent_id.strip() if intent_id else ""
+    if not intent_to_confirm:
+        # Check if user has an active pending intent
+        latest_intent = BookingIntent.query.filter_by(user_id=user_id, status='pending').order_by(BookingIntent.created_at.desc()).first()
+        if latest_intent:
+            intent_to_confirm = latest_intent.id
+        else:
+            # Check if already confirmed recently
+            recent_confirmed = BookingIntent.query.filter_by(user_id=user_id, status='confirmed').order_by(BookingIntent.created_at.desc()).first()
+            if recent_confirmed:
+                intent_to_confirm = recent_confirmed.id
+            else:
+                return json.dumps({"error": "No active booking hold found to confirm. Please specify what you would like to book first."})
+
+    booking, error = BookingService.confirm_intent(user_id=user_id, intent_id=intent_to_confirm)
+    if error:
+        return json.dumps({"error": error.get("message", "Failed to confirm booking")})
+
+    return json.dumps({
+        "status": "confirmed",
+        "booking_id": booking.id,
+        "court_name": booking.court.name,
+        "club_name": booking.court.club.name if booking.court.club else "ClubDash Arena",
+        "booking_date": str(booking.booking_date),
+        "start_time": str(booking.start_time),
+        "end_time": str(booking.end_time),
+        "message": f"Successfully confirmed booking #{booking.id} on {booking.court.name} for {booking.booking_date} from {booking.start_time} to {booking.end_time}!"
+    })
+
+@llm.tool
+def cancel_my_booking(booking_id: int = 0) -> str:
+    """Cancel one of the authenticated user's confirmed bookings."""
+    user_id = _get_current_user_id()
+    if not booking_id:
+        return json.dumps({"error": "Please provide the booking ID you wish to cancel."})
+
+    success, error = BookingService.release_booking(user_id=user_id, booking_id=booking_id)
+    if error:
+        return json.dumps({"error": error.get("message", "Unable to cancel booking")})
+
+    return json.dumps({
+        "status": "cancelled",
+        "booking_id": booking_id,
+        "message": f"Booking #{booking_id} has been cancelled successfully."
+    })
+
+
 
 

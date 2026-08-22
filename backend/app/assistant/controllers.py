@@ -44,3 +44,10 @@ def chat():
         }), 200
         
     return jsonify(result), status
+
+@assistant_bp.route('/clear', methods=['POST'])
+@jwt_required()
+def clear_chat():
+    session.pop('assistant_thread_messages', None)
+    return jsonify({"message": "Chat history cleared"}), 200
+
