@@ -3,12 +3,12 @@
     <!-- Image Frame -->
     <div class="image-frame">
       <img 
-        :src="event.imageUrl || 'https://placehold.co/400x250/2563eb/ffffff?text=' + encodeURIComponent(event.name)" 
-        :alt="event.name" 
+        :src="event.imageUrl || getSportImage(event.name || event.title || event.sport || event.category)" 
+        :alt="event.name || event.title" 
         class="event-img"
       />
       <div class="image-overlay"></div>
-      <div class="category-badge">{{ event.category || 'Tournament' }}</div>
+      <div class="category-badge">{{ event.category || event.sport || 'Tournament' }}</div>
     </div>
 
     <!-- Details Body -->
@@ -49,6 +49,8 @@
 </template>
 
 <script setup>
+import { getSportImage } from '@/utils/sportImages'
+
 defineProps({
   event: {
     type: Object,

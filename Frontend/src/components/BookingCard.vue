@@ -1,20 +1,19 @@
 <template>
   <div class="booking-card" :class="{ 'is-cancelled': booking.status === 'Cancelled' }">
+    <!-- Sport Image Thumbnail Banner -->
+    <div class="booking-thumb">
+      <img :src="getSportImage(booking.courtName || booking.sport)" :alt="booking.courtName" class="thumb-img" />
+      <div class="thumb-overlay"></div>
+      <span :class="['status-badge', booking.status.toLowerCase()]">
+        {{ booking.status }}
+      </span>
+    </div>
+
     <div class="card-body">
       <!-- Court Info & Title -->
       <div class="main-info">
-        <div class="sport-badge-container">
-          <div class="sport-icon-box">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="20" height="20">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
-        </div>
         <div class="title-details">
           <h3 class="court-name">{{ booking.courtName }}</h3>
-          <span :class="['status-badge', booking.status.toLowerCase()]">
-            {{ booking.status }}
-          </span>
         </div>
       </div>
 
@@ -57,6 +56,8 @@
 </template>
 
 <script setup>
+import { getSportImage } from '@/utils/sportImages'
+
 defineProps({
   booking: {
     type: Object,
@@ -92,6 +93,36 @@ export default {
   transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
   overflow: hidden;
   height: 100%;
+}
+
+.booking-thumb {
+  position: relative;
+  width: 100%;
+  height: 110px;
+  overflow: hidden;
+}
+
+.thumb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.booking-card:hover .thumb-img {
+  transform: scale(1.05);
+}
+
+.thumb-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.1) 0%, rgba(15, 23, 42, 0.5) 100%);
+}
+
+.booking-thumb .status-badge {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
 }
 
 .booking-card:hover {

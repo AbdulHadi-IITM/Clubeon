@@ -165,3 +165,17 @@ def check_out(attendance_id):
     if error:
         return jsonify(error), 404 if error['code'] == 'NOT_FOUND' else 400
     return jsonify({'message': 'Member checked out successfully.'}), 200
+
+
+@staff_bp.route('/events/attendance/check-in', methods=['POST'])
+@role_required('front-desk')
+def check_in_event():
+    data = request.get_json() or {}
+    event_id = data.get('event_id')
+    user_id = data.get('user_id')
+    if not event_id or not user_id:
+        return jsonify({'code': 'VALIDATION_ERROR', 'message': 'event_id and user_id are required.'}), 400
+    record, error = StaffService.check_in_event(event_id, user_id)
+    if error:
+        return jsonify(error), 404 if error['code'] == 'NOT_FOUND' else 400
+    return jsonify({'message': 'Participant checked in successfully.', 'attendance_id': record.id}), 201
