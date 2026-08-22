@@ -2985,6 +2985,8 @@ watch(
 
 // Modal Handlers
 const openAddCourtModal = () => {
+  showEditCourtModal.value = false
+  currentEditCourt.value = null
   courtForm.value = {
     court_name: '',
     sport_type: 'tennis',
@@ -3092,6 +3094,7 @@ const saveOrCreateClub = async () => {
 }
 
 const openEditCourtModal = (court) => {
+  showAddCourtModal.value = false
   currentEditCourt.value = court
   const hasOverrides =
     court.open_time_override || court.close_time_override || court.slot_duration_override
@@ -3545,6 +3548,8 @@ function closeBookingDetailsModal() {
 }
 
 function requestCancelBooking(booking) {
+  showBookingDetailsModal.value = false
+  selectedBooking.value = null
   bookingToCancel.value = booking
   showCancelConfirmModal.value = true
 }
@@ -3738,6 +3743,8 @@ const filteredAnnouncements = computed(() => {
 })
 
 const openCreateAnnouncementModal = () => {
+  showAnnouncementDetailsModal.value = false
+  selectedAnnouncement.value = null
   announcementForm.value = {
     title: '',
     category: 'General',
@@ -3810,6 +3817,7 @@ const submitCreateAnnouncement = async () => {
 }
 
 const openAnnouncementDetails = (item) => {
+  showCreateAnnouncementModal.value = false
   selectedAnnouncement.value = item
   showAnnouncementDetailsModal.value = true
   if (!item.is_read) {
@@ -4048,6 +4056,8 @@ function closeEventDetailsModal() {
 }
 
 function openEditEventModal(event) {
+  showEventDetailsModal.value = false
+  selectedEvent.value = null
   editingEvent.value = event
   editEventForm.id = event.id
   editEventForm.title = event.title
@@ -4100,6 +4110,8 @@ async function handleUpdateEvent() {
 }
 
 function requestDeleteEvent(event) {
+  showEventDetailsModal.value = false
+  selectedEvent.value = null
   eventToDelete.value = event
   showDeleteEventModal.value = true
 }
