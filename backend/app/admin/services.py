@@ -61,3 +61,66 @@ class AdminService:
         db.session.commit()
         
         return block, None
+
+    @staticmethod
+    def create_announcement(owner_id, title, body, announcement_type='general', target_audience='all'):
+        from app.notifications.models import Notification
+        from app.auth.models import User
+        
+        notification = Notification(
+            user_id=owner_id,
+            title=title,
+            body=body,
+            type=announcement_type,
+            is_read=False
+        )
+        db.session.add(notification)
+
+        users = User.query.filter(User.id != owner_id).all()
+        for u in users:
+            db.session.add(Notification(
+                user_id=u.id,
+                title=title,
+                body=body,
+                type=announcement_type,
+                is_read=False
+            ))
+        
+        db.session.commit()
+        return {
+            "id": notification.id,
+            "title": notification.title,
+            "body": notification.body,
+            "type": notification.type,
+            "is_read": notification.is_read,
+            "created_at": str(notification.created_at)
+        }, None
+
+    @staticmethod
+    def get_announcements(owner_id):
+        from app.notifications.models import Notification
+        announcements = Notification.query.filter_by(user_id=owner_id).order_by(Notification.created_at.desc()).all()
+        result = []
+        for a in announcements:
+            result.append({
+                "id": a.id,
+                "title": a.title,
+                "body": a.body,
+                "type": a.type,
+                "is_read": a.is_read,
+                "created_at": str(a.created_at)
+            })
+        return result, None
+
+    @staticmethod
+    def delete_announcement(owner_id, announcement_id):
+        from app.notifications.models import Notification
+        announcement = Notification.query.get(announcement_id)
+        if not announcement:
+            return False, {"code": "NOT_FOUND", "message": "Announcement not found"}
+        
+        # Delete related notifications with the same title if desired, or just this one
+        db.session.delete(announcement)
+        db.session.commit()
+        return True, None
+
