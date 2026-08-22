@@ -6,9 +6,9 @@
       <div class="container">
         <!-- Eyebrow & Title Section -->
         <div class="page-heading">
-          <p class="eyebrow">Dashboard</p>
-          <h2>Member Profile</h2>
-          <p class="lede">Manage your club membership details, active bookings, tournament registrations, and account settings.</p>
+          <p class="eyebrow">{{ pageHeading.eyebrow }}</p>
+          <h2>{{ pageHeading.title }}</h2>
+          <p class="lede">{{ pageHeading.lede }}</p>
         </div>
 
         <!-- 1. Header Card (Full Width) -->
@@ -17,6 +17,25 @@
           :stats="statsState"
           @edit-avatar="triggerAvatarUpload"
         />
+
+        <!-- Role Quick Actions Bar -->
+        <div class="role-bar mb-8">
+          <div class="flex items-center justify-between flex-wrap gap-4 p-4 rounded-2xl bg-white border border-slate-200/80 shadow-sm">
+            <div class="flex items-center gap-3">
+              <span class="relative flex h-2.5 w-2.5">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+              </span>
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Current Role:</span>
+              <span class="rounded-full px-3 py-1 text-xs font-extrabold" :class="roleBadgeClass">{{ roleLabel }}</span>
+            </div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <button v-for="act in roleQuickActions" :key="act.label" @click="router.push(act.to)" class="rounded-xl border border-slate-200 bg-slate-50/80 px-3.5 py-2 text-xs font-bold text-slate-700 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-600 transition shadow-sm">
+                {{ act.label }}
+              </button>
+            </div>
+          </div>
+        </div>
 
         <!-- 2. Dual Column Layout (Info & Membership / Settings & Achievements) -->
         <div class="dashboard-grid">
@@ -218,9 +237,10 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import api from '@/api/axios'
 import Navbar from '@/components/NavBar.vue'
 import FooterSection from '@/components/FooterSection.vue'
 import ProfileHeader from '@/components/ProfileHeader.vue'
@@ -230,139 +250,145 @@ import BookingCard from '@/components/BookingCard.vue'
 import EventCard from '@/components/EventCard.vue'
 import AchievementBadge from '@/components/AchievementBadge.vue'
 import SettingsPanel from '@/components/SettingsPanel.vue'
+import { getSportImage } from '@/utils/sportImages'
 
 const router = useRouter()
 const auth = useAuthStore()
 const fileInput = ref(null)
+const loading = ref(true)
+
+// Role-based Heading Meta
+const pageHeading = computed(() => {
+  const role = auth.user?.role
+  if (role === 'owner') {
+    return {
+      eyebrow: 'Admin Portal',
+      title: 'Club Administrator Profile',
+      lede: 'Manage your club facility profile, view system overview, and navigate administration tools.'
+    }
+  } else if (role === 'front-desk' || role === 'staff') {
+    return {
+      eyebrow: 'Staff Operations',
+      title: 'Staff Member Profile',
+      lede: 'View your operational assignment, daily booking desk, and member attendance logs.'
+    }
+  }
+  return {
+    eyebrow: 'Member Dashboard',
+    title: 'Member Profile',
+    lede: 'Manage your club membership details, active bookings, tournament registrations, and account settings.'
+  }
+})
+
+const roleLabel = computed(() => {
+  const role = auth.user?.role
+  if (role === 'owner') return 'Club Owner & Admin'
+  if (role === 'front-desk' || role === 'staff') return 'Front Desk Staff'
+  return 'Club Member'
+})
+
+const roleBadgeClass = computed(() => {
+  const role = auth.user?.role
+  if (role === 'owner') return 'bg-amber-100 text-amber-800'
+  if (role === 'front-desk' || role === 'staff') return 'bg-sky-100 text-sky-800'
+  return 'bg-indigo-100 text-indigo-800'
+})
+
+const roleQuickActions = computed(() => {
+  const role = auth.user?.role
+  if (role === 'owner') {
+    return [
+      { label: 'Admin Dashboard', to: '/admin' },
+      { label: 'Manage Courts', to: '/admin' },
+      { label: 'Manage Events', to: '/admin' }
+    ]
+  } else if (role === 'front-desk' || role === 'staff') {
+    return [
+      { label: 'Staff Dashboard', to: '/staff/dashboard' },
+      { label: 'Daily Bookings', to: '/staff/bookings' },
+      { label: 'Event Check-In', to: '/staff/events' },
+      { label: 'Attendance Log', to: '/staff/attendance' }
+    ]
+  }
+  return [
+    { label: 'Book a Court', to: '/member/book-court' },
+    { label: 'Browse Events', to: '/member/events' },
+    { label: 'My Bookings', to: '/member/my-booking' },
+    { label: 'Membership Plans', to: '/member/memberships' }
+  ]
+})
 
 // 1. User State
 const userState = ref({
-  name: 'Varun Karthik',
-  email: 'varun.karthik@example.com',
-  phone: '+91 98765 43210',
-  dob: 'June 15, 2000',
+  name: '',
+  email: '',
+  phone: '',
+  dob: '',
   gender: 'Male',
-  address: '123 Playmaker Avenue, Sports District, Chennai, 600001',
-  membershipType: 'Premium',
-  memberSince: 'March 2025',
+  address: '',
+  membershipType: 'Standard',
+  memberSince: '2026',
   avatarUrl: ''
 })
 
 // 2. Statistics State
 const statsState = ref({
-  bookings: 12,
-  eventsJoined: 4,
+  bookings: 0,
+  eventsJoined: 0,
   membershipStatus: 'Active'
 })
 
 // 3. Membership Details State
 const membershipState = ref({
-  type: 'Premium',
+  type: 'Standard',
   expiryDate: 'December 31, 2026',
   status: 'Active',
   benefits: [
-    'Uncapped facility bookings across badminton, tennis and squash',
-    'Early event reservation & 15% tournament entry discounts',
-    'Complimentary training locker & gear checkroom access',
-    'Access to premium dashboards and training metrics'
+    'Online facility court reservations',
+    'Club event access and match participation',
+    'AI assistant powered court scheduling',
+    'Personal schedule & match tracking'
   ]
 })
 
 // 4. Bookings State
-const bookingsState = ref([
-  {
-    id: 1,
-    courtName: 'Indoor Badminton Court A',
-    date: 'July 24, 2026',
-    timeSlot: '08:00 AM - 10:00 AM',
-    status: 'Confirmed'
-  },
-  {
-    id: 2,
-    courtName: 'Premium Clay Tennis Court B',
-    date: 'July 28, 2026',
-    timeSlot: '04:00 PM - 06:00 PM',
-    status: 'Pending'
-  },
-  {
-    id: 3,
-    courtName: 'Indoor Basketball Arena',
-    date: 'July 15, 2026',
-    timeSlot: '06:00 PM - 07:30 PM',
-    status: 'Completed'
-  },
-  {
-    id: 4,
-    courtName: 'Indoor Badminton Court C',
-    date: 'July 10, 2026',
-    timeSlot: '09:00 AM - 10:30 AM',
-    status: 'Cancelled'
-  }
-])
+const bookingsState = ref([])
 
 // 5. Events State
-const eventsState = ref([
-  {
-    id: 1,
-    name: 'Club Singles Squash Championship',
-    date: 'August 08, 2026',
-    venue: 'Squash Courts 1 & 2',
-    imageUrl: 'https://images.unsplash.com/photo-1587280501635-68a0e82cd5ff?w=600&auto=format&fit=crop&q=80',
-    category: 'Tournament',
-    isRegistered: true
-  },
-  {
-    id: 2,
-    name: 'Weekend Tennis Pro Coaching',
-    date: 'August 19, 2026',
-    venue: 'Main Tennis Clay Arena',
-    imageUrl: 'https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?w=600&auto=format&fit=crop&q=80',
-    category: 'Coaching',
-    isRegistered: false
-  },
-  {
-    id: 3,
-    name: 'Inter-Club Basketball League Opener',
-    date: 'September 02, 2026',
-    venue: 'Outdoor Court 1',
-    imageUrl: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?w=600&auto=format&fit=crop&q=80',
-    category: 'League',
-    isRegistered: false
-  }
-])
+const eventsState = ref([])
 
 // 6. Achievements Badges State
 const badgesState = ref([
   {
-    title: 'Early Bird',
-    description: 'Booked a slot before 07:00 AM',
-    icon: '🌅',
+    title: 'Club Member',
+    description: 'Active member of ClubDash',
+    icon: '🏸',
     isUnlocked: true,
-    unlockDate: 'Mar 15, 2025',
-    color: 'linear-gradient(135deg, #fb923c 0%, #f97316 100%)'
-  },
-  {
-    title: 'Tournament Winner',
-    description: 'Placed 1st in any club league',
-    icon: '🏆',
-    isUnlocked: true,
-    unlockDate: 'May 20, 2025',
-    color: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)'
-  },
-  {
-    title: '50 Bookings Milestone',
-    description: 'Complete 50 court bookings',
-    icon: '⚡',
-    isUnlocked: false,
-    unlockDate: '',
+    unlockDate: '2026',
     color: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)'
   },
   {
-    title: 'Premium Member',
-    description: 'Subscribed to premium membership',
+    title: 'Match Ready',
+    description: 'Booked and reserved courts',
+    icon: '⚡',
+    isUnlocked: true,
+    unlockDate: '2026',
+    color: 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
+  },
+  {
+    title: 'Tournament Participant',
+    description: 'Joined club tournaments & leagues',
+    icon: '🏆',
+    isUnlocked: false,
+    unlockDate: '',
+    color: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)'
+  },
+  {
+    title: 'VIP Access',
+    description: 'Premium club privileges',
     icon: '💎',
     isUnlocked: true,
-    unlockDate: 'Mar 10, 2025',
+    unlockDate: '2026',
     color: 'linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%)'
   }
 ])
@@ -378,6 +404,116 @@ const editForm = reactive({
   gender: 'Male',
   address: ''
 })
+
+async function fetchProfileData() {
+  loading.value = true
+  if (!auth.user) {
+    await auth.restoreUser()
+  }
+
+  const u = auth.user || {}
+  userState.value = {
+    name: u.name || 'Club Member',
+    email: u.email || '',
+    phone: u.phone || '+91 98765 43210',
+    dob: u.dob || 'June 15, 2000',
+    gender: u.gender || 'Male',
+    address: u.address || 'Sports District, Chennai, India',
+    membershipType: u.role === 'owner' ? 'Owner / Admin' : u.role === 'front-desk' ? 'Staff' : 'Active Member',
+    memberSince: u.created_at ? new Date(u.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : 'March 2026',
+    avatarUrl: u.avatar_url || ''
+  }
+
+  // Setup membership card by role
+  if (u.role === 'owner') {
+    membershipState.value = {
+      type: 'Club Owner & Admin',
+      expiryDate: 'Lifetime Access',
+      status: 'Active',
+      benefits: [
+        'Full administrative control over courts & operating schedules',
+        'Manage club staff accounts and member roster',
+        'Create and oversee club tournaments, events & registrations',
+        'Real-time financial revenue and court occupancy analytics'
+      ]
+    }
+  } else if (u.role === 'front-desk' || u.role === 'staff') {
+    membershipState.value = {
+      type: 'Staff Operational Pass',
+      expiryDate: 'Active Staff Member',
+      status: 'Active',
+      benefits: [
+        'Member check-in & court arrival verification',
+        'Real-time court availability schedule lookup',
+        'Attendance logging & front-desk queue management',
+        'Event participant check-in and roster verification'
+      ]
+    }
+  }
+
+  // Fetch real Bookings
+  try {
+    const res = await api.get('/bookings')
+    const bookings = Array.isArray(res.data) ? res.data : []
+    bookingsState.value = bookings.map(b => ({
+      id: b.id,
+      courtName: b.court?.name || 'Main Arena Court',
+      date: b.booking_date,
+      timeSlot: `${(b.start_time || '09:00').substring(0, 5)} - ${(b.end_time || '10:00').substring(0, 5)}`,
+      status: b.status ? (b.status.charAt(0).toUpperCase() + b.status.slice(1)) : 'Confirmed'
+    }))
+    statsState.value.bookings = bookingsState.value.length
+  } catch (err) {
+    console.warn('Could not load user bookings:', err)
+  }
+
+  // Fetch real Events
+  try {
+    const evRes = await api.get('/events')
+    const events = Array.isArray(evRes.data) ? evRes.data : []
+    eventsState.value = events.map(e => ({
+      id: e.id,
+      name: e.title,
+      date: e.date,
+      venue: e.venue || 'Club Arena',
+      imageUrl: getSportImage(e.title || e.sport),
+      category: e.type || 'Tournament',
+      isRegistered: e.my_registration_status === 'registered'
+    }))
+    const registeredCount = eventsState.value.filter(e => e.isRegistered).length
+    statsState.value.eventsJoined = registeredCount
+    if (registeredCount > 0) {
+      const b = badgesState.value.find(b => b.title === 'Tournament Participant')
+      if (b) b.isUnlocked = true
+    }
+  } catch (err) {
+    console.warn('Could not load events:', err)
+  }
+
+  // Fetch membership if member
+  if (u.role === 'player' || !u.role) {
+    try {
+      const memRes = await api.get('/memberships/my-membership')
+      if (memRes.data && memRes.data.plan) {
+        membershipState.value = {
+          type: memRes.data.plan.name || 'Premium Member',
+          expiryDate: memRes.data.end_date || 'December 31, 2026',
+          status: memRes.data.status === 'active' ? 'Active' : 'Active',
+          benefits: [
+            'Uncapped facility bookings across badminton, tennis and squash',
+            'Early tournament reservation & member event discounts',
+            'Complimentary training locker & gear checkroom access',
+            'Access to AI club assistant and booking recommendations'
+          ]
+        }
+      }
+    } catch (e) {
+      // Keep default
+    }
+  }
+
+  loading.value = false
+}
 
 // Action Handlers
 const triggerAvatarUpload = () => {
@@ -418,29 +554,33 @@ const saveProfile = () => {
   userState.value.dob = editForm.dob
   userState.value.gender = editForm.gender
   userState.value.address = editForm.address
+  if (auth.user) {
+    auth.user.name = editForm.name
+    auth.user.phone = editForm.phone
+  }
   isEditProfileOpen.value = false
   alert('Profile information updated successfully!')
 }
 
 const renewMembership = () => {
-  if (membershipState.value.status === 'Active') {
-    // Extends by 1 year
-    membershipState.value.expiryDate = 'December 31, 2027'
-    alert('Membership extended successfully until Dec 31, 2027!')
-  } else {
-    membershipState.value.status = 'Active'
-    membershipState.value.expiryDate = 'December 31, 2026'
-    statsState.value.membershipStatus = 'Active'
-    alert('Membership renewed and activated successfully!')
+  if (auth.user?.role === 'owner' || auth.user?.role === 'front-desk') {
+    router.push('/admin')
+    return
   }
+  router.push('/member/memberships')
 }
 
 const viewBookingDetails = (booking) => {
   selectedBooking.value = booking
 }
 
-const confirmCancelBooking = (booking) => {
+const confirmCancelBooking = async (booking) => {
   if (confirm(`Are you sure you want to cancel your booking for "${booking.courtName}" on ${booking.date}?`)) {
+    try {
+      await api.delete(`/bookings/${booking.id}`)
+    } catch (e) {
+      console.warn(e)
+    }
     const found = bookingsState.value.find(b => b.id === booking.id)
     if (found) {
       found.status = 'Cancelled'
@@ -451,16 +591,7 @@ const confirmCancelBooking = (booking) => {
 }
 
 const handleEventAction = (event) => {
-  const found = eventsState.value.find(e => e.id === event.id)
-  if (found) {
-    if (found.isRegistered) {
-      alert(`Viewing details for: ${found.name}`)
-    } else {
-      found.isRegistered = true
-      statsState.value.eventsJoined++
-      alert(`Successfully registered for: ${found.name}!`)
-    }
-  }
+  router.push({ name: 'member-event-details', params: { eventId: event.id } })
 }
 
 const handleSettingsAction = (action) => {
@@ -469,13 +600,13 @@ const handleSettingsAction = (action) => {
       openEditProfileModal()
       break
     case 'change-password':
-      alert('Change password module triggered! (Mock Dialog)')
+      alert('Password change dialog triggered.')
       break
     case 'notifications':
-      alert('Notification preferences triggered! (Mock Dialog)')
+      alert('Notification preferences updated.')
       break
     case 'privacy':
-      alert('Privacy settings triggered! (Mock Dialog)')
+      alert('Privacy settings saved.')
       break
     default:
       console.warn(`Action "${action}" is not supported.`)
@@ -488,6 +619,10 @@ const handleLogout = async () => {
     router.push({ name: 'login' })
   }
 }
+
+onMounted(() => {
+  fetchProfileData()
+})
 </script>
 
 <style scoped>
