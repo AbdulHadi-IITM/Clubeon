@@ -192,29 +192,32 @@
               <div class="discord-details-list">
                 <div class="detail-row">
                   <span class="detail-label">Email</span>
-                  <span class="detail-val">{{ adminProfile.email }}</span>
+                  <span class="detail-val">{{ adminProfile.email || 'Not provided' }}</span>
                 </div>
                 <div class="detail-row">
                   <span class="detail-label">Phone</span>
-                  <span class="detail-val">{{ adminProfile.phone }}</span>
+                  <span class="detail-val" :style="{ color: adminProfile.phone ? '#f1f5f9' : '#94a3b8' }">
+                    {{ adminProfile.phone || 'Not provided' }}
+                  </span>
                 </div>
                 <div class="detail-row">
                   <span class="detail-label">Club Facility</span>
-                  <span class="detail-val">{{ courtStore.club?.name || 'Apex Sports Club' }}</span>
+                  <span class="detail-val" style="color: #60a5fa; font-weight: 700;">ClubDash</span>
                 </div>
                 <div class="detail-row">
                   <span class="detail-label">Member Since</span>
-                  <span class="detail-val">Jan 2025</span>
+                  <span class="detail-val">{{ adminProfile.memberSince || 'Recent' }}</span>
                 </div>
               </div>
 
               <!-- Action Footer -->
               <div class="discord-actions-footer">
-                <label class="upload-btn-pill">
-                  📷 Upload Photo
-                  <input type="file" accept="image/*" @change="handleAvatarUpload" style="display: none;" />
-                </label>
-                <button class="close-card-btn" @click="showProfilePopover = false">Close</button>
+                <button type="button" class="edit-profile-btn-pill" @click="openEditProfileModal">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="15" height="15">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                  <span>Edit Profile</span>
+                </button>
               </div>
             </div>
           </div>
@@ -2883,6 +2886,188 @@
             </div>
           </div>
         </div>
+
+        <!-- Edit Admin Profile Modal -->
+        <div v-if="showEditProfileModal" class="modal-overlay" @click.self="closeEditProfileModal">
+          <div class="modal-card" style="max-width: 520px; width: 95vw; max-height: 90vh; overflow-y: auto;">
+            <!-- Modal Header -->
+            <div class="modal-header" style="background: linear-gradient(135deg, #1e293b, #0f172a); color: #ffffff; border-radius: 1rem 1rem 0 0; padding: 1.25rem 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+              <div style="display: flex; align-items: center; gap: 0.85rem;">
+                <div style="width: 42px; height: 42px; border-radius: 12px; background: linear-gradient(135deg, #3b82f6, #6366f1); display: grid; place-items: center; font-size: 1.35rem; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);">
+                  👤
+                </div>
+                <div>
+                  <h3 style="margin: 0; font-size: 1.2rem; font-weight: 800; color: #ffffff; letter-spacing: -0.02em;">Edit Admin Profile</h3>
+                  <span style="font-size: 0.82rem; color: #94a3b8;">Update your administrative contact details and credentials</span>
+                </div>
+              </div>
+              <button type="button" class="close-modal-btn" @click="closeEditProfileModal" style="color: #94a3b8; background: rgba(255,255,255,0.08); border-radius: 999px; width: 32px; height: 32px; display: grid; place-items: center; border: none; font-size: 1rem; cursor: pointer;">✕</button>
+            </div>
+
+            <!-- Modal Body Form -->
+            <form @submit.prevent="saveAdminProfile" class="modal-body" style="padding: 1.5rem;">
+              <!-- Avatar Preview & Change -->
+              <div style="display: flex; align-items: center; gap: 1.25rem; margin-bottom: 1.5rem; padding: 1rem; background: #f8fafc; border-radius: 0.85rem; border: 1px solid #e2e8f0;">
+                <div style="position: relative; width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, #2563eb, #4f46e5); color: #ffffff; display: grid; place-items: center; font-size: 1.3rem; font-weight: 800; overflow: hidden; flex-shrink: 0; box-shadow: 0 4px 12px rgba(37,99,235,0.3);">
+                  <img v-if="editProfileForm.avatarUrl" :src="editProfileForm.avatarUrl" alt="Avatar preview" style="width: 100%; height: 100%; object-fit: cover;" />
+                  <span v-else>{{ getInitials(editProfileForm.name || adminProfile.name) }}</span>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 0.4rem; flex: 1;">
+                  <span style="font-size: 0.85rem; font-weight: 700; color: #1e293b;">Profile Avatar</span>
+                  <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                    <label class="modal-upload-btn" style="background: #2563eb; color: #ffffff; font-size: 0.78rem; font-weight: 600; padding: 0.4rem 0.85rem; border-radius: 0.5rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.35rem; transition: background 0.2s ease;">
+                      📷 Choose Photo
+                      <input type="file" accept="image/*" @change="handleEditAvatarUpload" style="display: none;" />
+                    </label>
+                    <button v-if="editProfileForm.avatarUrl" type="button" @click="removeEditAvatar" style="background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; font-size: 0.78rem; font-weight: 600; padding: 0.4rem 0.85rem; border-radius: 0.5rem; cursor: pointer;">
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Full Name Field -->
+              <div class="form-group" style="margin-bottom: 1.15rem;">
+                <label class="form-label" style="display: block; font-size: 0.82rem; font-weight: 700; color: #334155; margin-bottom: 0.35rem;">
+                  Full Name <span style="color: #ef4444;">*</span>
+                </label>
+                <input
+                  v-model="editProfileForm.name"
+                  type="text"
+                  required
+                  placeholder="e.g. Alex Morgan"
+                  class="form-control"
+                  style="width: 100%; padding: 0.65rem 0.85rem; border: 1.5px solid #cbd5e1; border-radius: 0.6rem; font-size: 0.9rem;"
+                />
+              </div>
+
+              <!-- Email Field -->
+              <div class="form-group" style="margin-bottom: 1.15rem;">
+                <label class="form-label" style="display: block; font-size: 0.82rem; font-weight: 700; color: #334155; margin-bottom: 0.35rem;">
+                  Email Address <span style="color: #ef4444;">*</span>
+                </label>
+                <input
+                  v-model="editProfileForm.email"
+                  type="email"
+                  required
+                  placeholder="e.g. alex.morgan@clubdash.com"
+                  class="form-control"
+                  style="width: 100%; padding: 0.65rem 0.85rem; border: 1.5px solid #cbd5e1; border-radius: 0.6rem; font-size: 0.9rem;"
+                />
+              </div>
+
+              <!-- Phone Field -->
+              <div class="form-group" style="margin-bottom: 1.15rem;">
+                <label class="form-label" style="display: block; font-size: 0.82rem; font-weight: 700; color: #334155; margin-bottom: 0.35rem;">
+                  Phone Number
+                </label>
+                <input
+                  v-model="editProfileForm.phone"
+                  type="text"
+                  placeholder="e.g. +91 98765 43210"
+                  class="form-control"
+                  style="width: 100%; padding: 0.65rem 0.85rem; border: 1.5px solid #cbd5e1; border-radius: 0.6rem; font-size: 0.9rem;"
+                />
+              </div>
+
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.15rem;">
+                <!-- Role / Title -->
+                <div class="form-group">
+                  <label class="form-label" style="display: block; font-size: 0.82rem; font-weight: 700; color: #334155; margin-bottom: 0.35rem;">
+                    Role Title
+                  </label>
+                  <input
+                    v-model="editProfileForm.role"
+                    type="text"
+                    placeholder="e.g. Super Admin"
+                    class="form-control"
+                    style="width: 100%; padding: 0.65rem 0.85rem; border: 1.5px solid #cbd5e1; border-radius: 0.6rem; font-size: 0.9rem;"
+                  />
+                </div>
+
+                <!-- Club Facility -->
+                <div class="form-group">
+                  <label class="form-label" style="display: block; font-size: 0.82rem; font-weight: 700; color: #334155; margin-bottom: 0.35rem;">
+                    Club Facility <span style="font-size: 0.72rem; color: #64748b; font-weight: 500;">(Permanent)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value="ClubDash"
+                    disabled
+                    class="form-control"
+                    style="width: 100%; padding: 0.65rem 0.85rem; border: 1.5px solid #e2e8f0; background: #f8fafc; color: #64748b; font-weight: 600; border-radius: 0.6rem; font-size: 0.9rem; cursor: not-allowed;"
+                  />
+                </div>
+              </div>
+
+              <!-- Modal Footer -->
+              <div class="modal-footer" style="display: flex; justify-content: flex-end; align-items: center; gap: 0.75rem; padding-top: 1.25rem; border-top: 1px solid #e2e8f0; margin-top: 1.5rem;">
+                <button type="button" class="cancel-modal-btn" @click="closeEditProfileModal" style="background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; font-weight: 600; padding: 0.65rem 1.25rem; border-radius: 0.6rem; cursor: pointer;">
+                  Cancel
+                </button>
+                <button type="submit" class="submit-modal-btn" style="background: linear-gradient(135deg, #2563eb, #4f46e5); color: #ffffff; font-weight: 700; padding: 0.65rem 1.4rem; border-radius: 0.6rem; border: none; cursor: pointer; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35); display: inline-flex; align-items: center; gap: 0.4rem;">
+                  <span>Save Changes</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="16" height="16">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- First-Time Admin Phone Setup Modal -->
+        <div v-if="showFirstTimePhoneModal" class="modal-overlay" style="z-index: 500;">
+          <div class="modal-card" style="max-width: 440px; width: 95vw; border-radius: 1.25rem; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);">
+            <!-- Modal Header -->
+            <div style="background: linear-gradient(135deg, #1e293b, #0f172a); color: #ffffff; padding: 1.5rem; text-align: center; position: relative;">
+              <div style="width: 52px; height: 52px; border-radius: 16px; background: linear-gradient(135deg, #2563eb, #4f46e5); display: grid; place-items: center; font-size: 1.6rem; margin: 0 auto 0.75rem; box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);">
+                📱
+              </div>
+              <h3 style="margin: 0 0 0.35rem; font-size: 1.25rem; font-weight: 800; color: #ffffff; letter-spacing: -0.02em;">Welcome to ClubDash</h3>
+              <p style="margin: 0; font-size: 0.85rem; color: #94a3b8; line-height: 1.4;">
+                Please provide your contact phone number to complete your administrator setup.
+              </p>
+            </div>
+
+            <!-- Modal Body Form -->
+            <form @submit.prevent="submitFirstTimePhone" style="padding: 1.5rem; background: #ffffff;">
+              <div class="form-group" style="margin-bottom: 1.25rem;">
+                <label class="form-label" style="display: block; font-size: 0.85rem; font-weight: 700; color: #1e293b; margin-bottom: 0.45rem;">
+                  Admin Phone Number <span style="color: #ef4444;">*</span>
+                </label>
+                <input
+                  v-model="firstTimePhoneInput"
+                  type="tel"
+                  required
+                  placeholder="e.g. +91 98765 43210"
+                  class="form-control"
+                  style="width: 100%; padding: 0.75rem 0.95rem; border: 1.5px solid #cbd5e1; border-radius: 0.65rem; font-size: 0.95rem;"
+                  autofocus
+                />
+                <span style="display: block; font-size: 0.75rem; color: #64748b; margin-top: 0.4rem;">
+                  🔒 You will only be asked for this once upon your first login.
+                </span>
+              </div>
+
+              <div style="display: flex; gap: 0.75rem; justify-content: flex-end; align-items: center; margin-top: 1.5rem;">
+                <button
+                  type="button"
+                  @click="skipFirstTimePhone"
+                  style="background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; font-weight: 600; padding: 0.65rem 1.15rem; border-radius: 0.6rem; cursor: pointer; font-size: 0.85rem;"
+                >
+                  Skip for Now
+                </button>
+                <button
+                  type="submit"
+                  style="background: linear-gradient(135deg, #2563eb, #4f46e5); color: #ffffff; font-weight: 700; padding: 0.65rem 1.4rem; border-radius: 0.6rem; border: none; cursor: pointer; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35); font-size: 0.85rem;"
+                >
+                  Save & Continue
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       </div>
     </main>
     </div>
@@ -2940,7 +3125,14 @@ const courtForm = ref({
 })
 
 // Fetch data on mount
-onMounted(() => {
+onMounted(async () => {
+  if (!auth.initialized || !auth.user) {
+    try {
+      await auth.restoreUser()
+    } catch (e) {}
+  }
+  syncProfileWithAuthUser(auth.user)
+  checkFirstTimePhoneSetup(auth.user)
   courtStore.fetchCourts()
   notificationStore.fetchNotifications()
 })
@@ -4251,20 +4443,242 @@ function exportMembersCSV() {
   if (toast) toast.success('Members list exported to CSV successfully!')
 }
 
-// --- DISCORD-STYLE ADMIN PROFILE STATE ---
+// --- REAL-TIME ADMIN PROFILE STATE ---
 const showProfilePopover = ref(false)
+const showEditProfileModal = ref(false)
+const showFirstTimePhoneModal = ref(false)
+const firstTimePhoneInput = ref('')
 
 const adminProfile = reactive({
-  name: 'Alex Morgan',
+  name: '',
   role: 'Super Admin',
-  email: 'alex.morgan@clubdash.com',
-  phone: '+91 98765 43210',
-  initials: 'AM',
+  email: '',
+  phone: '',
+  facility: 'ClubDash',
+  memberSince: '',
+  initials: 'AD',
   avatarUrl: null
 })
 
+const editProfileForm = reactive({
+  name: '',
+  email: '',
+  phone: '',
+  role: '',
+  facility: 'ClubDash',
+  avatarUrl: null
+})
+
+function formatRole(role) {
+  if (!role) return 'Super Admin'
+  if (role.toLowerCase() === 'owner') return 'Super Admin'
+  if (role.toLowerCase() === 'front-desk') return 'Front Desk'
+  return role.charAt(0).toUpperCase() + role.slice(1)
+}
+
+function formatMemberSince(createdAt) {
+  if (!createdAt) return 'Recent'
+  try {
+    const d = new Date(createdAt)
+    if (isNaN(d.getTime())) return 'Recent'
+    return d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+  } catch {
+    return 'Recent'
+  }
+}
+
+function getInitials(name) {
+  if (!name) return 'AD'
+  const parts = name.trim().split(' ').filter(Boolean)
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+  } else if (parts.length === 1 && parts[0].length > 0) {
+    return parts[0].slice(0, 2).toUpperCase()
+  }
+  return 'AD'
+}
+
+function checkFirstTimePhoneSetup(u) {
+  if (!u) return
+  const userKey = `phone_prompt_done_${u.id || u.email}`
+  const alreadyPrompted = localStorage.getItem(userKey)
+  // If user has no phone in db and has not completed initial prompt
+  if (!u.phone && !alreadyPrompted) {
+    firstTimePhoneInput.value = ''
+    showFirstTimePhoneModal.value = true
+  }
+}
+
+async function submitFirstTimePhone() {
+  const phoneVal = firstTimePhoneInput.value.trim()
+  if (!phoneVal) {
+    if (toast) toast.error('Please enter a valid phone number.')
+    return
+  }
+
+  try {
+    if (auth.isAuthenticated()) {
+      await auth.updateProfile({ phone: phoneVal })
+    } else if (auth.user) {
+      auth.user.phone = phoneVal
+    }
+  } catch (err) {
+    console.warn('Error saving initial phone:', err)
+  }
+
+  adminProfile.phone = phoneVal
+  const userKey = `phone_prompt_done_${auth.user?.id || auth.user?.email || 'default'}`
+  localStorage.setItem(userKey, 'true')
+
+  showFirstTimePhoneModal.value = false
+  if (toast) toast.success('Phone number saved successfully! 📱')
+}
+
+function skipFirstTimePhone() {
+  const userKey = `phone_prompt_done_${auth.user?.id || auth.user?.email || 'default'}`
+  localStorage.setItem(userKey, 'true')
+  showFirstTimePhoneModal.value = false
+}
+
+function syncProfileWithAuthUser(u) {
+  if (!u) {
+    adminProfile.name = 'Admin User'
+    adminProfile.email = 'admin@clubdash.com'
+    adminProfile.role = 'Super Admin'
+    adminProfile.phone = ''
+    adminProfile.facility = 'ClubDash'
+    adminProfile.memberSince = 'Recent'
+    adminProfile.initials = 'AD'
+    return
+  }
+
+  adminProfile.name = u.name || 'Admin User'
+  adminProfile.email = u.email || 'admin@clubdash.com'
+  adminProfile.role = formatRole(u.role)
+  adminProfile.initials = getInitials(adminProfile.name)
+  adminProfile.phone = (u.phone && u.phone !== '+91 98765 43210') ? u.phone : ''
+  adminProfile.facility = 'ClubDash'
+  adminProfile.memberSince = formatMemberSince(u.created_at)
+
+  // Load user-specific avatar or valid custom phone
+  try {
+    const userKey = `admin_profile_${u.id || u.email}`
+    const saved = localStorage.getItem(userKey)
+    if (saved) {
+      const parsed = JSON.parse(saved)
+      if (parsed.phone && parsed.phone !== '+91 98765 43210' && !adminProfile.phone) {
+        adminProfile.phone = parsed.phone
+      }
+      if (parsed.avatarUrl) adminProfile.avatarUrl = parsed.avatarUrl
+    }
+  } catch (err) {
+    console.warn('Error reading stored profile extra:', err)
+  }
+}
+
+// Reactively watch for auth.user changes
+watch(
+  () => auth.user,
+  (newUser) => {
+    syncProfileWithAuthUser(newUser)
+    if (newUser) {
+      checkFirstTimePhoneSetup(newUser)
+    }
+  },
+  { immediate: true, deep: true }
+)
+
 function toggleProfilePopover() {
   showProfilePopover.value = !showProfilePopover.value
+}
+
+function openEditProfileModal() {
+  editProfileForm.name = adminProfile.name
+  editProfileForm.email = adminProfile.email
+  editProfileForm.phone = adminProfile.phone
+  editProfileForm.role = adminProfile.role
+  editProfileForm.facility = 'ClubDash'
+  editProfileForm.avatarUrl = adminProfile.avatarUrl
+  showEditProfileModal.value = true
+}
+
+function closeEditProfileModal() {
+  showEditProfileModal.value = false
+}
+
+function handleEditAvatarUpload(event) {
+  const file = event.target.files && event.target.files[0]
+  if (file) {
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      editProfileForm.avatarUrl = e.target.result
+    }
+    reader.readAsDataURL(file)
+  }
+}
+
+function removeEditAvatar() {
+  editProfileForm.avatarUrl = null
+}
+
+async function saveAdminProfile() {
+  if (!editProfileForm.name || !editProfileForm.name.trim()) {
+    if (toast) toast.error('Please enter a valid full name.')
+    return
+  }
+  if (!editProfileForm.email || !editProfileForm.email.trim()) {
+    if (toast) toast.error('Please enter a valid email address.')
+    return
+  }
+
+  const newName = editProfileForm.name.trim()
+  const newEmail = editProfileForm.email.trim()
+  const newPhone = editProfileForm.phone.trim()
+
+  try {
+    // Update on the backend
+    if (auth.isAuthenticated()) {
+      await auth.updateProfile({
+        name: newName,
+        email: newEmail,
+        phone: newPhone,
+        facility: 'ClubDash'
+      })
+    } else if (auth.user) {
+      auth.user.name = newName
+      auth.user.email = newEmail
+      auth.user.phone = newPhone
+    }
+  } catch (err) {
+    console.warn('Backend profile update note:', err)
+    if (toast && err?.response?.data?.message) {
+      toast.error(err.response.data.message)
+      return
+    }
+  }
+
+  adminProfile.name = newName
+  adminProfile.email = newEmail
+  adminProfile.phone = newPhone
+  adminProfile.role = editProfileForm.role.trim() || adminProfile.role
+  adminProfile.facility = 'ClubDash'
+  adminProfile.avatarUrl = editProfileForm.avatarUrl
+  adminProfile.initials = getInitials(adminProfile.name)
+
+  // Save user-specific preferences to localStorage
+  try {
+    const userKey = `admin_profile_${auth.user?.id || auth.user?.email || 'default'}`
+    localStorage.setItem(userKey, JSON.stringify({
+      phone: adminProfile.phone,
+      facility: 'ClubDash',
+      avatarUrl: adminProfile.avatarUrl
+    }))
+  } catch (err) {
+    console.warn('Failed to save profile preferences to localStorage:', err)
+  }
+
+  showEditProfileModal.value = false
+  if (toast) toast.success('Profile details saved successfully! ✨')
 }
 
 function handleAvatarUpload(event) {
@@ -4273,6 +4687,12 @@ function handleAvatarUpload(event) {
     const reader = new FileReader()
     reader.onload = (e) => {
       adminProfile.avatarUrl = e.target.result
+      try {
+        const userKey = `admin_profile_${auth.user?.id || auth.user?.email || 'default'}`
+        const existing = JSON.parse(localStorage.getItem(userKey) || '{}')
+        existing.avatarUrl = adminProfile.avatarUrl
+        localStorage.setItem(userKey, JSON.stringify(existing))
+      } catch (err) {}
       if (toast) toast.success('Profile picture updated successfully! 📸')
     }
     reader.readAsDataURL(file)
@@ -7062,42 +7482,36 @@ function handleAvatarUpload(event) {
 .discord-actions-footer {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
   margin-top: 0.85rem;
 }
 
-.upload-btn-pill {
-  flex: 1;
-  background: #2563eb;
+.edit-profile-btn-pill {
+  width: 100%;
+  background: linear-gradient(135deg, #2563eb, #4f46e5);
   color: #ffffff;
-  font-size: 0.76rem;
+  font-size: 0.82rem;
   font-weight: 700;
-  padding: 0.4rem 0.65rem;
-  border-radius: 0.5rem;
+  padding: 0.55rem 0.85rem;
+  border-radius: 0.6rem;
   text-align: center;
+  border: none;
   cursor: pointer;
-  transition: background 0.2s ease;
-}
-
-.upload-btn-pill:hover {
-  background: #1d4ed8;
-}
-
-.close-card-btn {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  color: #cbd5e1;
-  font-size: 0.76rem;
-  font-weight: 600;
-  padding: 0.4rem 0.65rem;
-  border-radius: 0.5rem;
-  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
   transition: all 0.2s ease;
 }
 
-.close-card-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
-  color: #ffffff;
+.edit-profile-btn-pill:hover {
+  background: linear-gradient(135deg, #1d4ed8, #4338ca);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.45);
+}
+
+.modal-upload-btn:hover {
+  background: #1d4ed8;
 }
 
 .popover-fade-enter-active,
