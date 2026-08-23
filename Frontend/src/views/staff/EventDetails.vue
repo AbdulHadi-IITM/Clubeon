@@ -86,20 +86,25 @@
         </div>
       </section>
     </template>
+    <div v-else class="glass p-10 text-center text-gray-500">
+      Please select a club to view event details.
+    </div>
   </div>
 </template>
 <script setup>
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import api from '@/api/axios'
 import ClubPicker from './components/ClubPicker.vue'
 import { date as formatDate, time, errorMessage } from './_helpers'
+
 const route = useRoute()
 const clubId = ref(route.query.club_id ? String(route.query.club_id) : '')
 const event = ref(null)
 const loading = ref(false)
 const error = ref('')
-const eventId = Number((window.location.pathname.match(/events\/(\d+)/) || [])[1])
+const eventId = computed(() => Number(route.params.eventId || (window.location.pathname.match(/events\/(\d+)/) || [])[1]))
+
 function dateTime(v) {
   if (!v) return '—'
   const d = new Date(String(v).replace(' ', 'T'))
@@ -113,19 +118,41 @@ function dateTime(v) {
         minute: '2-digit',
       }).format(d)
 }
+
 async function load() {
-  if (!clubId.value || !eventId) return
+  if (!eventId.value) return
+  
+  if (!clubId.value) {
+    try {
+      const clubsRes = await api.get('/clubs')
+      if (Array.isArray(clubsRes.data) && clubsRes.data.length > 0) {
+        clubId.value = String(clubsRes.data[0].id)
+      }
+    } catch (e) {
+      console.warn('Unable to auto-fetch clubs:', e)
+    }
+  }
+
+  if (!clubId.value) return
+
   loading.value = true
   error.value = ''
   try {
     event.value = (
-      await api.get(`/staff/events/${eventId}`, { params: { club_id: clubId.value } })
+      await api.get(`/staff/events/${eventId.value}`, { params: { club_id: clubId.value } })
     ).data
   } catch (e) {
-    error.value = errorMessage(e, 'Unable to load event.')
+    error.value = errorMessage(e, 'Unable to load event details.')
   } finally {
     loading.value = false
   }
 }
+
+watch(() => clubId.value, () => {
+  if (clubId.value) {
+    load()
+  }
+})
+
 onMounted(load)
 </script>

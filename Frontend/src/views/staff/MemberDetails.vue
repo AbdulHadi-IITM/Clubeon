@@ -102,33 +102,61 @@
         </section>
       </div>
     </template>
+    <div v-else class="glass p-10 text-center text-gray-500">
+      Please select a club to view member details.
+    </div>
   </div>
 </template>
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import api from '@/api/axios'
 import ClubPicker from './components/ClubPicker.vue'
 import { date as formatDate, time, errorMessage } from './_helpers'
+
 const route = useRoute()
 const clubId = ref(route.query.club_id ? String(route.query.club_id) : '')
 const member = ref(null)
 const loading = ref(false)
 const error = ref('')
-const userId = Number((window.location.pathname.match(/members\/(\d+)/) || [])[1])
+const userId = computed(() => Number(route.params.userId || (window.location.pathname.match(/members\/(\d+)/) || [])[1]))
 const initial = computed(() => (member.value?.name || 'M').charAt(0).toUpperCase())
+
 async function load() {
-  if (!clubId.value || !userId) return
+  if (!userId.value) return
+  
+  // If clubId is not set, try to fetch the first available club
+  if (!clubId.value) {
+    try {
+      const clubsRes = await api.get('/clubs')
+      if (Array.isArray(clubsRes.data) && clubsRes.data.length > 0) {
+        clubId.value = String(clubsRes.data[0].id)
+      }
+    } catch (e) {
+      console.warn('Unable to auto-fetch clubs:', e)
+    }
+  }
+
+  if (!clubId.value) return
+
   loading.value = true
   error.value = ''
   try {
     member.value = (
-      await api.get(`/staff/members/${userId}`, { params: { club_id: clubId.value } })
+      await api.get(`/staff/members/${userId.value}`, { params: { club_id: clubId.value } })
     ).data
   } catch (e) {
-    error.value = errorMessage(e, 'Unable to load member.')
+    error.value = errorMessage(e, 'Unable to load member details.')
   } finally {
     loading.value = false
   }
 }
+
+watch(() => clubId.value, () => {
+  if (clubId.value) {
+    load()
+  }
+})
+
 onMounted(load)
 </script>

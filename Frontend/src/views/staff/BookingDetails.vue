@@ -60,33 +60,59 @@
         </div>
       </section>
     </template>
+    <div v-else class="glass p-10 text-center text-gray-500">
+      Please select a club to view booking details.
+    </div>
   </div>
 </template>
 <script setup>
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import api from '@/api/axios'
 import ClubPicker from './components/ClubPicker.vue'
 import { date as formatDate, time, errorMessage } from './_helpers'
+
 const route = useRoute()
 const clubId = ref(route.query.club_id ? String(route.query.club_id) : '')
 const booking = ref(null)
 const loading = ref(false)
 const error = ref('')
-const bookingId = Number((window.location.pathname.match(/bookings\/(\d+)/) || [])[1])
+const bookingId = computed(() => Number(route.params.bookingId || (window.location.pathname.match(/bookings\/(\d+)/) || [])[1]))
+
 async function load() {
-  if (!clubId.value || !bookingId) return
+  if (!bookingId.value) return
+  
+  if (!clubId.value) {
+    try {
+      const clubsRes = await api.get('/clubs')
+      if (Array.isArray(clubsRes.data) && clubsRes.data.length > 0) {
+        clubId.value = String(clubsRes.data[0].id)
+      }
+    } catch (e) {
+      console.warn('Unable to auto-fetch clubs:', e)
+    }
+  }
+
+  if (!clubId.value) return
+
   loading.value = true
   error.value = ''
   try {
     booking.value = (
-      await api.get(`/staff/bookings/${bookingId}`, { params: { club_id: clubId.value } })
+      await api.get(`/staff/bookings/${bookingId.value}`, { params: { club_id: clubId.value } })
     ).data
   } catch (e) {
-    error.value = errorMessage(e, 'Unable to load booking.')
+    error.value = errorMessage(e, 'Unable to load booking details.')
   } finally {
     loading.value = false
   }
 }
+
+watch(() => clubId.value, () => {
+  if (clubId.value) {
+    load()
+  }
+})
+
 onMounted(load)
 </script>
