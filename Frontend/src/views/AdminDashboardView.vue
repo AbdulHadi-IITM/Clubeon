@@ -935,18 +935,21 @@
                 </p>
               </div>
               <div v-else class="events-grid">
-                <div v-for="court in courtStore.courts" :key="court.id" class="admin-event-card">
-                  <div class="event-card-top">
-                    <span class="event-type-chip chip-blue">Court</span>
+                <div v-for="court in courtStore.courts" :key="court.id" class="admin-event-card" style="padding: 0; overflow: hidden;">
+                  <div style="height: 120px; width: 100%; position: relative; overflow: hidden; background: #0f172a;">
+                    <img :src="getSportImage(court.name || court.sport_type)" :alt="court.name" style="width: 100%; height: 100%; object-fit: cover;" />
+                    <div style="position: absolute; inset: 0; background: linear-gradient(180deg, transparent 40%, rgba(15,23,42,0.6) 100%);"></div>
                     <span
                       class="event-status-pill"
                       :class="court.is_active ? 'status-open' : 'status-scheduled'"
+                      style="position: absolute; top: 10px; right: 10px;"
                     >
                       {{ court.is_active ? 'Active' : 'Inactive' }}
                     </span>
                   </div>
-                  <h4 class="event-card-title">{{ court.name }}</h4>
-                  <div class="court-sport-type">{{ sportLabel(court.sport_type) }}</div>
+                  <div style="padding: 1.25rem;">
+                    <h4 class="event-card-title">{{ court.name }}</h4>
+                    <div class="court-sport-type">{{ sportLabel(court.sport_type) }}</div>
 
                   <!-- Default/Custom Badge -->
                   <div class="court-settings-badge">
@@ -976,6 +979,7 @@
                   </div>
                 </div>
               </div>
+            </div>
             </section>
           </div>
 
@@ -1321,10 +1325,12 @@
 
               <!-- Grid View -->
               <div v-else-if="eventViewMode === 'grid'" class="admin-events-grid-container" style="margin-top: 1rem;">
-                <div v-for="evt in filteredEvents" :key="evt.id" class="event-card-rich">
-                  <div class="event-card-rich-header">
-                    <span class="sport-badge-pill" :class="'sport-' + evt.sport.toLowerCase()">{{ evt.sport }}</span>
-                    <span class="booking-status-badge" :class="'estatus-' + evt.status.toLowerCase()">{{ evt.status }}</span>
+                <div v-for="evt in filteredEvents" :key="evt.id" class="event-card-rich" style="padding: 0; overflow: hidden;">
+                  <div style="height: 130px; width: 100%; position: relative; overflow: hidden; background: #0f172a;">
+                    <img :src="getSportImage(evt.title || evt.sport)" :alt="evt.title" style="width: 100%; height: 100%; object-fit: cover; opacity: 0.9;" />
+                    <div style="position: absolute; inset: 0; background: linear-gradient(180deg, transparent 40%, rgba(15,23,42,0.7) 100%);"></div>
+                    <span class="sport-badge-pill" :class="'sport-' + evt.sport.toLowerCase()" style="position: absolute; top: 10px; left: 10px;">{{ evt.sport }}</span>
+                    <span class="booking-status-badge" :class="'estatus-' + evt.status.toLowerCase()" style="position: absolute; top: 10px; right: 10px;">{{ evt.status }}</span>
                   </div>
 
                   <div class="event-card-rich-body">
@@ -1373,7 +1379,9 @@
                         ✎ Edit
                       </button>
                       <button class="action-icon-btn cancel-btn" @click="requestDeleteEvent(evt)" title="Delete Event">
-                        🗑
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
                       </button>
                     </div>
                   </div>
@@ -1430,9 +1438,13 @@
                       </td>
                       <td style="text-align: right;">
                         <div class="table-actions-group">
-                          <button class="action-icon-btn view-btn" @click="openEventDetails(evt)">Details</button>
-                          <button class="action-icon-btn complete-btn" @click="openEditEventModal(evt)">Edit</button>
-                          <button class="action-icon-btn cancel-btn" @click="requestDeleteEvent(evt)">✕</button>
+                          <button class="action-icon-btn view-btn" @click="openEventDetails(evt)" title="View Details">Details</button>
+                          <button class="action-icon-btn complete-btn" @click="openEditEventModal(evt)" title="Edit Event">Edit</button>
+                          <button class="action-icon-btn cancel-btn" @click="requestDeleteEvent(evt)" title="Delete Event">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;">
+                              <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -2006,6 +2018,10 @@
               </div>
             </section>
           </div>
+        </div>
+      </main>
+
+      <!-- ALL ADMIN POPUP MODALS -->
 
           <!-- ADD COURT MODAL -->
           <div v-if="showAddCourtModal" class="modal-overlay" role="dialog" aria-modal="true">
@@ -2644,7 +2660,12 @@
             <div class="modal-footer">
               <div style="display: flex; gap: 0.75rem;">
                 <button class="action-icon-btn complete-btn" @click="openEditEventModal(selectedEvent)">✎ Edit Event</button>
-                <button class="action-icon-btn cancel-btn" @click="requestDeleteEvent(selectedEvent)">🗑 Delete Event</button>
+                <button class="action-icon-btn cancel-btn" @click="requestDeleteEvent(selectedEvent)" style="display: inline-flex; align-items: center; gap: 0.4rem;">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  <span>Delete Event</span>
+                </button>
               </div>
               <button class="cancel-modal-btn" @click="closeEventDetailsModal">Close</button>
             </div>
@@ -2653,18 +2674,29 @@
 
         <!-- DELETE EVENT CONFIRMATION MODAL -->
         <div v-if="showDeleteEventModal && eventToDelete" class="modal-overlay" @click.self="showDeleteEventModal = false">
-          <div class="modal-card small-confirm-modal">
-            <div class="modal-header">
-              <h3 style="color: #ef4444; margin: 0;">Delete Event</h3>
+          <div class="modal-card small-confirm-modal" style="max-width: 460px; width: 92vw; padding: 1.5rem; border-radius: 1.25rem; box-shadow: 0 20px 45px rgba(15, 23, 42, 0.22); overflow: hidden;">
+            <div class="modal-header" style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #f1f5f9; padding-bottom: 0.85rem;">
+              <div style="display: flex; align-items: center; gap: 0.55rem;">
+                <div style="width: 32px; height: 32px; border-radius: 8px; background: #fee2e2; color: #ef4444; display: grid; place-items: center; font-size: 1rem;">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </div>
+                <h3 style="color: #0f172a; margin: 0; font-size: 1.1rem; font-weight: 800;">Cancel & Delete Event</h3>
+              </div>
               <button class="close-modal-btn" @click="showDeleteEventModal = false">✕</button>
             </div>
-            <div class="modal-body" style="padding: 1.5rem 0;">
-              <p>Are you sure you want to delete event <strong>"{{ eventToDelete.title }}"</strong>?</p>
-              <p style="font-size: 0.85rem; color: #64748b; margin-top: 0.5rem;">This action will remove the event schedule and notify all {{ eventToDelete.registered }} registered attendees.</p>
+            <div class="modal-body" style="padding: 1.25rem 0; overflow-wrap: break-word; word-break: break-word; white-space: normal;">
+              <p style="font-size: 0.95rem; color: #334155; line-height: 1.5; margin: 0;">
+                Are you sure you want to delete event <strong style="color: #0f172a;">"{{ eventToDelete.title }}"</strong>?
+              </p>
+              <div style="margin-top: 0.85rem; padding: 0.75rem 0.95rem; background: #fef2f2; border: 1px solid #fecaca; border-radius: 0.75rem; color: #b91c1c; font-size: 0.82rem; line-height: 1.5; overflow-wrap: break-word; word-break: break-word;">
+                📢 This action will cancel the event and automatically broadcast an announcement notice to all {{ eventToDelete.registered || 0 }} registered attendees.
+              </div>
             </div>
-            <div class="modal-footer">
+            <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 0.75rem; border-top: 1px solid #f1f5f9; padding-top: 0.85rem; margin-top: 0.25rem;">
               <button class="cancel-modal-btn" @click="showDeleteEventModal = false">Keep Event</button>
-              <button class="submit-modal-btn danger-btn" @click="confirmDeleteEvent">Confirm Delete</button>
+              <button class="submit-modal-btn danger-btn" @click="confirmDeleteEvent" style="background: linear-gradient(135deg, #ef4444, #dc2626); color: #ffffff; padding: 0.55rem 1.2rem; border-radius: 0.6rem; font-weight: 700; border: none; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);">Confirm Delete</button>
             </div>
           </div>
         </div>
@@ -3068,9 +3100,7 @@
           </div>
         </div>
       </div>
-    </main>
     </div>
-  </div>
 </template>
 
 <script setup>
@@ -3080,6 +3110,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useCourtStore } from '@/stores/courts'
 import { useNotificationStore } from '@/stores/notifications'
 import api from '@/api/axios'
+import { getSportImage } from '@/utils/sportImages'
 
 const toast = inject('toast')
 const courtStore = useCourtStore()
@@ -3228,6 +3259,8 @@ watch(
 )
 
 const openAddCourtModal = () => {
+  showEditCourtModal.value = false
+  currentEditCourt.value = null
   courtForm.value = {
     court_name: '',
     sport_type: 'tennis',
@@ -3331,6 +3364,7 @@ const saveOrCreateClub = async () => {
 }
 
 const openEditCourtModal = (court) => {
+  showAddCourtModal.value = false
   currentEditCourt.value = court
   const hasOverrides =
     court.open_time_override || court.close_time_override || court.slot_duration_override
@@ -3529,6 +3563,8 @@ function closeBookingDetailsModal() {
 }
 
 function requestCancelBooking(booking) {
+  showBookingDetailsModal.value = false
+  selectedBooking.value = null
   bookingToCancel.value = booking
   showCancelConfirmModal.value = true
 }
@@ -3600,6 +3636,43 @@ function handleCreateNewBooking() {
   bookingsList.value.unshift(createdBooking)
   showNewBookingModal.value = false
   if (toast) toast.success(`New booking ${newId} created successfully!`)
+}
+
+async function loadAdminBookings() {
+  try {
+    const res = await api.get('/bookings')
+    if (Array.isArray(res.data) && res.data.length > 0) {
+      const realBookings = res.data.map(b => {
+        const courtName = b.court?.name || 'Main Court'
+        const sport = b.court?.sport_type || (courtName.toLowerCase().includes('badminton') ? 'Badminton' : courtName.toLowerCase().includes('squash') ? 'Squash' : 'Tennis')
+        const playerName = b.user?.name || (b.user_id ? `Member #${b.user_id}` : 'Club Member')
+        const initials = playerName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) || 'MB'
+        return {
+          id: `BK-${b.id}`,
+          player: playerName,
+          email: b.user?.email || 'member@clubdash.com',
+          phone: b.user?.phone || '+91 98765 43210',
+          facility: courtName,
+          sport: sport.charAt(0).toUpperCase() + sport.slice(1),
+          date: b.booking_date,
+          dateDisplay: b.booking_date,
+          time: `${(b.start_time || '09:00').substring(0, 5)} - ${(b.end_time || '10:00').substring(0, 5)}`,
+          duration: '1.0 hr',
+          amount: b.court?.price_per_hour || 500,
+          paymentStatus: 'Paid',
+          paymentMethod: 'Online Payment',
+          status: b.status ? (b.status.charAt(0).toUpperCase() + b.status.slice(1)) : 'Confirmed',
+          initials,
+          userType: 'Active Member',
+          createdAt: b.created_at || b.booking_date,
+          notes: ''
+        }
+      })
+      bookingsList.value = realBookings
+    }
+  } catch (err) {
+    console.warn('Could not fetch real bookings for admin:', err)
+  }
 }
 
 function exportBookingsCSV() {
@@ -3679,7 +3752,13 @@ const filteredAnnouncements = computed(() => {
 })
 
 const openCreateAnnouncementModal = () => {
-  announcementForm.value = { title: '', category: 'General', body: '' }
+  showAnnouncementDetailsModal.value = false
+  selectedAnnouncement.value = null
+  announcementForm.value = {
+    title: '',
+    category: 'General',
+    body: '',
+  }
   showCreateAnnouncementModal.value = true
 }
 
@@ -3746,6 +3825,7 @@ const submitCreateAnnouncement = async () => {
 }
 
 const openAnnouncementDetails = (item) => {
+  showCreateAnnouncementModal.value = false
   selectedAnnouncement.value = item
   showAnnouncementDetailsModal.value = true
   if (!item.is_read) notificationStore.markAsRead(item.id)
@@ -3789,13 +3869,46 @@ const selectedEvent = ref(null)
 const editingEvent = ref(null)
 const eventToDelete = ref(null)
 
-const eventsList = ref([
-  { id: 'EVT-201', title: 'Apex Summer Tennis Open 2026', type: 'Tournament', sport: 'Tennis', date: '2026-08-28', dateDisplay: 'Aug 28 - Aug 30, 2026', time: '09:00 AM - 06:00 PM', venue: 'Tennis Courts 1 & 2', capacity: 32, registered: 32, fee: 500, status: 'Upcoming', organizer: 'Head Coach David', description: 'Annual competitive tennis tournament featuring singles and doubles knockouts with trophy prizes and ranking points.', participants: ['John Doe', 'Alice Johnson', 'Michael Brown', 'Sophia Martinez', 'Robert Paul', 'David Lee', 'Emma Wilson', 'James Taylor'] },
-  { id: 'EVT-202', title: 'Masterclass Badminton Clinic', type: 'Coaching Clinic', sport: 'Badminton', date: '2026-08-20', dateDisplay: 'Aug 20, 2026', time: '04:00 PM - 07:00 PM', venue: 'Badminton Arena A', capacity: 20, registered: 16, fee: 350, status: 'Upcoming', organizer: 'Coach Lin Dan', description: 'Intensive footwork and smash technique coaching clinic for intermediate and advanced badminton players.', participants: ['Jane Smith', 'Chris Evans', 'Sarah Parker', 'Tom Holland', 'Zendaya Coleman'] },
-  { id: 'EVT-203', title: 'Squash Club Championship 2026', type: 'Tournament', sport: 'Squash', date: '2026-09-05', dateDisplay: 'Sep 05, 2026', time: '10:00 AM - 05:00 PM', venue: 'Squash Courts 1 & 2', capacity: 16, registered: 12, fee: 400, status: 'Upcoming', organizer: 'Squash Director Alex', description: 'Club championship event for squash enthusiasts. Round-robin format followed by knockout finals.', participants: ['Robert Paul', 'David Lee', 'Mark Ruffalo', 'Scarlett Johansson'] },
-  { id: 'EVT-204', title: 'Weekend Swimming Sprint Challenge', type: 'Social League', sport: 'Swimming', date: '2026-08-15', dateDisplay: 'Aug 15, 2026', time: '07:00 AM - 11:00 AM', venue: 'Olympic Swimming Pool', capacity: 25, registered: 25, fee: 0, status: 'Ongoing', organizer: 'Swim Coach Maria', description: 'Fun weekend sprint relays and freestyle 50m challenges open to all club members. Refreshments included.', participants: ['Michael Brown', 'John Doe', 'Alice Johnson', 'Kevin Hart'] },
-  { id: 'EVT-205', title: 'Junior Tennis Grassroots Camp', type: 'Coaching Clinic', sport: 'Tennis', date: '2026-07-10', dateDisplay: 'Jul 10, 2026', time: '09:00 AM - 12:00 PM', venue: 'Tennis Court 3', capacity: 15, registered: 15, fee: 250, status: 'Completed', organizer: 'Coach Serena', description: 'Introductory tennis drills and fun games designed for kids aged 8 to 14.', participants: ['Leo Messi', 'Cristiano R.', 'Neymar Jr.'] }
-])
+const eventsList = ref([])
+
+async function loadEvents() {
+  try {
+    const clubId = courtStore.club?.id || (courtStore.courts && courtStore.courts[0]?.club_id) || ''
+    const url = clubId ? `/events?club_id=${clubId}&status=all` : '/events?status=all'
+    const res = await api.get(url)
+    eventsList.value = (res.data || []).map(e => ({
+      id: e.id,
+      title: e.title,
+      type: e.type || 'Tournament',
+      sport: e.sport || 'Sports',
+      date: e.date,
+      dateDisplay: new Date(e.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      time: `${(e.start_time || '09:00').substring(0, 5)} - ${(e.end_time || '18:00').substring(0, 5)}`,
+      start_time: (e.start_time || '09:00').substring(0, 5),
+      end_time: (e.end_time || '18:00').substring(0, 5),
+      venue: e.venue || (courtStore.club?.name || 'Main Arena'),
+      capacity: e.max_attendees || 30,
+      registered: e.registered_count || 0,
+      fee: e.registration_fee || 0,
+      status: e.status ? (e.status.charAt(0).toUpperCase() + e.status.slice(1)) : 'Upcoming',
+      organizer: 'Club Owner',
+      description: e.description || '',
+      participants: []
+    }))
+  } catch (error) {
+    console.error('Failed to load events:', error)
+  }
+}
+
+onMounted(() => {
+  loadEvents()
+  loadAdminBookings()
+})
+
+watch(() => courtStore.club, () => {
+  loadEvents()
+  loadAdminBookings()
+})
 
 const upcomingEvents = computed(() => {
   return eventsList.value.map(e => ({
@@ -3813,8 +3926,13 @@ const upcomingEvents = computed(() => {
 const eventForm = reactive({
   title: '', sport: 'Tennis', type: 'Tournament',
   date: new Date().toISOString().split('T')[0],
-  time: '10:00 AM - 04:00 PM', venue: 'Tennis Court 1', capacity: 16,
-  fee: 0, status: 'Upcoming', organizer: 'Club Staff', description: ''
+  time: '10:00 - 16:00',
+  venue: 'Tennis Court 1',
+  capacity: 16,
+  fee: 0,
+  status: 'Upcoming',
+  organizer: 'Club Staff',
+  description: ''
 })
 
 const editEventForm = reactive({
@@ -3869,24 +3987,50 @@ function closeCreateEventModal() {
   showCreateEventModal.value = false
 }
 
-function handleCreateEvent() {
-  if (!eventForm.title || !eventForm.venue) {
-    if (toast) toast.error('Please fill in event title and venue.')
+function _parseTimeString(t, defaultTime = '10:00') {
+  if (!t) return defaultTime
+  const raw = t.trim()
+  if (raw.includes(':')) {
+    const parts = raw.replace(/(am|pm)/i, '').trim().split(':')
+    let h = parseInt(parts[0])
+    if (/pm/i.test(raw) && h < 12) h += 12
+    return `${h.toString().padStart(2, '0')}:${(parts[1] || '00').padStart(2, '0')}`
+  }
+  return defaultTime
+}
+
+async function handleCreateEvent() {
+  if (!eventForm.title) {
+    if (toast) toast.error('Please fill in event title.')
     return
   }
-  const newId = `EVT-${200 + eventsList.value.length + 1}`
-  const createdEvent = {
-    id: newId, title: eventForm.title, type: eventForm.type, sport: eventForm.sport,
-    date: eventForm.date, dateDisplay: new Date(eventForm.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-    time: eventForm.time, venue: eventForm.venue, capacity: Number(eventForm.capacity) || 16,
-    registered: 0, fee: Number(eventForm.fee) || 0, status: eventForm.status,
-    organizer: eventForm.organizer || 'Club Admin',
-    description: eventForm.description || 'Club event scheduled by administrator.',
-    participants: []
+  const clubId = courtStore.club?.id || (courtStore.courts && courtStore.courts[0]?.club_id) || undefined
+  let [startTimeStr, endTimeStr] = ['10:00', '16:00']
+  if (eventForm.time && eventForm.time.includes('-')) {
+    const parts = eventForm.time.split('-')
+    startTimeStr = parts[0].trim()
+    endTimeStr = parts[1].trim()
   }
-  eventsList.value.unshift(createdEvent)
-  showCreateEventModal.value = false
-  if (toast) toast.success(`Event "${createdEvent.title}" created successfully!`)
+
+  const payload = {
+    club_id: clubId,
+    title: eventForm.title,
+    description: eventForm.description || '',
+    event_date: eventForm.date || new Date().toISOString().split('T')[0],
+    start_time: _parseTimeString(startTimeStr, '10:00'),
+    end_time: _parseTimeString(endTimeStr, '16:00'),
+    max_attendees: Number(eventForm.capacity) || 20,
+    registration_fee: Number(eventForm.fee) || 0
+  }
+
+  try {
+    await api.post('/events', payload)
+    showCreateEventModal.value = false
+    await loadEvents()
+    if (toast) toast.success(`Event "${payload.title}" created successfully!`)
+  } catch (err) {
+    if (toast) toast.error(err.response?.data?.message || 'Failed to create event.')
+  }
 }
 
 function openEventDetails(event) {
@@ -3900,6 +4044,8 @@ function closeEventDetailsModal() {
 }
 
 function openEditEventModal(event) {
+  showEventDetailsModal.value = false
+  selectedEvent.value = null
   editingEvent.value = event
   editEventForm.id = event.id
   editEventForm.title = event.title
@@ -3920,41 +4066,56 @@ function closeEditEventModal() {
   editingEvent.value = null
 }
 
-function handleUpdateEvent() {
+async function handleUpdateEvent() {
   if (!editingEvent.value) return
-  const target = eventsList.value.find(e => e.id === editingEvent.value.id)
-  if (target) {
-    target.title = editEventForm.title
-    target.sport = editEventForm.sport
-    target.type = editEventForm.type
-    target.date = editEventForm.date
-    if (editEventForm.date) {
-      target.dateDisplay = new Date(editEventForm.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-    }
-    target.time = editEventForm.time
-    target.venue = editEventForm.venue
-    target.capacity = Number(editEventForm.capacity) || target.capacity
-    target.fee = Number(editEventForm.fee) || 0
-    target.status = editEventForm.status
-    target.description = editEventForm.description
+  let [startTimeStr, endTimeStr] = [editingEvent.value.start_time || '10:00', editingEvent.value.end_time || '16:00']
+  if (editEventForm.time && editEventForm.time.includes('-')) {
+    const parts = editEventForm.time.split('-')
+    startTimeStr = parts[0].trim()
+    endTimeStr = parts[1].trim()
   }
-  showEditEventModal.value = false
-  editingEvent.value = null
-  if (toast) toast.success('Event details updated successfully!')
+
+  const payload = {
+    title: editEventForm.title,
+    description: editEventForm.description,
+    event_date: editEventForm.date,
+    start_time: _parseTimeString(startTimeStr, '10:00'),
+    end_time: _parseTimeString(endTimeStr, '16:00'),
+    max_attendees: Number(editEventForm.capacity) || 20,
+    registration_fee: Number(editEventForm.fee) || 0,
+    status: (editEventForm.status || 'upcoming').toLowerCase()
+  }
+
+  try {
+    await api.put(`/events/${editingEvent.value.id}`, payload)
+    showEditEventModal.value = false
+    editingEvent.value = null
+    await loadEvents()
+    if (toast) toast.success('Event details updated successfully!')
+  } catch (err) {
+    if (toast) toast.error(err.response?.data?.message || 'Failed to update event.')
+  }
 }
 
 function requestDeleteEvent(event) {
+  showEventDetailsModal.value = false
+  selectedEvent.value = null
   eventToDelete.value = event
   showDeleteEventModal.value = true
 }
 
-function confirmDeleteEvent() {
+async function confirmDeleteEvent() {
   if (!eventToDelete.value) return
-  eventsList.value = eventsList.value.filter(e => e.id !== eventToDelete.value.id)
-  showDeleteEventModal.value = false
-  if (showEventDetailsModal.value) showEventDetailsModal.value = false
-  if (toast) toast.success(`Event "${eventToDelete.value.title}" deleted.`)
-  eventToDelete.value = null
+  try {
+    await api.delete(`/events/${eventToDelete.value.id}`)
+    showDeleteEventModal.value = false
+    if (showEventDetailsModal.value) showEventDetailsModal.value = false
+    if (toast) toast.success(`Event "${eventToDelete.value.title}" cancelled.`)
+    eventToDelete.value = null
+    await loadEvents()
+  } catch (err) {
+    if (toast) toast.error(err.response?.data?.message || 'Failed to cancel event.')
+  }
 }
 
 function addSampleParticipant(event) {
@@ -5542,7 +5703,7 @@ function handleAvatarUpload(event) {
   justify-content: space-between;
   align-items: center;
   padding: 1.25rem 1.75rem;
-  border-bottom: 1px solid rgba(226, 232, 240, 0.6);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
   background: #ffffff;
   flex: 0 0 auto;
   position: sticky;
@@ -5550,27 +5711,36 @@ function handleAvatarUpload(event) {
   z-index: 2;
 }
 
+.modal-header h2,
 .modal-header h3 {
   margin: 0;
   font-family: 'Poppins', sans-serif;
-  font-size: 1.35rem;
+  font-size: 1.25rem;
   font-weight: 700;
   color: #0f172a;
 }
 
-.close-btn {
-  background: none;
+.close-btn,
+.close-modal-btn {
+  background: #f1f5f9;
   border: none;
-  font-size: 1.75rem;
-  color: #94a3b8;
+  border-radius: 0.5rem;
+  width: 32px;
+  height: 32px;
+  font-size: 1rem;
+  color: #64748b;
   cursor: pointer;
-  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
   line-height: 1;
-  transition: color 0.2s ease;
 }
 
-.close-btn:hover {
-  color: #4f46e5;
+.close-btn:hover,
+.close-modal-btn:hover {
+  background: #e2e8f0;
+  color: #0f172a;
 }
 
 .modal-form {
@@ -5603,89 +5773,86 @@ function handleAvatarUpload(event) {
 }
 
 .form-group input,
-.form-group select {
+.form-group select,
+.form-group textarea {
   width: 100%;
-  padding: 0.8rem 1rem;
+  padding: 0.75rem 1rem;
   border-radius: 0.75rem;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #cbd5e1;
   font-family: inherit;
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   color: #0f172a;
   background: #ffffff;
-  transition:
-    border-color 0.2s ease,
-    box-shadow 0.2s ease;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .form-group input:focus,
-.form-group select:focus {
-  outline: none;
-  border-color: #4f46e5;
-  box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+.form-group select:focus,
+.form-group textarea:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
 }
 
-/* Keep long court forms fully inside the viewport. */
-.modal-form::-webkit-scrollbar {
-  width: 8px;
-}
-.modal-form::-webkit-scrollbar-track {
-  background: transparent;
-}
-.modal-form::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border: 2px solid #ffffff;
-  border-radius: 999px;
-}
-
-.toggle-section {
-  padding-top: 0.15rem;
+.modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 1rem 1.75rem;
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+  flex-shrink: 0;
 }
 
 .modal-actions {
   display: flex;
+  align-items: center;
   justify-content: flex-end;
   gap: 0.75rem;
-  margin: 0.35rem -1.75rem -1.5rem;
+  margin: 0.5rem -1.75rem -1.5rem;
   padding: 1rem 1.75rem;
   position: sticky;
   bottom: -1.5rem;
   z-index: 2;
-  background: rgba(255, 255, 255, 0.97);
-  border-top: 1px solid #e8edf4;
-  backdrop-filter: blur(8px);
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
 }
 
 .cancel-modal-btn {
-  padding: 0.75rem 1.5rem;
+  padding: 0.65rem 1.25rem;
   border-radius: 0.75rem;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #cbd5e1;
   background: #ffffff;
   color: #475569;
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .cancel-modal-btn:hover {
-  background: #f8fafc;
+  background: #f1f5f9;
+  color: #0f172a;
 }
 
 .submit-modal-btn {
-  padding: 0.75rem 1.75rem;
+  padding: 0.65rem 1.5rem;
   border-radius: 0.75rem;
   border: none;
-  background: #4f46e5;
+  background: linear-gradient(135deg, #2563eb, #4f46e5);
   color: #ffffff;
   font-weight: 700;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
 }
 
 .submit-modal-btn:hover {
-  background: #4338ca;
+  background: linear-gradient(135deg, #1d4ed8, #4338ca);
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35);
+  transform: translateY(-1px);
 }
 
 /* Club Banner */

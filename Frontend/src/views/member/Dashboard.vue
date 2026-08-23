@@ -119,13 +119,16 @@
           <div
             v-for="b in upcoming.slice(0, 4)"
             :key="b.id"
-            class="rounded-xl border border-slate-200 bg-slate-50/70 p-4 flex items-center justify-between gap-4"
+            class="rounded-xl border border-slate-200 bg-slate-50/70 p-3 flex items-center justify-between gap-4 overflow-hidden"
           >
-            <div>
-              <p class="text-sm font-bold text-slate-900">{{ b.court_name }}</p>
-              <p class="mt-1 text-xs text-slate-500">
-                {{ formatDate(b.date) }} · {{ formatTime(b.start_time) }}
-              </p>
+            <div class="flex items-center gap-3">
+              <img :src="getSportImage(b.court_name)" :alt="b.court_name" class="h-12 w-16 rounded-lg object-cover shadow-sm flex-shrink-0" />
+              <div>
+                <p class="text-sm font-bold text-slate-900">{{ b.court_name }}</p>
+                <p class="mt-0.5 text-xs text-slate-500">
+                  {{ formatDate(b.date) }} · {{ formatTime(b.start_time) }}
+                </p>
+              </div>
             </div>
             <span class="pill bg-emerald-50 text-emerald-700">Confirmed</span>
           </div>
@@ -149,11 +152,14 @@
         </div>
         <div class="mt-6 border-t border-slate-100 pt-5">
           <h3 class="text-sm font-bold text-slate-900">Next club event</h3>
-          <div v-if="events[0]" class="mt-3">
-            <p class="text-sm font-semibold text-slate-800">{{ events[0].title }}</p>
-            <p class="mt-1 text-xs text-slate-500">
-              {{ formatDate(events[0].date) }} · {{ formatTime(events[0].start_time) }}
-            </p>
+          <div v-if="events[0]" class="mt-3 flex items-center gap-3">
+            <img :src="getSportImage(events[0].title || events[0].sport)" :alt="events[0].title" class="h-12 w-16 rounded-lg object-cover shadow-sm flex-shrink-0" />
+            <div>
+              <p class="text-sm font-semibold text-slate-800">{{ events[0].title }}</p>
+              <p class="mt-0.5 text-xs text-slate-500">
+                {{ formatDate(events[0].date) }} · {{ formatTime(events[0].start_time) }}
+              </p>
+            </div>
           </div>
           <p v-else class="mt-3 text-xs text-slate-500">No upcoming events.</p>
         </div>
@@ -165,6 +171,7 @@
 import { computed, onMounted, ref } from 'vue'
 import api from '@/api/axios'
 import { useAuthStore } from '@/stores/auth'
+import { getSportImage } from '@/utils/sportImages'
 import { useNotificationStore } from '@/stores/notifications'
 
 const auth = useAuthStore()
@@ -174,7 +181,6 @@ const events = ref([])
 const error = ref('')
 
 const announcements = computed(() => notificationStore.announcements)
-
 const firstName = computed(
   () => String(auth.user?.name || auth.user?.username || 'Member').split(' ')[0],
 )

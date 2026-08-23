@@ -17,8 +17,10 @@
 
     <div v-else-if="event" class="grid gap-5 lg:grid-cols-[1.5fr_.75fr]">
       <section class="panel overflow-hidden">
-        <div class="event-banner">
-          <span class="pill bg-white/90 text-indigo-700">{{ event.status || 'upcoming' }}</span>
+        <div class="relative h-48 sm:h-64 w-full overflow-hidden bg-slate-900">
+          <img :src="getSportImage(event.title || event.sport)" :alt="event.title" class="h-full w-full object-cover opacity-90" />
+          <div class="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent"></div>
+          <span class="absolute top-4 right-4 pill bg-white/95 text-indigo-700 font-bold shadow-md">{{ event.status || 'upcoming' }}</span>
         </div>
         <div class="p-6 sm:p-8">
           <p class="kicker">{{ formatDate(event.date) }}</p>
@@ -83,20 +85,102 @@
         </router-link>
       </aside>
     </div>
+
+    <!-- EVENT REGISTRATION DETAILS & CONFIRMATION MODAL -->
+    <div v-if="showRegisterModal && event" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-fade-in">
+      <div class="w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl border border-slate-200 animate-scale-up">
+        <div class="border-b border-slate-100 bg-slate-50/75 p-5">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-extrabold uppercase tracking-wider text-indigo-600">Event Registration</span>
+            <button @click="showRegisterModal = false" class="rounded-lg p-1 text-slate-400 hover:bg-slate-200 hover:text-slate-600 transition">✕</button>
+          </div>
+          <h3 class="mt-1 text-xl font-bold text-slate-900">{{ event.title }}</h3>
+          <p class="mt-1 text-xs text-slate-500">{{ formatDate(event.date) }} • {{ time(event.start_time) }} - {{ time(event.end_time) }}</p>
+        </div>
+
+        <form @submit.prevent="confirmAndSubmitRegistration" class="p-6 space-y-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Participant Name *</label>
+              <input type="text" v-model="regForm.name" required class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-medium text-slate-900 outline-none focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-100" />
+            </div>
+            <div>
+              <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Email Address *</label>
+              <input type="email" v-model="regForm.email" required class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-medium text-slate-900 outline-none focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-100" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Phone Number *</label>
+              <input type="tel" v-model="regForm.phone" required placeholder="+91 98765 43210" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-medium text-slate-900 outline-none focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-100" />
+            </div>
+            <div>
+              <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Skill Category</label>
+              <select v-model="regForm.category" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-medium text-slate-900 outline-none focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-100">
+                <option value="Open">Open / All Levels</option>
+                <option value="Beginner">Beginner</option>
+                <option value="Intermediate">Intermediate</option>
+                <option value="Advanced">Advanced / Competitive</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Special Requirements / Notes</label>
+            <textarea v-model="regForm.notes" rows="2" placeholder="e.g. Dietary requirements, equipment requests, partner name" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-sm font-medium text-slate-900 outline-none focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-100"></textarea>
+          </div>
+
+          <div class="rounded-xl border border-slate-100 bg-indigo-50/50 p-4">
+            <div class="flex items-center justify-between text-sm font-semibold">
+              <span class="text-slate-600">Entry Fee</span>
+              <span class="text-indigo-600 font-extrabold text-base">{{ event.registration_fee > 0 ? formatCurrency(event.registration_fee) : 'Free' }}</span>
+            </div>
+          </div>
+
+          <label class="flex items-start gap-3 pt-1 cursor-pointer">
+            <input type="checkbox" v-model="regForm.confirmedTerms" required class="mt-1 h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" />
+            <span class="text-xs text-slate-600 leading-relaxed">
+              I confirm my registration for this event and agree to adhere to all club guidelines.
+            </span>
+          </label>
+
+          <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+            <button type="button" @click="showRegisterModal = false" class="rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-50 transition">Cancel</button>
+            <button type="submit" :disabled="busy" class="rounded-xl bg-indigo-600 px-5 py-2.5 text-xs font-bold text-white shadow-md shadow-indigo-200 hover:bg-indigo-700 transition disabled:opacity-50">
+              {{ busy ? 'Registering...' : event.registration_fee > 0 ? 'Proceed to Payment (' + formatCurrency(event.registration_fee) + ')' : 'Confirm & Register' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { computed, h, onMounted, ref } from 'vue'
+import { computed, h, onMounted, ref, reactive } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 import api from '@/api/axios'
+import { getSportImage } from '@/utils/sportImages'
 
 const route = useRoute()
 const router = useRouter()
+const auth = useAuthStore()
 const event = ref(null)
 const loading = ref(true)
 const error = ref('')
 const busy = ref(false)
+const showRegisterModal = ref(false)
+
+const regForm = reactive({
+  name: '',
+  email: '',
+  phone: '',
+  category: 'Open',
+  notes: '',
+  confirmedTerms: false
+})
 
 const registered = computed(() => event.value?.my_registration_status === 'registered')
 const participantLabel = computed(() => {
@@ -146,9 +230,8 @@ async function load() {
   loading.value = true
   error.value = ''
   try {
-    const response = await api.get('/events')
-    const rows = Array.isArray(response.data) ? response.data : []
-    event.value = rows.find((row) => String(row.id) === String(route.params.eventId)) || null
+    const response = await api.get(`/events/${route.params.eventId}`)
+    event.value = response.data || null
     if (!event.value) throw new Error('Event not found.')
   } catch (err) {
     error.value = err?.response?.data?.message || err?.message || 'Unable to load event.'
@@ -159,21 +242,36 @@ async function load() {
 
 function startRegistration() {
   if (!event.value) return
+  regForm.name = auth.user?.name || ''
+  regForm.email = auth.user?.email || ''
+  regForm.phone = auth.user?.phone || ''
+  regForm.category = 'Open'
+  regForm.notes = ''
+  regForm.confirmedTerms = false
+  showRegisterModal.value = true
+}
+
+async function confirmAndSubmitRegistration() {
+  if (!event.value) return
+  if (!regForm.confirmedTerms) {
+    alert('Please agree to the confirmation terms.')
+    return
+  }
+
   if (Number(event.value.registration_fee || 0) > 0) {
+    showRegisterModal.value = false
     router.push({
       name: 'member-checkout',
       query: { payment_type: 'event', reference_id: String(event.value.id) },
     })
     return
   }
-  registerFree()
-}
 
-async function registerFree() {
   busy.value = true
   error.value = ''
   try {
     await api.post(`/events/${event.value.id}/register`)
+    showRegisterModal.value = false
     await load()
   } catch (err) {
     error.value = err?.response?.data?.message || 'Unable to register.'
@@ -183,6 +281,7 @@ async function registerFree() {
 }
 
 async function cancelRegistration() {
+  if (!confirm(`Are you sure you want to cancel your registration for "${event.value.title}"?`)) return
   busy.value = true
   try {
     await api.post(`/events/${event.value.id}/cancel`)
@@ -194,7 +293,10 @@ async function cancelRegistration() {
   }
 }
 
-onMounted(load)
+onMounted(async () => {
+  if (!auth.user) await auth.restoreUser()
+  await load()
+})
 </script>
 
 <style scoped>
@@ -274,5 +376,19 @@ onMounted(load)
 .btn:disabled {
   opacity: 0.55;
   cursor: not-allowed;
+}
+.animate-fade-in {
+  animation: fadeIn 0.2s ease-out;
+}
+.animate-scale-up {
+  animation: scaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes scaleUp {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
 }
 </style>

@@ -187,3 +187,32 @@ def update_club(club_id):
         return jsonify(error), 403
 
     return jsonify({"message": "Club settings updated successfully"}), 200
+
+@clubs_bp.route('/<int:club_id>/metadata', methods=['PATCH', 'PUT'])
+@role_required('owner')
+def update_club_metadata(club_id):
+    user_id = int(get_jwt_identity())
+    data = request.get_json() or {}
+
+    club, error = ClubService.update_metadata(
+        owner_id=user_id,
+        club_id=club_id,
+        latitude=data.get('latitude'),
+        longitude=data.get('longitude'),
+        amenities=data.get('amenities'),
+        tags=data.get('tags')
+    )
+    if error:
+        return jsonify(error), 403
+
+    return jsonify({
+        "message": "Club metadata updated successfully",
+        "club": {
+            "id": club.id,
+            "latitude": club.latitude,
+            "longitude": club.longitude,
+            "amenities": club.amenities,
+            "tags": club.tags
+        }
+    }), 200
+

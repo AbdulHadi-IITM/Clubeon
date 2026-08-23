@@ -144,19 +144,12 @@
             <!-- =============================================
                  LEFT
             ============================================== -->
-            <div class="flex gap-4">
-              <div
-                class="w-12 h-12 rounded-xl bg-primary-500/10 flex items-center justify-center shrink-0"
-              >
-                <svg
-                  class="w-6 h-6 text-primary-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path stroke-width="1.5" d="M5 5h14v14H5zM5 12h14M12 5v14" />
-                </svg>
-              </div>
+            <div class="flex gap-4 items-center">
+              <img
+                :src="getSportImage(booking.courtName || booking.sport)"
+                :alt="booking.courtName"
+                class="w-14 h-14 rounded-xl object-cover shadow-sm shrink-0 border border-slate-200"
+              />
 
               <div>
                 <div class="flex flex-wrap items-center gap-2">
@@ -320,10 +313,10 @@
 
 <script setup>
 import { computed, onMounted, ref } from 'vue'
-
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
 import { useBookingStore } from '@/stores/bookings'
+import { getSportImage } from '@/utils/sportImages'
 
 const router = useRouter()
 const bookingStore = useBookingStore()
