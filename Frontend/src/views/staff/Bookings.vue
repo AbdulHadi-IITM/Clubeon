@@ -39,7 +39,12 @@
               <td class="p-4 text-sm text-gray-300">
                 {{ time(b.start_time) }} – {{ time(b.end_time) }}
               </td>
-              <td class="p-4 text-sm text-gray-300">{{ b.court_name }}</td>
+              <td class="p-4 text-sm text-gray-300">
+                <div class="flex items-center gap-2.5">
+                  <img :src="getSportImage(b.court_name)" :alt="b.court_name" class="w-8 h-8 rounded-lg object-cover shadow-sm border border-white/10 shrink-0" />
+                  <span>{{ b.court_name }}</span>
+                </div>
+              </td>
               <td class="p-4">
                 <p class="text-sm text-gray-200">{{ b.user_name }}</p>
                 <p class="text-xs text-gray-500">{{ b.user_email }}</p>
@@ -78,6 +83,7 @@ import { ref } from 'vue'
 import api from '@/api/axios'
 import ClubPicker from './components/ClubPicker.vue'
 import { today, time, errorMessage } from './_helpers'
+import { getSportImage } from '@/utils/sportImages'
 const clubId = ref('')
 const selectedDate = ref(today())
 const bookings = ref([])

@@ -92,7 +92,7 @@ def test_membership_payment_uses_plan_price(client, app, db_session, make_player
                                             sample_club, auth_headers, monkeypatch):
     app.config["STRIPE_SECRET_KEY"] = "sk_test_dummy"
     plan = MembershipPlan(club_id=sample_club.id, name="Gold",
-                          price_monthly=999.0, is_active=True)
+                          duration_months=1, price=999.0, is_active=True)
     db_session.add(plan)
     db_session.commit()
 

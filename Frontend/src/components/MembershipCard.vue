@@ -1,5 +1,5 @@
 <template>
-  <div class="membership-card-container" :class="[membership.type.toLowerCase(), { 'is-active': membership.status === 'Active' }]">
+  <div class="membership-card-container" :class="[(membership.type || 'premium').toLowerCase(), { 'is-active': (membership.status || 'Active') === 'Active' }]">
     <!-- Main Info Layout -->
     <div class="card-inner">
       <div class="header-section">
@@ -26,7 +26,7 @@
       <!-- Action Footer -->
       <div class="card-footer">
         <div class="status-summary">
-          <span class="status-dot" :class="membership.status.toLowerCase()"></span>
+          <span class="status-dot" :class="(membership.status || 'active').toLowerCase()"></span>
           <span class="status-text">Status: {{ membership.status }}</span>
         </div>
         <button 

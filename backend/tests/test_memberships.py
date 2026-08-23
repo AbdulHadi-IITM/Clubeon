@@ -8,23 +8,35 @@ def sample_plan(sample_club, db_session):
     plan = MembershipPlan(
         club_id=sample_club.id,
         name="Gold Plan",
-        price_monthly=99.99,
+        duration_months=1, price=99.99,
         benefits="All access"
     )
     db_session.add(plan)
     db_session.commit()
     return plan
 
-def test_get_plans(client, sample_plan):
+def test_get_plans(client, sample_plan, db_session):
+    # With no club_id the endpoint returns the GLOBAL plans (club_id IS NULL),
+    # so a club-scoped plan must not appear.
     response = client.get('/api/v1/memberships/plans')
     assert response.status_code == 200
-    assert len(response.json) == 1
-    assert response.json[0]['name'] == 'Gold Plan'
-    
-    # Filter by club_id
+    assert all(p['name'] != 'Gold Plan' for p in response.json)
+
+    global_plan = MembershipPlan(
+        club_id=None, name="Global Plan", duration_months=1,
+        price=149.0, benefits="Everywhere",
+    )
+    db_session.add(global_plan)
+    db_session.commit()
+
+    response = client.get('/api/v1/memberships/plans')
+    assert any(p['name'] == 'Global Plan' for p in response.json)
+
+    # Filter by club_id returns that club's plan
     response = client.get(f'/api/v1/memberships/plans?club_id={sample_plan.club_id}')
     assert response.status_code == 200
     assert len(response.json) == 1
+    assert response.json[0]['name'] == 'Gold Plan'
 
 def test_subscribe_success(client, auth_headers, sample_plan, db_session, make_player):
     user = make_player(email="sub@test.com")

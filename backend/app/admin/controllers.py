@@ -154,7 +154,6 @@ def block_court():
         "block_id": block.id
     }), 201
 
-
 @admin_bp.route('/members', methods=['GET'])
 @role_required('owner')
 def get_admin_members():
@@ -180,4 +179,48 @@ def get_admin_analytics():
     owner_id = int(get_jwt_identity())
     stats = AdminService.get_analytics(owner_id)
     return jsonify(stats), 200
+
+
+@admin_bp.route('/announcements', methods=['POST'])
+@role_required('owner')
+def create_announcement():
+    owner_id = int(get_jwt_identity())
+    data = request.get_json() or {}
+    
+    title = data.get('title')
+    body = data.get('body') or data.get('message', '')
+    category = data.get('category', 'General')
+    target_audience = data.get('target_audience', 'all')
+    
+    if not title or not body:
+        return jsonify({"code": "VALIDATION_ERROR", "message": "Title and body are required"}), 400
+        
+    announcement, error = AdminService.create_announcement(owner_id, title, body, category.lower(), target_audience)
+    if error:
+        return jsonify(error), 400
+        
+    return jsonify({
+        "message": "Announcement broadcasted successfully",
+        "announcement": announcement
+    }), 201
+
+
+@admin_bp.route('/announcements', methods=['GET'])
+@role_required('owner')
+def get_announcements():
+    owner_id = int(get_jwt_identity())
+    announcements, error = AdminService.get_announcements(owner_id)
+    if error:
+        return jsonify(error), 400
+    return jsonify(announcements), 200
+
+
+@admin_bp.route('/announcements/<int:announcement_id>', methods=['DELETE'])
+@role_required('owner')
+def delete_announcement(announcement_id):
+    owner_id = int(get_jwt_identity())
+    success, error = AdminService.delete_announcement(owner_id, announcement_id)
+    if error:
+        return jsonify(error), 400
+    return jsonify({"message": "Announcement deleted successfully"}), 200
 

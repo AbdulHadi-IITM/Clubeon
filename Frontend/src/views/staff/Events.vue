@@ -21,43 +21,49 @@
       No events found for this club/date.
     </div>
     <div v-else class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-      <article v-for="event in events" :key="event.id" class="glass card-hover p-5">
-        <div class="flex items-start justify-between gap-3">
-          <div>
-            <p class="text-xs text-primary-400">{{ formatDate(event.date) }}</p>
-            <h2 class="font-semibold text-white mt-1">{{ event.title }}</h2>
-          </div>
-          <span class="text-xs rounded-full bg-white/5 px-2.5 py-1 text-gray-400">{{
-            event.status
-          }}</span>
+      <article
+        v-for="event in events"
+        :key="event.id"
+        class="rounded-2xl border border-white/10 bg-slate-900/60 overflow-hidden flex flex-col justify-between"
+      >
+        <div class="relative h-32 w-full overflow-hidden bg-slate-950">
+          <img :src="getSportImage(event.title || event.sport)" :alt="event.title" class="h-full w-full object-cover opacity-85" />
+          <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent"></div>
+          <span class="absolute top-3 right-3 text-xs rounded-full bg-slate-900/80 backdrop-blur-sm px-2.5 py-1 text-white border border-white/10">{{ event.status || 'upcoming' }}</span>
         </div>
-        <p class="text-sm text-gray-500 mt-4 line-clamp-2">
-          {{ event.description || 'No description provided.' }}
-        </p>
-        <div class="grid grid-cols-2 gap-3 mt-5 text-xs">
+        <div class="p-5 flex-1 flex flex-col justify-between">
           <div>
-            <p class="text-gray-600">Time</p>
-            <p class="text-gray-300 mt-1">
-              {{ time(event.start_time) }}–{{ time(event.end_time) }}
+            <p class="text-xs text-primary-400 font-bold uppercase tracking-wider">{{ formatDate(event.date) }}</p>
+            <h2 class="font-bold text-white mt-1 text-base">{{ event.title }}</h2>
+            <p class="text-xs text-gray-400 mt-2 line-clamp-2">
+              {{ event.description || 'No description provided.' }}
             </p>
           </div>
           <div>
-            <p class="text-gray-600">Participants</p>
-            <p class="text-gray-300 mt-1">
-              {{ event.registered_count
-              }}{{ event.max_attendees ? ` / ${event.max_attendees}` : '' }}
-            </p>
+            <div class="grid grid-cols-2 gap-3 mt-4 text-xs pt-3 border-t border-white/5">
+              <div>
+                <p class="text-gray-500">Time</p>
+                <p class="text-gray-300 font-semibold mt-0.5">
+                  {{ time(event.start_time) }}–{{ time(event.end_time) }}
+                </p>
+              </div>
+              <div>
+                <p class="text-gray-500">Participants</p>
+                <p class="text-gray-300 font-semibold mt-0.5">
+                  {{ event.registered_count }}{{ event.max_attendees ? ` / ${event.max_attendees}` : '' }}
+                </p>
+              </div>
+            </div>
+            <router-link
+              :to="{
+                name: 'staff-event-detail',
+                params: { eventId: event.id },
+                query: { club_id: clubId },
+              }"
+              class="mt-4 block text-center rounded-xl bg-primary-500/10 py-2.5 text-xs font-bold text-primary-400 hover:bg-primary-500/20 transition"
+            >View event & participants</router-link>
           </div>
         </div>
-        <router-link
-          :to="{
-            name: 'staff-event-detail',
-            params: { eventId: event.id },
-            query: { club_id: clubId },
-          }"
-          class="mt-5 block text-center rounded-xl bg-primary-500/10 py-2.5 text-xs font-medium text-primary-400 hover:bg-primary-500/15"
-          >View event & participants</router-link
-        >
       </article>
     </div>
   </div>
@@ -67,6 +73,7 @@ import { ref } from 'vue'
 import api from '@/api/axios'
 import ClubPicker from './components/ClubPicker.vue'
 import { today, date as formatDate, time, errorMessage } from './_helpers'
+import { getSportImage } from '@/utils/sportImages'
 const clubId = ref('')
 const selectedDate = ref('')
 const events = ref([])

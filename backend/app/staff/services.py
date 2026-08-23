@@ -260,6 +260,7 @@ class StaffService:
             .all()
         )
         users = {u.id: u for u in User.query.filter(User.id.in_([r.user_id for r in registrations])).all()} if registrations else {}
+        attendances = {a.user_id: a for a in AttendanceRecord.query.filter_by(event_id=event_id).all()}
         return {
             'id': event.id,
             'club_id': event.club_id,
@@ -279,7 +280,28 @@ class StaffService:
                     'name': users[r.user_id].name if r.user_id in users else 'Member',
                     'email': users[r.user_id].email if r.user_id in users else '',
                     'registered_at': str(r.registered_at) if r.registered_at else None,
+                    'is_checked_in': r.user_id in attendances,
+                    'check_in_at': str(attendances[r.user_id].check_in_at) if r.user_id in attendances else None,
                 }
                 for r in registrations
             ],
         }
+
+    @staticmethod
+    def check_in_event(event_id, user_id):
+        event = Event.query.get(event_id)
+        if not event:
+            return None, {'code': 'NOT_FOUND', 'message': 'Event not found'}
+
+        registration = EventRegistration.query.filter_by(event_id=event_id, user_id=user_id, status='registered').first()
+        if not registration:
+            return None, {'code': 'NOT_FOUND', 'message': 'Participant registration not found'}
+
+        existing = AttendanceRecord.query.filter_by(event_id=event_id, user_id=user_id).first()
+        if existing:
+            return existing, None
+
+        record = AttendanceRecord(user_id=user_id, event_id=event_id)
+        db.session.add(record)
+        db.session.commit()
+        return record, None

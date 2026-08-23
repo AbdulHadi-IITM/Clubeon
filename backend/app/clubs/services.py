@@ -63,6 +63,18 @@ class ClubService:
         db.session.commit()
         return club, None
 
+    @staticmethod
+    def update_metadata(owner_id, club_id, latitude=None, longitude=None, amenities=None, tags=None):
+        club = Club.query.get(club_id)
+        if not club or club.owner_id != owner_id:
+            return None, {"code": "FORBIDDEN", "message": "Not authorized"}
+        if latitude is not None: club.latitude = float(latitude) if latitude != '' else None
+        if longitude is not None: club.longitude = float(longitude) if longitude != '' else None
+        if amenities is not None: club.amenities = amenities if isinstance(amenities, list) else [amenities]
+        if tags is not None: club.tags = tags if isinstance(tags, list) else [tags]
+        db.session.commit()
+        return club, None
+
 class CourtService:
     SUPPORTED_SPORTS = {
         'tennis', 'badminton', 'basketball', 'golf', 'football',

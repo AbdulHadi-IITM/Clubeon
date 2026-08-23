@@ -8,15 +8,18 @@ memberships_bp = Blueprint('memberships', __name__, url_prefix='/api/v1/membersh
 def get_plans():
     club_id = request.args.get('club_id', type=int)
     plans = MembershipService.get_plans(club_id)
-    
+
     result = []
     for p in plans:
         result.append({
             "id": p.id,
-            "club_id": p.club_id,
+            "club_id": p.club_id,               # may be None
             "name": p.name,
-            "price_monthly": p.price_monthly,
-            "benefits": p.benefits
+            "price": p.price,                   # changed from price_monthly
+            "duration_months": p.duration_months,  # new
+            "benefits": p.benefits,
+            "discount_percentage": p.discount_percentage,  # new
+            "is_active": p.is_active
         })
     return jsonify(result), 200
 
@@ -50,7 +53,7 @@ def subscribe():
 def get_my_memberships():
     user_id = int(get_jwt_identity())
     memberships = MembershipService.get_my_memberships(user_id)
-    
+
     result = []
     for m in memberships:
         result.append({
@@ -58,6 +61,9 @@ def get_my_memberships():
             "plan_id": m.plan_id,
             "club_id": m.club_id,
             "plan_name": m.plan.name,
+            "plan_duration_months": m.plan.duration_months,
+            "plan_price": m.plan.price,
+            "plan_discount_percentage": m.plan.discount_percentage,
             "status": m.status,
             "start_date": str(m.start_date),
             "end_date": str(m.end_date),

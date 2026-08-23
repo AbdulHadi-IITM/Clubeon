@@ -7,7 +7,6 @@ import { useAuthStore } from '@/stores/auth'
 
 import LandingView from '@/views/LandingView.vue'
 import AuthView from '@/views/AuthView.vue'
-import ProfileView from '@/views/ProfileView.vue'
 
 // ============================================================
 // Admin / Owner
@@ -189,6 +188,13 @@ const router = createRouter({
           component: () => import('@/views/member/Checkout.vue'),
           meta: { requiresAuth: true, requiresRole: 'player', title: 'Checkout', subtitle: 'Member Portal' },
         },
+
+        {
+          path: 'profile',
+          name: 'member-profile',
+          component: () => import('@/views/ProfileView.vue'),
+          meta: { requiresAuth: true, requiresRole: 'player', title: 'My Profile', subtitle: 'Member Portal' },
+        },
       ],
     },
 
@@ -296,6 +302,13 @@ const router = createRouter({
           component: () => import('@/views/staff/Events.vue'),
           meta: { requiresAuth: true, requiresRole: 'front-desk', title: 'Events', subtitle: 'Front Desk Portal' },
         },
+
+        {
+          path: 'profile',
+          name: 'staff-profile',
+          component: () => import('@/views/ProfileView.vue'),
+          meta: { requiresAuth: true, requiresRole: 'front-desk', title: 'My Profile', subtitle: 'Front Desk Portal' },
+        },
       ],
     },
 
@@ -323,11 +336,11 @@ const router = createRouter({
     {
       path: '/profile',
       name: 'profile',
-      component: ProfileView,
-
-      meta: {
-        requiresAuth: true,
-        title: 'Profile',
+      redirect: () => {
+        const auth = useAuthStore()
+        if (auth.user?.role === 'front-desk') return { name: 'staff-profile' }
+        if (auth.user?.role === 'owner') return { name: 'admin' }
+        return { name: 'member-profile' }
       },
     },
 

@@ -1134,37 +1134,20 @@
                       <!-- Court & Schedule -->
                       <td>
                         <div class="court-info-cell">
-                          <div class="facility-head-line">
+                          <div class="facility-head-line" style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
                             <span class="court-name-txt">{{ b.facility }}</span>
                             <span class="sport-badge-pill" :class="'sport-' + b.sport.toLowerCase()">{{ b.sport }}</span>
+                            <span class="booking-status-badge" :class="'bstatus-' + getEffectiveStatus(b).toLowerCase()" style="font-size: 0.7rem; padding: 0.15rem 0.55rem; line-height: 1;">{{ getEffectiveStatus(b) }}</span>
                           </div>
                           <span class="time-subtxt">{{ b.dateDisplay }} ({{ b.date }}) • {{ b.time }}</span>
                         </div>
                       </td>
 
                       <!-- Clean Actions Column -->
-                      <td style="text-align: right;">
+                      <td style="text-align: right; white-space: nowrap;">
                         <div class="table-actions-group">
-                          <button class="action-icon-btn view-btn" title="View Full Details" @click="openBookingDetails(b)">
+                          <button class="action-icon-btn view-btn" title="View Full Details & Management" @click="openBookingDetails(b)">
                             Details
-                          </button>
-
-                          <button 
-                            v-if="getEffectiveStatus(b) === 'Confirmed' || getEffectiveStatus(b) === 'Pending'" 
-                            class="action-icon-btn cancel-btn" 
-                            title="Cancel Booking"
-                            @click="requestCancelBooking(b)"
-                          >
-                            Cancel
-                          </button>
-
-                          <button 
-                            v-if="getEffectiveStatus(b) === 'Confirmed'" 
-                            class="action-icon-btn complete-btn" 
-                            title="Mark Completed"
-                            @click="markBookingCompleted(b)"
-                          >
-                            ✓
                           </button>
                         </div>
                       </td>

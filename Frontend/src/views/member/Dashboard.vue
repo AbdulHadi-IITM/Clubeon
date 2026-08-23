@@ -52,6 +52,58 @@
         <p class="muted mt-1 text-xs">club activities</p>
       </div>
     </div>
+    <!-- Club Announcements & Notice Board -->
+    <section v-if="announcements.length > 0" class="panel p-5 sm:p-6 border-indigo-100 bg-gradient-to-br from-white via-indigo-50/20 to-blue-50/30">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div class="flex items-center gap-2">
+          <span class="text-xl">📢</span>
+          <div>
+            <h2 class="font-bold text-slate-900 text-base sm:text-lg">Club Announcements & Notices</h2>
+            <p class="muted text-xs">Official facility updates, maintenance, and club news</p>
+          </div>
+        </div>
+        <span class="pill bg-indigo-50 text-indigo-700 font-semibold text-xs px-2.5 py-1">
+          {{ announcements.length }} active
+        </span>
+      </div>
+
+      <div class="mt-4 grid gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
+        <div
+          v-for="item in announcements.slice(0, 3)"
+          :key="item.id"
+          class="rounded-xl border border-slate-200 bg-white p-4.5 shadow-sm hover:shadow-md transition duration-200 flex flex-col justify-between"
+          :style="{
+            borderLeftWidth: '4px',
+            borderLeftColor: item.category === 'Maintenance' ? '#ef4444' : item.category === 'Policy' ? '#f59e0b' : item.category === 'Tournament' ? '#10b981' : item.category === 'Broadcast' ? '#8b5cf6' : '#2563eb'
+          }"
+        >
+          <div>
+            <div class="flex items-center justify-between gap-2 mb-2">
+              <span 
+                class="text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full"
+                :class="{
+                  'bg-rose-50 text-rose-700 border border-rose-200': item.category === 'Maintenance',
+                  'bg-amber-50 text-amber-700 border border-amber-200': item.category === 'Policy',
+                  'bg-emerald-50 text-emerald-700 border border-emerald-200': item.category === 'Tournament',
+                  'bg-purple-50 text-purple-700 border border-purple-200': item.category === 'Broadcast',
+                  'bg-blue-50 text-blue-700 border border-blue-200': !['Maintenance', 'Policy', 'Tournament', 'Broadcast'].includes(item.category)
+                }"
+              >
+                {{ item.icon || '📢' }} {{ item.category || 'General' }}
+              </span>
+              <span class="text-[11px] text-slate-400 font-medium">{{ item.date || item.created_at?.slice(0, 10) }}</span>
+            </div>
+            <h3 class="font-bold text-slate-900 text-sm leading-snug line-clamp-2 mb-1.5">
+              {{ item.title }}
+            </h3>
+            <p class="text-xs text-slate-600 leading-relaxed line-clamp-3">
+              {{ item.body }}
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <div class="grid gap-5 lg:grid-cols-[1.35fr_.65fr]">
       <section class="panel p-5">
         <div class="flex items-center justify-between">
@@ -67,13 +119,16 @@
           <div
             v-for="b in upcoming.slice(0, 4)"
             :key="b.id"
-            class="rounded-xl border border-slate-200 bg-slate-50/70 p-4 flex items-center justify-between gap-4"
+            class="rounded-xl border border-slate-200 bg-slate-50/70 p-3 flex items-center justify-between gap-4 overflow-hidden"
           >
-            <div>
-              <p class="text-sm font-bold text-slate-900">{{ b.court_name }}</p>
-              <p class="mt-1 text-xs text-slate-500">
-                {{ formatDate(b.date) }} · {{ formatTime(b.start_time) }}
-              </p>
+            <div class="flex items-center gap-3">
+              <img :src="getSportImage(b.court_name)" :alt="b.court_name" class="h-12 w-16 rounded-lg object-cover shadow-sm flex-shrink-0" />
+              <div>
+                <p class="text-sm font-bold text-slate-900">{{ b.court_name }}</p>
+                <p class="mt-0.5 text-xs text-slate-500">
+                  {{ formatDate(b.date) }} · {{ formatTime(b.start_time) }}
+                </p>
+              </div>
             </div>
             <span class="pill bg-emerald-50 text-emerald-700">Confirmed</span>
           </div>
@@ -97,11 +152,14 @@
         </div>
         <div class="mt-6 border-t border-slate-100 pt-5">
           <h3 class="text-sm font-bold text-slate-900">Next club event</h3>
-          <div v-if="events[0]" class="mt-3">
-            <p class="text-sm font-semibold text-slate-800">{{ events[0].title }}</p>
-            <p class="mt-1 text-xs text-slate-500">
-              {{ formatDate(events[0].date) }} · {{ formatTime(events[0].start_time) }}
-            </p>
+          <div v-if="events[0]" class="mt-3 flex items-center gap-3">
+            <img :src="getSportImage(events[0].title || events[0].sport)" :alt="events[0].title" class="h-12 w-16 rounded-lg object-cover shadow-sm flex-shrink-0" />
+            <div>
+              <p class="text-sm font-semibold text-slate-800">{{ events[0].title }}</p>
+              <p class="mt-0.5 text-xs text-slate-500">
+                {{ formatDate(events[0].date) }} · {{ formatTime(events[0].start_time) }}
+              </p>
+            </div>
           </div>
           <p v-else class="mt-3 text-xs text-slate-500">No upcoming events.</p>
         </div>
@@ -113,10 +171,16 @@
 import { computed, onMounted, ref } from 'vue'
 import api from '@/api/axios'
 import { useAuthStore } from '@/stores/auth'
-const auth = useAuthStore(),
-  bookings = ref([]),
-  events = ref([]),
-  error = ref('')
+import { getSportImage } from '@/utils/sportImages'
+import { useNotificationStore } from '@/stores/notifications'
+
+const auth = useAuthStore()
+const notificationStore = useNotificationStore()
+const bookings = ref([])
+const events = ref([])
+const error = ref('')
+
+const announcements = computed(() => notificationStore.announcements)
 const firstName = computed(
   () => String(auth.user?.name || auth.user?.username || 'Member').split(' ')[0],
 )
@@ -147,7 +211,11 @@ function formatTime(v) {
 async function load() {
   error.value = ''
   try {
-    const [b, e] = await Promise.all([api.get('/bookings'), api.get('/events')])
+    const [b, e] = await Promise.all([
+      api.get('/bookings').catch(() => ({ data: [] })), 
+      api.get('/events').catch(() => ({ data: [] })),
+      notificationStore.fetchNotifications().catch(() => null)
+    ])
     bookings.value = Array.isArray(b.data) ? b.data : []
     events.value = Array.isArray(e.data) ? e.data : []
   } catch (err) {

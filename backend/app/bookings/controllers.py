@@ -1,7 +1,7 @@
 from app.auth.decorators import role_required
 from flask import Blueprint, request, jsonify
 from app.bookings.services import BookingService
-from flask_jwt_extended import get_jwt_identity, jwt_required
+from flask_jwt_extended import get_jwt_identity, jwt_required, get_jwt
 
 bookings_bp = Blueprint('bookings', __name__, url_prefix='/api/v1/bookings')
 
@@ -64,3 +64,61 @@ def release_booking(booking_id):
         return jsonify(error), status_code
 
     return jsonify({"message": "Booking released successfully"}), 200
+
+
+@bookings_bp.route('/club', methods=['GET'])
+@role_required('owner', 'front-desk')
+def get_club_bookings():
+    """
+    Bookings for the caller's club — the owner/front-desk view.
+
+    Previously no such endpoint existed and GET /bookings was player-only, so
+    owners and staff could not see any bookings at all.
+
+    Optional query filters: ?date=YYYY-MM-DD&status=active&court_id=1
+    """
+    from app.clubs.models import Club
+
+    user_id = int(get_jwt_identity())
+    claims = get_jwt()
+
+    if claims.get('role') == 'owner':
+        club = Club.query.filter_by(owner_id=user_id).first()
+    else:
+        # Front-desk staff are not yet tied to a club in the data model, so
+        # they operate on the club named by ?club_id=, falling back to the
+        # single configured club.
+        club_id = request.args.get('club_id', type=int)
+        club = Club.query.get(club_id) if club_id else Club.query.first()
+
+    if not club:
+        return jsonify({"code": "NOT_FOUND", "message": "No club found for this user."}), 404
+
+    bookings, error = BookingService.get_club_bookings(
+        club_id=club.id,
+        booking_date=request.args.get('date'),
+        status=request.args.get('status'),
+        court_id=request.args.get('court_id', type=int),
+    )
+    if error:
+        return jsonify(error), 403 if error['code'] == 'FORBIDDEN' else 400
+
+    result = []
+    for b in bookings:
+        result.append({
+            "id": b.id,
+            "user_id": b.user_id,
+            "member_name": b.user.name if b.user else None,
+            "member_email": b.user.email if b.user else None,
+            "court_id": b.court_id,
+            "court_name": b.court.name if b.court else None,
+            "club_name": club.name,
+            "date": str(b.booking_date),
+            "start_time": str(b.start_time),
+            "end_time": str(b.end_time),
+            "status": b.status,
+            "created_at": str(b.created_at) if b.created_at else None,
+        })
+
+    return jsonify({"club": {"id": club.id, "name": club.name},
+                    "count": len(result), "bookings": result}), 200
