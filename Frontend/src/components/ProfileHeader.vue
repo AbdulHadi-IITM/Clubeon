@@ -12,8 +12,8 @@
       <div class="avatar-wrapper">
         <div class="avatar-container">
           <img 
-            :src="user.avatarUrl || 'https://placehold.co/150x150/4f46e5/ffffff?text=' + encodeURIComponent(user.name.split(' ').map(n=>n[0]).join(''))" 
-            :alt="user.name" 
+            :src="user.avatarUrl || 'https://placehold.co/150x150/4f46e5/ffffff?text=' + encodeURIComponent(((user.name || 'Member').trim().split(' ').map(n=>n[0]).join('') || 'M').slice(0, 2))" 
+            :alt="user.name || 'Member'" 
             class="avatar-img"
           />
           <button @click="$emit('edit-avatar')" class="edit-avatar-btn" aria-label="Edit profile picture">
@@ -27,12 +27,12 @@
       <!-- Info Area -->
       <div class="details-container">
         <div class="meta-info">
-          <h1 class="user-name">{{ user.name }}</h1>
+          <h1 class="user-name">{{ user.name || 'Member Profile' }}</h1>
           <div class="badge-group">
-            <span :class="['membership-badge', user.membershipType.toLowerCase()]">
-              {{ user.membershipType }}
+            <span :class="['membership-badge', (user.membershipType || 'member').toLowerCase()]">
+              {{ user.membershipType || 'Active Member' }}
             </span>
-            <span class="member-since">Member since {{ user.memberSince }}</span>
+            <span class="member-since">Member since {{ user.memberSince || 'Recent' }}</span>
           </div>
         </div>
 

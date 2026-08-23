@@ -35,7 +35,7 @@
     </nav>
     <div class="p-4">
       <router-link
-        to="/profile"
+        :to="profilePath"
         class="flex items-center gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.045] p-3 transition hover:border-indigo-400/30 hover:bg-white/[0.075]"
       >
         <div
@@ -118,6 +118,7 @@ const isStaff = computed(() => authStore.user?.role === 'front-desk')
 const navigation = computed(() => (isStaff.value ? staffNavigation : memberNavigation))
 const mobileNavigation = computed(() => navigation.value)
 const homePath = computed(() => (isStaff.value ? '/staff/dashboard' : '/member/dashboard'))
+const profilePath = computed(() => (isStaff.value ? '/staff/profile' : '/member/profile'))
 const portalLabel = computed(() => (isStaff.value ? 'Front Desk Portal' : 'Member Portal'))
 const roleLabel = computed(() => (isStaff.value ? 'Front Desk' : 'Member'))
 const displayName = computed(() => {

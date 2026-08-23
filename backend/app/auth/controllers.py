@@ -8,11 +8,24 @@ auth_bp = Blueprint('auth', __name__, url_prefix='/api/v1/auth')
 
 def _user_to_dict(user):
     """Helper to serialize user."""
+    club_name = None
+    if user.role == 'owner':
+        try:
+            from app.clubs.models import Club
+            club = Club.query.filter_by(owner_id=user.id).first()
+            if club:
+                club_name = club.name
+        except Exception:
+            pass
+
     return {
         "id": user.id,
         "name": user.name,
         "email": user.email,
-        "role": user.role
+        "role": user.role,
+        "phone": getattr(user, 'phone', None) or '',
+        "facility": club_name or '',
+        "created_at": user.created_at.isoformat() if user.created_at else None
     }
 
 
@@ -139,5 +152,33 @@ def logout():
         samesite='Lax',
         path='/'
     )
-
     return response, 200
+
+
+@auth_bp.route('/profile', methods=['PUT', 'PATCH'])
+@jwt_required()
+def update_profile():
+    """
+    Update logged-in user profile details (e.g. name, email).
+    """
+    user_id = get_jwt_identity()
+    if not user_id:
+        return jsonify({"code": "UNAUTHORIZED", "message": "Not authenticated"}), 401
+
+    data = request.get_json() or {}
+    user, error = AuthService.update_profile(
+        user_id=int(user_id),
+        name=data.get('name'),
+        email=data.get('email'),
+        phone=data.get('phone'),
+        facility=data.get('facility')
+    )
+
+    if error:
+        status_code = 409 if error.get('code') == 'CONFLICT' else 400
+        return jsonify(error), status_code
+
+    return jsonify({
+        "message": "Profile updated successfully",
+        "user": _user_to_dict(user)
+    }), 200

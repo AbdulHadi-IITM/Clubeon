@@ -4,15 +4,16 @@
       <div>
         <p class="kicker">Membership</p>
         <h1 class="title">Plans & Membership</h1>
-        <p class="muted">Choose a plan, manage your active membership, and review payments.</p>
+        <p class="muted">Choose a plan and duration, unlock court discounts.</p>
       </div>
-      <button class="btn btn-soft" type="button" @click="loadAll">Refresh</button>
+      <button class="btn btn-soft" @click="loadAll">Refresh</button>
     </div>
 
     <div v-if="error" class="panel mb-5 border-red-200 bg-red-50 p-4 text-sm text-red-700">
       {{ error }}
     </div>
 
+    <!-- My Active Membership (shown only if exists) -->
     <section v-if="activeMemberships.length" class="mb-7">
       <div class="section-head">
         <div>
@@ -27,6 +28,10 @@
             <div>
               <span class="pill bg-emerald-50 text-emerald-700">{{ membership.status }}</span>
               <h3 class="mt-3 text-xl font-extrabold text-slate-900">{{ membership.plan_name }}</h3>
+              <p class="mt-1 text-sm text-slate-500">
+                {{ membership.plan_duration_months }} months ·
+                {{ membership.plan_discount_percentage }}% off
+              </p>
             </div>
             <div class="text-right">
               <p class="text-xs text-slate-400">Valid until</p>
@@ -55,7 +60,8 @@
       </div>
     </section>
 
-    <section>
+    <!-- Available Plans (shown only if no active membership) -->
+    <section v-else>
       <div class="section-head">
         <div>
           <p class="kicker">Available plans</p>
@@ -63,87 +69,53 @@
         </div>
       </div>
 
-      <div v-if="loadingPlans" class="panel p-10 text-center text-slate-500">
-        Loading membership plans...
-      </div>
+      <div v-if="loadingPlans" class="panel p-10 text-center text-slate-500">Loading plans...</div>
+      <div v-else-if="!plans.length" class="panel p-10 text-center">No active plans.</div>
 
-      <div v-else-if="!plans.length" class="panel p-10 text-center">
-        <p class="font-bold text-slate-800">No active membership plans are available.</p>
-        <p class="mt-2 text-sm text-slate-500">Please check again later or contact the club.</p>
-      </div>
-
-      <div v-else class="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+      <div v-else class="grid gap-5 md:grid-cols-2">
         <article
-          v-for="(plan, index) in plans"
-          :key="plan.id"
+          v-for="group in groupedPlans"
+          :key="group.name"
           class="plan-card"
-          :class="{ featured: index === 1 }"
+          :class="{ featured: group.name === 'Premium' }"
         >
-          <div v-if="index === 1" class="featured-label">Popular</div>
-          <p class="kicker">{{ plan.club_id ? `Club #${plan.club_id}` : 'Club membership' }}</p>
-          <h3 class="mt-2 text-xl font-extrabold text-slate-900">{{ plan.name }}</h3>
-          <div class="mt-5 flex items-end gap-1">
-            <span class="text-3xl font-black tracking-tight text-slate-900">{{
-              currency(plan.price_monthly)
-            }}</span>
-            <span class="pb-1 text-sm text-slate-400">/ month</span>
+          <div class="featured-label" v-if="group.name === 'Premium'">Best Value</div>
+          <p class="kicker">{{ group.name }} Membership</p>
+          <p class="plan-benefit">
+            {{
+              group.discount_percentage === 100 ? 'Free court bookings' : '50% off court bookings'
+            }}
+          </p>
+
+          <!-- ====== Duration Selector ====== -->
+          <div class="duration-grid mt-6">
+            <button
+              v-for="plan in group.plans"
+              :key="plan.id"
+              type="button"
+              class="duration-btn"
+              :class="{ 'duration-active': selectedPlans[group.name]?.id === plan.id }"
+              @click="selectedPlans[group.name] = plan"
+            >
+              <span class="duration-months">{{ plan.duration_months }} mo</span>
+              <span class="duration-price">{{ currency(plan.price) }}</span>
+            </button>
           </div>
 
-          <ul class="mt-6 space-y-3">
-            <li
-              v-for="benefit in benefits(plan.benefits)"
-              :key="benefit"
-              class="flex gap-2 text-sm text-slate-600"
-            >
-              <span
-                class="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-emerald-50 text-emerald-600"
-                >✓</span
-              >
-              <span>{{ benefit }}</span>
-            </li>
-          </ul>
-
-          <button class="btn btn-primary mt-7 w-full" @click="choosePlan(plan)">
-            Choose {{ plan.name }}
+          <!-- ====== CTA Button (always a button, no layout shift) ====== -->
+          <button
+            type="button"
+            class="btn btn-primary mt-6 w-full"
+            :disabled="!selectedPlans[group.name]"
+            @click="choosePlan(group)"
+          >
+            {{
+              selectedPlans[group.name]
+                ? `Choose ${group.name} · ${currency(selectedPlans[group.name].price)}`
+                : 'Select a duration first'
+            }}
           </button>
         </article>
-      </div>
-    </section>
-
-    <section v-if="payments.length" class="mt-8">
-      <div class="section-head">
-        <div>
-          <p class="kicker">Payments</p>
-          <h2 class="section-title">Recent payment history</h2>
-        </div>
-      </div>
-      <div class="panel divide-y divide-slate-100">
-        <div
-          v-for="payment in payments.slice(0, 5)"
-          :key="payment.id"
-          class="flex flex-wrap items-center justify-between gap-3 p-4"
-        >
-          <div>
-            <p class="font-bold text-slate-800">{{ label(payment.payment_type) }}</p>
-            <p class="mt-1 text-xs text-slate-400">
-              {{ formatDateTime(payment.created_at) }} · #{{ payment.id }}
-            </p>
-          </div>
-          <div class="text-right">
-            <p class="font-extrabold text-slate-900">{{ currency(payment.amount) }}</p>
-            <span
-              class="pill"
-              :class="
-                payment.status === 'completed'
-                  ? 'bg-emerald-50 text-emerald-700'
-                  : payment.status === 'failed'
-                    ? 'bg-red-50 text-red-700'
-                    : 'bg-amber-50 text-amber-700'
-              "
-              >{{ payment.status }}</span
-            >
-          </div>
-        </div>
       </div>
     </section>
   </div>
@@ -162,14 +134,31 @@ const loadingPlans = ref(true)
 const error = ref('')
 const cancelling = ref(null)
 
+// Keyed by group name (e.g., "Standard", "Premium")
+const selectedPlans = ref({})
+
+const groupedPlans = computed(() => {
+  const groups = {}
+  for (const plan of plans.value) {
+    if (!groups[plan.name]) {
+      groups[plan.name] = {
+        name: plan.name,
+        discount_percentage: plan.discount_percentage,
+        plans: [],
+      }
+    }
+    groups[plan.name].plans.push(plan)
+  }
+  for (const group of Object.values(groups)) {
+    group.plans.sort((a, b) => a.duration_months - b.duration_months)
+  }
+  return Object.values(groups)
+})
+
 const activeMemberships = computed(() => memberships.value.filter((m) => m.status === 'active'))
 
 function currency(value) {
-  return new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
-    maximumFractionDigits: 2,
-  }).format(Number(value || 0))
+  return `₹\u00A0${Number(value).toLocaleString('en-IN')}`
 }
 
 function formatDate(value) {
@@ -181,56 +170,35 @@ function formatDate(value) {
   }).format(new Date(`${value}T00:00:00`))
 }
 
-function formatDateTime(value) {
-  if (!value) return '—'
-  return new Intl.DateTimeFormat('en-IN', { dateStyle: 'medium', timeStyle: 'short' }).format(
-    new Date(value),
-  )
-}
-
-function benefits(value) {
-  if (!value) return ['Club membership access']
-  if (Array.isArray(value)) return value
-  try {
-    const parsed = JSON.parse(value)
-    if (Array.isArray(parsed)) return parsed
-  } catch {}
-  return String(value)
-    .split(/\r?\n|•|,/)
-    .map((x) => x.trim())
-    .filter(Boolean)
-}
-
-function label(value) {
-  return String(value || 'payment')
-    .replace(/_/g, ' ')
-    .replace(/\b\w/g, (c) => c.toUpperCase())
-}
-
-function choosePlan(plan) {
-  router.push({
-    name: 'member-checkout',
-    query: { payment_type: 'membership', reference_id: String(plan.id) },
-  })
-}
-
 async function loadAll() {
   loadingPlans.value = true
   error.value = ''
   try {
-    const [plansResponse, membershipsResponse, paymentsResponse] = await Promise.all([
+    const [plansRes, membershipsRes, paymentsRes] = await Promise.all([
       api.get('/memberships/plans'),
       api.get('/memberships/my-memberships'),
       api.get('/payments/my-payments'),
     ])
-    plans.value = Array.isArray(plansResponse.data) ? plansResponse.data : []
-    memberships.value = Array.isArray(membershipsResponse.data) ? membershipsResponse.data : []
-    payments.value = Array.isArray(paymentsResponse.data) ? paymentsResponse.data : []
+    plans.value = Array.isArray(plansRes.data) ? plansRes.data : []
+    memberships.value = Array.isArray(membershipsRes.data) ? membershipsRes.data : []
+    payments.value = Array.isArray(paymentsRes.data) ? paymentsRes.data : []
   } catch (err) {
-    error.value = err?.response?.data?.message || 'Unable to load membership information.'
+    error.value = err.response?.data?.message || 'Unable to load plans.'
   } finally {
     loadingPlans.value = false
   }
+}
+
+function choosePlan(group) {
+  const plan = selectedPlans.value[group.name]
+  if (!plan) return
+  router.push({
+    name: 'member-checkout',
+    query: {
+      payment_type: 'membership',
+      reference_id: String(plan.id),
+    },
+  })
 }
 
 async function cancelMembership(membership) {
@@ -241,7 +209,7 @@ async function cancelMembership(membership) {
     await api.post(`/memberships/${membership.id}/cancel`)
     await loadAll()
   } catch (err) {
-    error.value = err?.response?.data?.message || 'Unable to cancel membership.'
+    error.value = err.response?.data?.message || 'Unable to cancel membership.'
   } finally {
     cancelling.value = null
   }
@@ -356,7 +324,16 @@ onMounted(loadAll)
   font-weight: 800;
   text-transform: capitalize;
 }
+
+/* =========================================================
+   FIXED `.btn` STYLES
+   - `.btn` is now inline-flex (auto width) so the header button fits perfectly.
+   - The full-width buttons (inside cards) use the `w-full` class.
+   ========================================================= */
 .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border-radius: 11px;
   padding: 10px 14px;
   font-size: 12px;
@@ -380,5 +357,50 @@ onMounted(loadAll)
 .btn:disabled {
   opacity: 0.55;
   cursor: not-allowed;
+}
+
+/* ====== Duration Grid: Flex row ====== */
+.duration-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.duration-btn {
+  flex: 1 1 auto;
+  min-width: 70px;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  background: #f8fafc;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  transition: all 0.15s ease;
+}
+
+.duration-btn:hover {
+  border-color: #a5b4fc;
+  background: #eef2ff;
+}
+
+.duration-active {
+  border-color: #4f46e5 !important;
+  background: #e0e7ff !important;
+  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.15);
+}
+
+.duration-months {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.duration-price {
+  font-size: 0.8rem;
+  color: #64748b;
 }
 </style>

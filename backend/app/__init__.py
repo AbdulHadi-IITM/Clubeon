@@ -125,6 +125,10 @@ def create_app(config_class=Config):
     from app.assistant.controllers import assistant_bp
     app.register_blueprint(assistant_bp)
 
+    with app.app_context():
+        from app.memberships.services import MembershipService
+        MembershipService.seed_default_plans()
+
     # =========================================================
     # OpenAPI YAML
     # =========================================================
@@ -179,7 +183,7 @@ def create_app(config_class=Config):
         try:
             from sqlalchemy import text, inspect
             db.create_all()
-            
+
             # Ensure new columns exist on existing tables in SQLite/Postgres
             inspector = inspect(db.engine)
             if inspector.has_table('clubs'):
