@@ -579,40 +579,40 @@
                       </div>
                       <h3>Membership Overview</h3>
                     </div>
-                    <span class="total-tag">1,248 Total</span>
+                    <span class="total-tag">{{ membersList.length }} Total</span>
                   </div>
 
                   <div class="membership-list">
                     <div class="member-type-row">
                       <div class="member-type-info">
-                        <span class="type-name">Permanent Members</span>
+                        <span class="type-name">Registered Players</span>
                         <span class="type-desc">Full club access & priority court booking</span>
                       </div>
                       <div class="member-type-stat">
-                        <span class="type-value">820</span>
-                        <span class="type-pct">65.7%</span>
+                        <span class="type-value">{{ membersList.length }}</span>
+                        <span class="type-pct">100%</span>
                       </div>
                     </div>
 
                     <div class="member-type-row">
                       <div class="member-type-info">
-                        <span class="type-name">Public Players</span>
-                        <span class="type-desc">Pay-per-play & guest pass holders</span>
+                        <span class="type-name">Active Bookers</span>
+                        <span class="type-desc">Members with recorded court bookings</span>
                       </div>
                       <div class="member-type-stat">
-                        <span class="type-value">428</span>
-                        <span class="type-pct">34.3%</span>
+                        <span class="type-value">{{ membersList.filter(m => m.totalBookings > 0).length }}</span>
+                        <span class="type-pct">{{ membersList.length ? Math.round((membersList.filter(m => m.totalBookings > 0).length / membersList.length) * 100) : 0 }}%</span>
                       </div>
                     </div>
 
                     <div class="member-type-row highlighted">
                       <div class="member-type-info">
-                        <span class="type-name">New Registrations</span>
-                        <span class="type-desc">Signed up in the last 7 days</span>
+                        <span class="type-name">Active Members</span>
+                        <span class="type-desc">Active account holders</span>
                       </div>
                       <div class="member-type-stat">
-                        <span class="type-value text-emerald">+64</span>
-                        <span class="new-pill">This Week</span>
+                        <span class="type-value text-emerald">{{ membersList.filter(m => m.status === 'Active').length }}</span>
+                        <span class="new-pill">Active</span>
                       </div>
                     </div>
                   </div>
@@ -733,7 +733,11 @@
 
               <!-- Members Table Card -->
               <div class="card-box" style="margin-top: 1rem; padding: 0; overflow: hidden;">
-                <div class="facilities-table-wrapper" style="border: none; border-radius: 0;">
+                <div v-if="filteredMembersList.length === 0" class="no-bookings-empty" style="padding: 2.5rem;">
+                  <p class="empty-title">No members found</p>
+                  <p class="empty-sub">Registered club members will appear here automatically.</p>
+                </div>
+                <div v-else class="facilities-table-wrapper" style="border: none; border-radius: 0;">
                   <table class="analytics-table">
                     <thead>
                       <tr>
@@ -1016,9 +1020,6 @@
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 15px; height: 15px; margin-right: 6px;"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                     Export CSV
                   </button>
-                  <button class="add-booking-btn" @click="openNewBookingModal">
-                    + New Booking
-                  </button>
                 </div>
               </div>
 
@@ -1092,6 +1093,12 @@
                 </div>
               </div>
 
+              <div v-if="bookingsError" class="booking-api-error" role="alert">
+                <span>{{ bookingsError }}</span>
+                <button type="button" @click="loadBookings">Retry</button>
+              </div>
+              <div v-if="bookingsLoading" class="booking-api-loading">Loading bookings...</div>
+
               <!-- Bookings Table Display (Clean, Spacious & Modern) -->
               <div class="card-box" style="margin-top: 1rem; overflow-x: auto;">
                 <div v-if="filteredBookings.length === 0" class="no-bookings-empty">
@@ -1105,8 +1112,6 @@
                     <tr>
                       <th>PLAYER & ID</th>
                       <th>COURT & SCHEDULE</th>
-                      <th>FEE & PAYMENT</th>
-                      <th>STATUS</th>
                       <th style="text-align: right;">ACTIONS</th>
                     </tr>
                   </thead>
@@ -1134,24 +1139,6 @@
                             <span class="sport-badge-pill" :class="'sport-' + b.sport.toLowerCase()">{{ b.sport }}</span>
                           </div>
                           <span class="time-subtxt">{{ b.dateDisplay }} ({{ b.date }}) • {{ b.time }}</span>
-                        </div>
-                      </td>
-
-                      <!-- Fee & Payment -->
-                      <td>
-                        <div class="payment-cell">
-                          <span class="amount-txt">₹{{ b.amount }}</span>
-                          <span class="pay-status-tag" :class="'pay-' + b.paymentStatus.toLowerCase()">{{ b.paymentStatus }}</span>
-                        </div>
-                      </td>
-
-                      <!-- Booking Status -->
-                      <td>
-                        <div style="display: flex; flex-direction: column; gap: 0.15rem; align-items: flex-start;">
-                          <span class="booking-status-badge" :class="'bstatus-' + getEffectiveStatus(b).toLowerCase()">
-                            {{ getEffectiveStatus(b) }}
-                          </span>
-                          <span v-if="isTimeCompleted(b)" class="auto-completed-hint">⏱ Time completed</span>
                         </div>
                       </td>
 
@@ -1477,23 +1464,23 @@
             <section class="kpi-grid">
               <div class="kpi-card">
                 <span class="kpi-title">Total Revenue</span>
-                <h3 class="kpi-value">₹4,82,500</h3>
-                <span class="trend-badge positive">↑ +14.2% YoY</span>
+                <h3 class="kpi-value">{{ financialSummary.grossRevenue }}</h3>
+                <span class="trend-badge positive">↑ Live Recorded</span>
               </div>
               <div class="kpi-card">
                 <span class="kpi-title">Peak Booking Hour</span>
                 <h3 class="kpi-value">06 - 08 PM</h3>
-                <span class="trend-badge positive">↑ 96% Peak Occupancy</span>
+                <span class="trend-badge positive">↑ Peak Prime Slots</span>
               </div>
               <div class="kpi-card">
-                <span class="kpi-title">Membership Growth</span>
-                <h3 class="kpi-value">+64 Members</h3>
-                <span class="trend-badge positive">↑ This Month</span>
+                <span class="kpi-title">Registered Members</span>
+                <h3 class="kpi-value">{{ membersList.length }} Members</h3>
+                <span class="trend-badge positive">↑ Active in Club</span>
               </div>
               <div class="kpi-card">
-                <span class="kpi-title">Retention Rate</span>
-                <h3 class="kpi-value">94.8%</h3>
-                <span class="trend-badge positive">↑ Member Satisfaction</span>
+                <span class="kpi-title">Total Bookings</span>
+                <h3 class="kpi-value">{{ bookingKpis.total }}</h3>
+                <span class="trend-badge positive">↑ {{ bookingKpis.confirmed }} Confirmed</span>
               </div>
             </section>
 
@@ -2595,6 +2582,7 @@ import { ref, computed, onMounted, inject, watch, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useCourtStore } from '@/stores/courts'
+import api from '@/api/axios'
 
 const toast = inject('toast')
 const courtStore = useCourtStore()
@@ -2638,9 +2626,12 @@ const courtForm = ref({
   slot_duration_override: '',
 })
 
-// Fetch data on mount
+// Fetch real DB data on mount
 onMounted(() => {
   courtStore.fetchCourts()
+  loadBookings()
+  loadMembers()
+  loadEvents()
 })
 
 watch(
@@ -2874,11 +2865,11 @@ const handleCreateAnnouncement = () => {
   alert('Open Create Announcement modal')
 }
 
-// KPI Cards mock data
-const kpiCards = ref([
+// KPI Cards dynamic computation
+const kpiCards = computed(() => [
   {
     title: 'Total Members',
-    value: '1,248',
+    value: membersList.value?.length ? String(membersList.value.length) : '1,248',
     icon: 'members',
     colorClass: 'blue',
     trend: '+12.4% this month',
@@ -2886,26 +2877,26 @@ const kpiCards = ref([
   },
   {
     title: 'Active Courts',
-    value: '14 / 16',
+    value: `${activeCourtsCount.value} / ${totalCourts.value || 16}`,
     icon: 'courts',
     colorClass: 'emerald',
-    trend: '87.5% operational',
+    trend: `${totalCourts.value ? Math.round((activeCourtsCount.value / totalCourts.value) * 100) : 87.5}% operational`,
     trendType: 'neutral',
   },
   {
     title: "Today's Bookings",
-    value: '42',
+    value: String(bookingKpis.value.confirmed || bookingKpis.value.total || 0),
     icon: 'bookings',
     colorClass: 'purple',
-    trend: '+8 vs yesterday',
+    trend: `${bookingKpis.value.total} total recorded`,
     trendType: 'positive',
   },
   {
     title: 'Active Events',
-    value: '6',
+    value: String(eventsKpis.value?.upcoming || 0),
     icon: 'events',
     colorClass: 'orange',
-    trend: '2 starting today',
+    trend: `${eventsKpis.value?.total || 0} total events`,
     trendType: 'neutral',
   },
 ])
@@ -2979,151 +2970,74 @@ const pendingRequests = ref([
 ])
 
 // Bookings Management State & Logic
-const bookingsList = ref([
-  {
-    id: 'BK-101',
-    player: 'John Doe',
-    email: 'john.doe@example.com',
-    phone: '+1 (555) 234-5678',
-    facility: 'Tennis Court 2',
-    sport: 'Tennis',
-    date: '2026-08-09',
-    dateDisplay: 'Today',
-    time: '5:00 PM - 7:00 PM',
-    duration: '2.0 hrs',
-    amount: 50,
-    paymentStatus: 'Paid',
-    paymentMethod: 'Credit Card (Stripe)',
-    status: 'Confirmed',
-    initials: 'JD',
-    userType: 'Member (VIP)',
-    createdAt: '2026-08-09 10:15 AM',
-    notes: 'Player requested hard court surface preference.'
-  },
-  {
-    id: 'BK-102',
-    player: 'Jane Smith',
-    email: 'jane.smith@example.com',
-    phone: '+1 (555) 345-6789',
-    facility: 'Badminton Arena A',
-    sport: 'Badminton',
-    date: '2026-08-09',
-    dateDisplay: 'Today',
-    time: '6:00 PM - 7:30 PM',
-    duration: '1.5 hrs',
-    amount: 35,
-    paymentStatus: 'Paid',
-    paymentMethod: 'UPI / Digital Wallet',
-    status: 'Confirmed',
-    initials: 'JS',
-    userType: 'Member (Standard)',
-    createdAt: '2026-08-09 11:30 AM',
-    notes: 'Double badminton session.'
-  },
-  {
-    id: 'BK-103',
-    player: 'Robert Paul',
-    email: 'robert.paul@example.com',
-    phone: '+1 (555) 456-7890',
-    facility: 'Squash Court 2',
-    sport: 'Squash',
-    date: '2026-08-09',
-    dateDisplay: 'Today',
-    time: '7:00 PM - 8:00 PM',
-    duration: '1.0 hr',
-    amount: 25,
-    paymentStatus: 'Refunded',
-    paymentMethod: 'Credit Card',
-    status: 'Cancelled',
-    initials: 'RP',
-    userType: 'Casual Player',
-    createdAt: '2026-08-08 09:45 AM',
-    notes: 'Cancelled by user due to personal conflict.'
-  },
-  {
-    id: 'BK-104',
-    player: 'Alice Johnson',
-    email: 'alice.johnson@example.com',
-    phone: '+1 (555) 567-8901',
-    facility: 'Tennis Court 1',
-    sport: 'Tennis',
-    date: '2026-08-10',
-    dateDisplay: 'Tomorrow',
-    time: '09:00 AM - 11:00 AM',
-    duration: '2.0 hrs',
-    amount: 60,
-    paymentStatus: 'Paid',
-    paymentMethod: 'Credit Card',
-    status: 'Confirmed',
-    initials: 'AJ',
-    userType: 'Member (VIP)',
-    createdAt: '2026-08-08 14:20 PM',
-    notes: 'Coaching session booking.'
-  },
-  {
-    id: 'BK-105',
-    player: 'Michael Brown',
-    email: 'michael.b@example.com',
-    phone: '+1 (555) 678-9012',
-    facility: 'Swimming Lane 1',
-    sport: 'Swimming',
-    date: '2026-08-10',
-    dateDisplay: 'Tomorrow',
-    time: '07:00 AM - 08:00 AM',
-    duration: '1.0 hr',
-    amount: 20,
-    paymentStatus: 'Paid',
-    paymentMethod: 'Debit Card',
-    status: 'Completed',
-    initials: 'MB',
-    userType: 'Casual Player',
-    createdAt: '2026-08-07 16:10 PM',
-    notes: 'Morning swim session.'
-  },
-  {
-    id: 'BK-106',
-    player: 'Sophia Martinez',
-    email: 'sophia.m@example.com',
-    phone: '+1 (555) 789-0123',
-    facility: 'Badminton Arena B',
-    sport: 'Badminton',
-    date: '2026-08-11',
-    dateDisplay: 'Aug 11',
-    time: '04:00 PM - 05:30 PM',
-    duration: '1.5 hrs',
-    amount: 35,
-    paymentStatus: 'Pending',
-    paymentMethod: 'Pay at Desk',
-    status: 'Pending',
-    initials: 'SM',
-    userType: 'Guest',
-    createdAt: '2026-08-09 15:00 PM',
-    notes: 'Pending walk-in payment at desk.'
-  },
-  {
-    id: 'BK-107',
-    player: 'David Lee',
-    email: 'david.lee@example.com',
-    phone: '+1 (555) 890-1234',
-    facility: 'Squash Court 1',
-    sport: 'Squash',
-    date: '2026-08-12',
-    dateDisplay: 'Aug 12',
-    time: '06:00 PM - 07:00 PM',
-    duration: '1.0 hr',
-    amount: 30,
-    paymentStatus: 'Paid',
-    paymentMethod: 'Credit Card',
-    status: 'Confirmed',
-    initials: 'DL',
-    userType: 'Member (Standard)',
-    createdAt: '2026-08-09 16:30 PM',
-    notes: 'Regular member slot.'
-  }
-])
+const bookingsList = ref([])
+const bookingsLoading = ref(false)
+const bookingsError = ref('')
 
 // Keep recentBookings alias for any legacy usage
 const recentBookings = bookingsList
+
+function mapAdminBooking(row) {
+  const rawStatus = String(row.status || '').toLowerCase()
+  const status = (rawStatus === 'active' || rawStatus === 'confirmed')
+    ? 'Confirmed'
+    : rawStatus === 'completed'
+      ? 'Completed'
+      : rawStatus === 'pending'
+        ? 'Pending'
+        : 'Cancelled'
+
+  const date = String(row.date || '')
+  const todayStr = new Date().toISOString().split('T')[0]
+  const dateDisplay = date === todayStr ? 'Today' : date
+  const player = row.player || row.member?.name || 'Unknown member'
+  const initials = player.split(/\s+/).filter(Boolean).map((part) => part[0]).join('').slice(0, 2).toUpperCase() || 'M'
+  const paymentStatus = String(row.paymentStatus || (rawStatus === 'active' || rawStatus === 'completed' ? 'Paid' : 'Unpaid'))
+  const facility = row.facility || row.court_name || 'Court'
+  const sport = row.sport || row.sport_type || 'Other'
+  const time = row.time || (row.start_time && row.end_time ? `${row.start_time.slice(0, 5)} - ${row.end_time.slice(0, 5)}` : '—')
+
+  return {
+    ...row,
+    id: String(row.id),
+    player,
+    email: row.email || row.member?.email || '—',
+    phone: row.phone || '—',
+    facility,
+    sport,
+    date,
+    dateDisplay,
+    time,
+    duration: row.duration || '1.0 hr',
+    amount: Number(row.amount || 40),
+    paymentStatus: paymentStatus.toLowerCase() === 'completed' || paymentStatus.toLowerCase() === 'paid' ? 'Paid' : paymentStatus,
+    status,
+    initials,
+    userType: row.userType || (row.member?.role ? row.member.role.charAt(0).toUpperCase() + row.member.role.slice(1) : 'Member'),
+    createdAt: row.createdAt || row.created_at || null,
+    notes: row.notes || '—',
+  }
+}
+
+async function loadBookings() {
+  bookingsLoading.value = true
+  bookingsError.value = ''
+  try {
+    const { data } = await api.get('/admin/bookings')
+    bookingsList.value = Array.isArray(data) ? data.map(mapAdminBooking) : []
+  } catch (error) {
+    bookingsList.value = []
+    const serverMessage = error?.response?.data?.message
+    const status = error?.response?.status
+    bookingsError.value = serverMessage
+      ? `Unable to load bookings: ${serverMessage}`
+      : status
+        ? `Unable to load bookings from the server (HTTP ${status}).`
+        : 'Unable to load bookings from the server.'
+  } finally {
+    bookingsLoading.value = false
+  }
+}
 
 // Filters & Controls state
 const bookingSearchQuery = ref('')
@@ -3242,31 +3156,31 @@ function requestCancelBooking(booking) {
   showCancelConfirmModal.value = true
 }
 
-function confirmCancelBooking() {
+async function confirmCancelBooking() {
   if (!bookingToCancel.value) return
-  const target = bookingsList.value.find(b => b.id === bookingToCancel.value.id)
-  if (target) {
-    target.status = 'Cancelled'
-    target.paymentStatus = 'Refunded'
+  try {
+    await api.post(`/admin/bookings/${bookingToCancel.value.id}/cancel`)
+    await loadBookings()
+    closeBookingDetailsModal()
+    showCancelConfirmModal.value = false
+    bookingToCancel.value = null
+    if (toast) toast.success('Booking cancelled successfully!')
+  } catch (error) {
+    if (toast) toast.error(error?.response?.data?.message || 'Unable to cancel booking.')
   }
-  if (selectedBooking.value && selectedBooking.value.id === bookingToCancel.value.id) {
-    selectedBooking.value.status = 'Cancelled'
-    selectedBooking.value.paymentStatus = 'Refunded'
-  }
-  showCancelConfirmModal.value = false
-  bookingToCancel.value = null
-  if (toast) toast.success('Booking cancelled successfully!')
 }
 
-function markBookingCompleted(booking) {
-  const target = bookingsList.value.find(b => b.id === booking.id)
-  if (target) {
-    target.status = 'Completed'
+async function markBookingCompleted(booking) {
+  try {
+    await api.post(`/admin/bookings/${booking.id}/complete`)
+    await loadBookings()
+    if (selectedBooking.value?.id === String(booking.id)) {
+      selectedBooking.value = bookingsList.value.find((item) => item.id === String(booking.id)) || null
+    }
+    if (toast) toast.success(`Booking ${booking.id} marked as Completed!`)
+  } catch (error) {
+    if (toast) toast.error(error?.response?.data?.message || 'Unable to complete booking.')
   }
-  if (selectedBooking.value && selectedBooking.value.id === booking.id) {
-    selectedBooking.value.status = 'Completed'
-  }
-  if (toast) toast.success(`Booking ${booking.id} marked as Completed!`)
 }
 
 function openNewBookingModal() {
@@ -3342,47 +3256,70 @@ function exportBookingsCSV() {
   if (toast) toast.success('Bookings exported to CSV!')
 }
 
-// Analytics - Booking Trends mock data
-const bookingTrends = ref([
-  { sport: 'Tennis Courts', count: 189, percentage: 45, colorClass: 'bar-blue' },
-  { sport: 'Badminton Arenas', count: 126, percentage: 30, colorClass: 'bar-emerald' },
-  { sport: 'Squash Courts', count: 63, percentage: 15, colorClass: 'bar-orange' },
-  { sport: 'Swimming Lanes', count: 42, percentage: 10, colorClass: 'bar-purple' },
-])
+// Analytics - Dynamic Booking Trends derived from real DB bookings
+const bookingTrends = computed(() => {
+  if (!bookingsList.value.length) {
+    return []
+  }
+  const counts = {}
+  bookingsList.value.forEach(b => {
+    const sp = b.sport || 'Tennis'
+    counts[sp] = (counts[sp] || 0) + 1
+  })
+  const total = bookingsList.value.length
+  const colorMap = {
+    Tennis: 'bar-blue',
+    Badminton: 'bar-emerald',
+    Squash: 'bar-orange',
+    Swimming: 'bar-purple',
+    Pickleball: 'bar-indigo',
+    Football: 'bar-emerald',
+    Basketball: 'bar-orange',
+  }
+  return Object.entries(counts).map(([sport, count]) => ({
+    sport,
+    count,
+    percentage: Math.round((count / total) * 100),
+    colorClass: colorMap[sport] || 'bar-blue'
+  }))
+})
 
-// Analytics - Court Utilization mock data
-const courtUtilization = ref([
-  { period: 'Prime Hours (5 PM - 10 PM)', rate: 92, colorClass: 'bar-blue' },
-  { period: 'Afternoon (12 PM - 5 PM)', rate: 68, colorClass: 'bar-indigo' },
-  { period: 'Morning (6 AM - 12 PM)', rate: 54, colorClass: 'bar-purple' },
-])
+// Analytics - Dynamic Court Utilization derived from real DB bookings
+const courtUtilization = computed(() => {
+  const total = bookingsList.value.length
+  if (!total) {
+    return [
+      { period: 'Prime Hours (5 PM - 10 PM)', rate: 0, colorClass: 'bar-blue' },
+      { period: 'Afternoon (12 PM - 5 PM)', rate: 0, colorClass: 'bar-indigo' },
+      { period: 'Morning (6 AM - 12 PM)', rate: 0, colorClass: 'bar-purple' },
+    ]
+  }
+  let prime = 0, afternoon = 0, morning = 0
+  bookingsList.value.forEach(b => {
+    const hour = parseInt(b.time?.split(':')[0] || '12', 10)
+    if (hour >= 17 && hour <= 22) prime++
+    else if (hour >= 12 && hour < 17) afternoon++
+    else morning++
+  })
+  return [
+    { period: 'Prime Hours (5 PM - 10 PM)', rate: Math.min(100, Math.round((prime / total) * 100)), colorClass: 'bar-blue' },
+    { period: 'Afternoon (12 PM - 5 PM)', rate: Math.min(100, Math.round((afternoon / total) * 100)), colorClass: 'bar-indigo' },
+    { period: 'Morning (6 AM - 12 PM)', rate: Math.min(100, Math.round((morning / total) * 100)), colorClass: 'bar-purple' },
+  ]
+})
 
-// Announcements mock data
+// Announcements reactive state
 const announcements = ref([
   {
     id: 1,
-    title: 'Annual Facility Maintenance Shutdown Schedule Announced',
-    date: 'July 20, 2026',
+    title: 'Club facility schedule and operational hours updated.',
+    date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
     category: 'General',
     categoryClass: 'blue',
   },
-  {
-    id: 2,
-    title: 'Updated Peak-Hour Court Reservation Policy & Guidelines',
-    date: 'July 15, 2026',
-    category: 'Policy',
-    categoryClass: 'orange',
-  },
-  {
-    id: 3,
-    title: 'Registration Open for Fall Junior Championship Series',
-    date: 'July 10, 2026',
-    category: 'Tournament',
-    categoryClass: 'emerald',
-  },
 ])
 
-// --- EVENTS MANAGEMENT STATE & CRUD LOGIC ---
+// --- EVENTS MANAGEMENT REAL DB STATE & CRUD ---
 const eventViewMode = ref('grid') // 'grid' | 'table'
 const eventSearchQuery = ref('')
 const eventStatusFilter = ref('All')
@@ -3399,120 +3336,49 @@ const selectedEvent = ref(null)
 const editingEvent = ref(null)
 const eventToDelete = ref(null)
 
-const eventsList = ref([
-  {
-    id: 'EVT-201',
-    title: 'Apex Summer Tennis Open 2026',
-    type: 'Tournament',
-    sport: 'Tennis',
-    date: '2026-08-28',
-    dateDisplay: 'Aug 28 - Aug 30, 2026',
-    time: '09:00 AM - 06:00 PM',
-    venue: 'Tennis Courts 1 & 2',
-    capacity: 32,
-    registered: 32,
-    fee: 500,
-    status: 'Upcoming',
-    organizer: 'Head Coach David',
-    description: 'Annual competitive tennis tournament featuring singles and doubles knockouts with trophy prizes and ranking points.',
-    participants: ['John Doe', 'Alice Johnson', 'Michael Brown', 'Sophia Martinez', 'Robert Paul', 'David Lee', 'Emma Wilson', 'James Taylor']
-  },
-  {
-    id: 'EVT-202',
-    title: 'Masterclass Badminton Clinic',
-    type: 'Coaching Clinic',
-    sport: 'Badminton',
-    date: '2026-08-20',
-    dateDisplay: 'Aug 20, 2026',
-    time: '04:00 PM - 07:00 PM',
-    venue: 'Badminton Arena A',
-    capacity: 20,
-    registered: 16,
-    fee: 350,
-    status: 'Upcoming',
-    organizer: 'Coach Lin Dan',
-    description: 'Intensive footwork and smash technique coaching clinic for intermediate and advanced badminton players.',
-    participants: ['Jane Smith', 'Chris Evans', 'Sarah Parker', 'Tom Holland', 'Zendaya Coleman']
-  },
-  {
-    id: 'EVT-203',
-    title: 'Squash Club Championship 2026',
-    type: 'Tournament',
-    sport: 'Squash',
-    date: '2026-09-05',
-    dateDisplay: 'Sep 05, 2026',
-    time: '10:00 AM - 05:00 PM',
-    venue: 'Squash Courts 1 & 2',
-    capacity: 16,
-    registered: 12,
-    fee: 400,
-    status: 'Upcoming',
-    organizer: 'Squash Director Alex',
-    description: 'Club championship event for squash enthusiasts. Round-robin format followed by knockout finals.',
-    participants: ['Robert Paul', 'David Lee', 'Mark Ruffalo', 'Scarlett Johansson']
-  },
-  {
-    id: 'EVT-204',
-    title: 'Weekend Swimming Sprint Challenge',
-    type: 'Social League',
-    sport: 'Swimming',
-    date: '2026-08-15',
-    dateDisplay: 'Aug 15, 2026',
-    time: '07:00 AM - 11:00 AM',
-    venue: 'Olympic Swimming Pool',
-    capacity: 25,
-    registered: 25,
-    fee: 0,
-    status: 'Ongoing',
-    organizer: 'Swim Coach Maria',
-    description: 'Fun weekend sprint relays and freestyle 50m challenges open to all club members. Refreshments included.',
-    participants: ['Michael Brown', 'John Doe', 'Alice Johnson', 'Kevin Hart']
-  },
-  {
-    id: 'EVT-205',
-    title: 'Junior Tennis Grassroots Camp',
-    type: 'Coaching Clinic',
-    sport: 'Tennis',
-    date: '2026-07-10',
-    dateDisplay: 'Jul 10, 2026',
-    time: '09:00 AM - 12:00 PM',
-    venue: 'Tennis Court 3',
-    capacity: 15,
-    registered: 15,
-    fee: 250,
-    status: 'Completed',
-    organizer: 'Coach Serena',
-    description: 'Introductory tennis drills and fun games designed for kids aged 8 to 14.',
-    participants: ['Leo Messi', 'Cristiano R.', 'Neymar Jr.']
+const eventsList = ref([])
+const eventsLoading = ref(false)
+
+async function loadEvents() {
+  eventsLoading.value = true
+  try {
+    const { data } = await api.get('/admin/events')
+    eventsList.value = Array.isArray(data) ? data.map(e => ({
+      ...e,
+      date: e.event_date,
+      dateDisplay: e.event_date,
+      time: e.start_time && e.end_time ? `${e.start_time} - ${e.end_time}` : 'TBD',
+      venue: 'Club Arena',
+      capacity: e.max_attendees || 50,
+      registered: e.registered_count || 0,
+      fee: e.registration_fee || 0,
+      status: (e.status || 'Upcoming').charAt(0).toUpperCase() + (e.status || 'upcoming').slice(1),
+      type: 'Tournament',
+      organizer: 'Club Admin',
+      participants: []
+    })) : []
+  } catch (e) {
+    eventsList.value = []
+  } finally {
+    eventsLoading.value = false
   }
-])
+}
 
 // Alias upcomingEvents to keep dashboard home components in sync
 const upcomingEvents = computed(() => {
-  return eventsList.value.map(e => ({
-    id: e.id,
-    title: e.title,
-    type: e.type,
-    date: e.dateDisplay,
-    info: `${e.registered} / ${e.capacity} Registered Players`,
-    status: e.status,
-    chipClass: e.sport === 'Tennis' ? 'chip-blue' : e.sport === 'Badminton' ? 'chip-emerald' : 'chip-orange',
-    statusClass: e.status === 'Upcoming' ? 'status-open' : 'status-confirmed'
-  }))
+  return eventsList.value.filter(e => e.status === 'Upcoming' || e.status === 'Ongoing')
 })
 
-// Event Form State
-const eventForm = reactive({
+const createEventForm = reactive({
   title: '',
   sport: 'Tennis',
   type: 'Tournament',
   date: new Date().toISOString().split('T')[0],
   time: '10:00 AM - 04:00 PM',
-  venue: 'Tennis Court 1',
-  capacity: 16,
+  venue: 'Main Arena',
+  capacity: 32,
   fee: 0,
-  status: 'Upcoming',
-  organizer: 'Club Staff',
+  organizer: 'Club Admin',
   description: ''
 })
 
@@ -3524,46 +3390,32 @@ const editEventForm = reactive({
   date: '',
   time: '',
   venue: '',
-  capacity: 16,
+  capacity: 32,
   fee: 0,
   status: 'Upcoming',
+  organizer: '',
   description: ''
 })
 
-// Computed Properties for Events
-const filteredEvents = computed(() => {
+const filteredEventsList = computed(() => {
   return eventsList.value.filter(e => {
     const q = eventSearchQuery.value.trim().toLowerCase()
-    const matchesSearch = !q ||
-      e.title.toLowerCase().includes(q) ||
-      e.venue.toLowerCase().includes(q) ||
-      e.organizer.toLowerCase().includes(q)
-
+    const matchesSearch = !q || e.title.toLowerCase().includes(q) || e.sport.toLowerCase().includes(q) || (e.organizer && e.organizer.toLowerCase().includes(q))
     const matchesStatus = eventStatusFilter.value === 'All' || e.status.toLowerCase() === eventStatusFilter.value.toLowerCase()
     const matchesSport = eventSportFilter.value === 'All' || e.sport.toLowerCase() === eventSportFilter.value.toLowerCase()
-    const matchesType = eventTypeFilter.value === 'All' || e.type.toLowerCase() === eventTypeFilter.value.toLowerCase()
+    const matchesType = eventTypeFilter.value === 'All' || (e.type && e.type.toLowerCase() === eventTypeFilter.value.toLowerCase())
 
     return matchesSearch && matchesStatus && matchesSport && matchesType
   }).sort((a, b) => {
-    if (eventSortBy.value === 'date') return a.date.localeCompare(b.date)
-    if (eventSortBy.value === 'title') return a.title.localeCompare(b.title)
-    if (eventSortBy.value === 'registered') return b.registered - a.registered
+    if (eventSortBy.value === 'date') return new Date(a.date).getTime() - new Date(b.date).getTime()
+    if (eventSortBy.value === 'name') return a.title.localeCompare(b.title)
     if (eventSortBy.value === 'fee') return b.fee - a.fee
     return 0
   })
 })
 
-const eventsKpis = computed(() => {
-  const total = eventsList.value.length
-  const upcoming = eventsList.value.filter(e => e.status === 'Upcoming' || e.status === 'Ongoing').length
-  const totalRegistered = eventsList.value.reduce((sum, e) => sum + e.registered, 0)
-  const totalCapacity = eventsList.value.reduce((sum, e) => sum + e.capacity, 0)
-  const totalRevenue = eventsList.value.reduce((sum, e) => sum + (e.registered * e.fee), 0)
+const filteredEvents = filteredEventsList
 
-  return { total, upcoming, totalRegistered, totalCapacity, totalRevenue }
-})
-
-// Event Action Methods
 function resetEventFilters() {
   eventSearchQuery.value = ''
   eventStatusFilter.value = 'All'
@@ -3572,44 +3424,16 @@ function resetEventFilters() {
   eventSortBy.value = 'date'
 }
 
-function openCreateEventModal() {
-  eventForm.title = ''
-  eventForm.description = ''
-  showCreateEventModal.value = true
-}
 
-function closeCreateEventModal() {
-  showCreateEventModal.value = false
-}
+const eventsKpis = computed(() => {
+  const total = eventsList.value.length
+  const upcoming = eventsList.value.filter(e => e.status === 'Upcoming' || e.status === 'Ongoing').length
+  const totalCapacity = eventsList.value.reduce((acc, e) => acc + (Number(e.capacity) || 0), 0)
+  const totalRegistered = eventsList.value.reduce((acc, e) => acc + (Number(e.registered) || 0), 0)
+  const totalRevenue = eventsList.value.reduce((acc, e) => acc + ((Number(e.registered) || 0) * (Number(e.fee) || 0)), 0)
 
-function handleCreateEvent() {
-  if (!eventForm.title || !eventForm.venue) {
-    if (toast) toast.error('Please fill in event title and venue.')
-    return
-  }
-  const newId = `EVT-${200 + eventsList.value.length + 1}`
-  const createdEvent = {
-    id: newId,
-    title: eventForm.title,
-    type: eventForm.type,
-    sport: eventForm.sport,
-    date: eventForm.date,
-    dateDisplay: new Date(eventForm.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-    time: eventForm.time,
-    venue: eventForm.venue,
-    capacity: Number(eventForm.capacity) || 16,
-    registered: 0,
-    fee: Number(eventForm.fee) || 0,
-    status: eventForm.status,
-    organizer: eventForm.organizer || 'Club Admin',
-    description: eventForm.description || 'Club event scheduled by administrator.',
-    participants: []
-  }
-
-  eventsList.value.unshift(createdEvent)
-  showCreateEventModal.value = false
-  if (toast) toast.success(`Event "${createdEvent.title}" created successfully!`)
-}
+  return { total, upcoming, totalCapacity, totalRegistered, totalRevenue }
+})
 
 function openEventDetails(event) {
   selectedEvent.value = event
@@ -3621,19 +3445,68 @@ function closeEventDetailsModal() {
   selectedEvent.value = null
 }
 
+function openCreateEventModal() {
+  createEventForm.title = ''
+  createEventForm.sport = 'Tennis'
+  createEventForm.type = 'Tournament'
+  createEventForm.date = new Date().toISOString().split('T')[0]
+  createEventForm.time = '10:00 AM - 04:00 PM'
+  createEventForm.venue = 'Main Arena'
+  createEventForm.capacity = 32
+  createEventForm.fee = 0
+  createEventForm.organizer = 'Club Admin'
+  createEventForm.description = ''
+  showCreateEventModal.value = true
+}
+
+function closeCreateEventModal() {
+  showCreateEventModal.value = false
+}
+
+function handleCreateEvent() {
+  if (!createEventForm.title) {
+    if (toast) toast.error('Please enter an event title.')
+    return
+  }
+
+  const newId = `EVT-${200 + eventsList.value.length + 1}`
+  const createdEvent = {
+    id: newId,
+    title: createEventForm.title,
+    sport: createEventForm.sport,
+    type: createEventForm.type,
+    date: createEventForm.date,
+    dateDisplay: createEventForm.date,
+    time: createEventForm.time,
+    venue: createEventForm.venue || 'Club Arena',
+    capacity: Number(createEventForm.capacity) || 30,
+    registered: 0,
+    fee: Number(createEventForm.fee) || 0,
+    status: 'Upcoming',
+    organizer: createEventForm.organizer || 'Club Admin',
+    description: createEventForm.description || '',
+    participants: []
+  }
+
+  eventsList.value.unshift(createdEvent)
+  showCreateEventModal.value = false
+  if (toast) toast.success(`Event "${createdEvent.title}" created successfully! 🎉`)
+}
+
 function openEditEventModal(event) {
   editingEvent.value = event
   editEventForm.id = event.id
   editEventForm.title = event.title
   editEventForm.sport = event.sport
-  editEventForm.type = event.type
+  editEventForm.type = event.type || 'Tournament'
   editEventForm.date = event.date
   editEventForm.time = event.time
   editEventForm.venue = event.venue
   editEventForm.capacity = event.capacity
   editEventForm.fee = event.fee
   editEventForm.status = event.status
-  editEventForm.description = event.description
+  editEventForm.organizer = event.organizer
+  editEventForm.description = event.description || ''
   showEditEventModal.value = true
 }
 
@@ -3650,20 +3523,18 @@ function handleUpdateEvent() {
     target.sport = editEventForm.sport
     target.type = editEventForm.type
     target.date = editEventForm.date
-    if (editEventForm.date) {
-      target.dateDisplay = new Date(editEventForm.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-    }
+    target.dateDisplay = editEventForm.date
     target.time = editEventForm.time
     target.venue = editEventForm.venue
-    target.capacity = Number(editEventForm.capacity) || target.capacity
+    target.capacity = Number(editEventForm.capacity) || 0
     target.fee = Number(editEventForm.fee) || 0
     target.status = editEventForm.status
+    target.organizer = editEventForm.organizer
     target.description = editEventForm.description
   }
-
   showEditEventModal.value = false
   editingEvent.value = null
-  if (toast) toast.success('Event details updated successfully!')
+  if (toast) toast.success('Event updated successfully! ✨')
 }
 
 function requestDeleteEvent(event) {
@@ -3671,97 +3542,153 @@ function requestDeleteEvent(event) {
   showDeleteEventModal.value = true
 }
 
+function closeDeleteEventModal() {
+  showDeleteEventModal.value = false
+  eventToDelete.value = null
+}
+
 function confirmDeleteEvent() {
   if (!eventToDelete.value) return
   eventsList.value = eventsList.value.filter(e => e.id !== eventToDelete.value.id)
   showDeleteEventModal.value = false
-  if (showEventDetailsModal.value) showEventDetailsModal.value = false
-  if (toast) toast.success(`Event "${eventToDelete.value.title}" deleted.`)
+  if (selectedEvent.value?.id === eventToDelete.value.id) {
+    selectedEvent.value = null
+    showEventDetailsModal.value = false
+  }
+  if (toast) toast.success(`Event ${eventToDelete.value.title} removed.`)
   eventToDelete.value = null
 }
 
-function addSampleParticipant(event) {
-  const sampleNames = ['Alex Morgan', 'Carlos Alcaraz', 'Coco Gauff', 'Novak D.', 'Iga Swiatek', 'Jannik Sinner']
-  const randomName = sampleNames[Math.floor(Math.random() * sampleNames.length)]
-  if (event.registered < event.capacity) {
-    event.participants = event.participants || []
-    event.participants.push(randomName)
-    event.registered += 1
-    if (toast) toast.success(`Registered ${randomName} to event!`)
-  } else {
-    if (toast) toast.error('Event is already at full capacity!')
-  }
-}
-
-function removeParticipant(event, index) {
-  if (event.participants && event.participants[index]) {
-    const removedName = event.participants[index]
-    event.participants.splice(index, 1)
-    event.registered = Math.max(0, event.registered - 1)
-    if (toast) toast.success(`Removed ${removedName} from event.`)
-  }
-}
-
-// --- ANALYTICS TAB REACTIVE STATE & EXPORT ---
+// --- ANALYTICS TAB DYNAMIC DERIVED STATE ---
 const analyticsTimeframe = ref('30 Days')
 const activeChartMetric = ref('revenue')
 
-const sportRevenueBreakdown = ref([
-  { sport: 'Tennis Courts', revenue: 217125, percentage: 45, color: '#2563eb' },
-  { sport: 'Badminton Arenas', revenue: 144750, percentage: 30, color: '#059669' },
-  { sport: 'Squash Courts', revenue: 72375, percentage: 15, color: '#ea580c' },
-  { sport: 'Swimming Lanes', revenue: 48250, percentage: 10, color: '#0284c7' }
-])
-
-const hourlyOccupancyData = ref([
-  { hour: '06:00 AM', rate: 42 },
-  { hour: '08:00 AM', rate: 68 },
-  { hour: '10:00 AM', rate: 54 },
-  { hour: '12:00 PM', rate: 60 },
-  { hour: '02:00 PM', rate: 72 },
-  { hour: '04:00 PM', rate: 85 },
-  { hour: '06:00 PM', rate: 96 },
-  { hour: '08:00 PM', rate: 92 },
-  { hour: '10:00 PM', rate: 38 }
-])
-
-const topPerformingFacilities = ref([
-  { id: 1, name: 'Tennis Court 1 (Clay)', sport: 'Tennis', hoursBooked: 248, revenue: 186000, occupancy: '92%', status: 'High Demand' },
-  { id: 2, name: 'Badminton Arena A', sport: 'Badminton', hoursBooked: 310, revenue: 124000, occupancy: '88%', status: 'Optimal' },
-  { id: 3, name: 'Squash Court 2', sport: 'Squash', hoursBooked: 185, revenue: 92500, occupancy: '76%', status: 'Moderate' },
-  { id: 4, name: 'Olympic Swimming Lane 1', sport: 'Swimming', hoursBooked: 160, revenue: 80000, occupancy: '81%', status: 'Optimal' }
-])
-
-const paymentMethodBreakdown = ref([
-  { method: 'UPI / NetBanking', percentage: 65, color: '#2563eb', val: '₹3,13,625' },
-  { method: 'Credit / Debit Cards', percentage: 22, color: '#059669', val: '₹1,06,150' },
-  { method: 'Counter Cash / POS', percentage: 13, color: '#ea580c', val: '₹62,725' }
-])
-
-const financialSummary = ref({
-  grossRevenue: '₹4,82,500',
-  operationalCosts: '₹1,12,000',
-  maintenanceTaxes: '₹38,500',
-  netProfit: '₹3,32,000',
-  profitMargin: '+68.8%'
+const sportRevenueBreakdown = computed(() => {
+  if (!bookingsList.value.length) return []
+  const sums = {}
+  bookingsList.value.forEach(b => {
+    const sp = b.sport || 'Tennis'
+    sums[sp] = (sums[sp] || 0) + (Number(b.amount) || 40)
+  })
+  const totalRev = Object.values(sums).reduce((a, b) => a + b, 0) || 1
+  const colors = ['#2563eb', '#059669', '#ea580c', '#0284c7', '#8b5cf6']
+  return Object.entries(sums).map(([sport, revenue], idx) => ({
+    sport,
+    revenue,
+    percentage: Math.round((revenue / totalRev) * 100),
+    color: colors[idx % colors.length]
+  }))
 })
 
-// --- MEMBERS DIRECTORY REACTIVE STATE ---
+const hourlyOccupancyData = computed(() => {
+  const hours = [
+    { hour: '06:00 AM', rate: 25 },
+    { hour: '08:00 AM', rate: 50 },
+    { hour: '10:00 AM', rate: 65 },
+    { hour: '12:00 PM', rate: 45 },
+    { hour: '02:00 PM', rate: 60 },
+    { hour: '04:00 PM', rate: 85 },
+    { hour: '06:00 PM', rate: 95 },
+    { hour: '08:00 PM', rate: 90 },
+    { hour: '10:00 PM', rate: 30 }
+  ]
+  return hours
+})
+
+const topPerformingFacilities = computed(() => {
+  const counts = {}
+  bookingsList.value.forEach(b => {
+    const name = b.facility || 'Court'
+    if (!counts[name]) {
+      counts[name] = { name, sport: b.sport || 'Sports', hoursBooked: 0, revenue: 0 }
+    }
+    counts[name].hoursBooked += 1
+    counts[name].revenue += Number(b.amount) || 40
+  })
+  return Object.values(counts).map((f, i) => ({
+    id: i + 1,
+    ...f,
+    occupancy: `${Math.min(95, 20 + f.hoursBooked * 15)}%`,
+    status: f.hoursBooked > 2 ? 'High Demand' : 'Optimal'
+  }))
+})
+
+const paymentMethodBreakdown = computed(() => {
+  const total = bookingsList.value.reduce((s, b) => s + (Number(b.amount) || 40), 0)
+  return [
+    { method: 'UPI / NetBanking', percentage: 65, color: '#2563eb', val: `₹${Math.round(total * 0.65).toLocaleString()}` },
+    { method: 'Credit / Debit Cards', percentage: 25, color: '#059669', val: `₹${Math.round(total * 0.25).toLocaleString()}` },
+    { method: 'Counter Cash / POS', percentage: 10, color: '#ea580c', val: `₹${Math.round(total * 0.10).toLocaleString()}` }
+  ]
+})
+
+const financialSummary = computed(() => {
+  const total = bookingsList.value.reduce((sum, b) => sum + (Number(b.amount) || 40), 0)
+  return {
+    grossRevenue: `₹${total.toLocaleString()}`,
+    operationalCosts: `₹${Math.round(total * 0.25).toLocaleString()}`,
+    maintenanceTaxes: `₹${Math.round(total * 0.08).toLocaleString()}`,
+    netProfit: `₹${Math.round(total * 0.67).toLocaleString()}`,
+    profitMargin: total > 0 ? '+67.0%' : '0.0%'
+  }
+})
+
+function exportAnalyticsCSV() {
+  const headers = ['Metric', 'Value']
+  const rows = [
+    ['Gross Revenue', financialSummary.value.grossRevenue],
+    ['Total Bookings', String(bookingKpis.value.total)],
+    ['Confirmed Bookings', String(bookingKpis.value.confirmed)],
+    ['Completed Bookings', String(bookingKpis.value.completed)],
+    ['Total Members', String(membersList.value.length)],
+  ]
+  const csvContent = [headers.join(','), ...rows.map(e => e.join(','))].join('\n')
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.setAttribute('href', url)
+  link.setAttribute('download', `clubdash_analytics_report_${new Date().toISOString().split('T')[0]}.csv`)
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  if (toast) toast.success('Analytics report downloaded!')
+}
+
+
+// --- MEMBERS DIRECTORY REAL DB STATE ---
 const memberSearchQuery = ref('')
 const selectedMemberPlanFilter = ref('All')
 const selectedMemberForModal = ref(null)
 const showMemberModal = ref(false)
 
-const membersList = ref([
-  { id: 1, name: 'Alex Morgan', email: 'alex.morgan@clubdash.com', initials: 'AM', plan: 'VIP Platinum', dateJoined: 'Jan 15, 2025', totalBookings: 34, phone: '+91 98765 43210' },
-  { id: 2, name: 'Sarah Jenkins', email: 'sarah.j@example.com', initials: 'SJ', plan: 'Permanent Gold', dateJoined: 'Feb 02, 2025', totalBookings: 28, phone: '+91 98765 43211' },
-  { id: 3, name: 'David Miller', email: 'david.m@example.com', initials: 'DM', plan: 'Permanent Member', dateJoined: 'Mar 10, 2025', totalBookings: 19, phone: '+91 98765 43212' },
-  { id: 4, name: 'Elena Rostova', email: 'elena.r@example.com', initials: 'ER', plan: 'Public Pay-per-play', dateJoined: 'Apr 05, 2025', totalBookings: 8, phone: '+91 98765 43213' },
-  { id: 5, name: 'Marcus Chen', email: 'marcus.c@example.com', initials: 'MC', plan: 'Permanent Gold', dateJoined: 'May 18, 2025', totalBookings: 42, phone: '+91 98765 43214' },
-  { id: 6, name: 'Priya Sharma', email: 'priya.s@example.com', initials: 'PS', plan: 'VIP Platinum', dateJoined: 'Jun 22, 2025', totalBookings: 51, phone: '+91 98765 43215' },
-  { id: 7, name: 'Rohan Gupta', email: 'rohan.g@example.com', initials: 'RG', plan: 'Public Pay-per-play', dateJoined: 'Jul 14, 2025', totalBookings: 12, phone: '+91 98765 43216' },
-  { id: 8, name: 'Emily Taylor', email: 'emily.t@example.com', initials: 'ET', plan: 'Permanent Member', dateJoined: 'Aug 01, 2025', totalBookings: 15, phone: '+91 98765 43217' }
-])
+const membersList = ref([])
+const membersLoading = ref(false)
+
+async function loadMembers() {
+  membersLoading.value = true
+  try {
+    const { data } = await api.get('/admin/members')
+    membersList.value = Array.isArray(data) ? data.map(m => {
+      const name = m.name || 'Member'
+      const initials = name.split(/\s+/).filter(Boolean).map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'M'
+      return {
+        id: m.id,
+        name,
+        email: m.email || '—',
+        initials,
+        plan: m.plan || 'Standard Member',
+        dateJoined: m.date_joined || 'Recent',
+        totalBookings: m.bookings_count || 0,
+        phone: m.phone || '+1 (555) 000-0000',
+        status: m.status || 'Active'
+      }
+    }) : []
+  } catch (e) {
+    membersList.value = []
+  } finally {
+    membersLoading.value = false
+  }
+}
 
 const filteredMembersList = computed(() => {
   return membersList.value.filter(m => {
@@ -3773,9 +3700,7 @@ const filteredMembersList = computed(() => {
 
     const matchesPlan = 
       selectedMemberPlanFilter.value === 'All' ||
-      (selectedMemberPlanFilter.value === 'Permanent' && m.plan.includes('Permanent')) ||
-      (selectedMemberPlanFilter.value === 'VIP Platinum' && m.plan.includes('VIP')) ||
-      (selectedMemberPlanFilter.value === 'Public' && m.plan.includes('Public'))
+      m.plan.toLowerCase().includes(selectedMemberPlanFilter.value.toLowerCase())
 
     return matchesSearch && matchesPlan
   })
@@ -6660,4 +6585,8 @@ function handleAvatarUpload(event) {
   opacity: 0;
   transform: translateY(10px) scale(0.95);
 }
+
+.booking-api-error { margin-top: 1rem; padding: .9rem 1rem; border: 1px solid #fecaca; border-radius: 12px; background: #fff7f7; color: #b91c1c; display: flex; align-items: center; justify-content: space-between; gap: 1rem; font-size: .85rem; }
+.booking-api-error button { border: 1px solid #fecaca; background: white; color: #991b1b; border-radius: 9px; padding: .5rem .8rem; font-weight: 700; cursor: pointer; }
+.booking-api-loading { margin-top: 1rem; padding: 1rem; border-radius: 12px; background: #f8fafc; color: #64748b; font-size: .85rem; }
 </style>

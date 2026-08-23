@@ -113,21 +113,80 @@ class StaffService:
         }
 
     @staticmethod
-    def list_attendance(club_id):
-        return (
+    def expected_attendance(club_id, attendance_date=None):
+        target_date = date.today()
+        if attendance_date:
+            try:
+                target_date = datetime.strptime(attendance_date, '%Y-%m-%d').date()
+            except ValueError:
+                return None, {'code': 'VALIDATION_ERROR', 'message': 'Invalid date format. Use YYYY-MM-DD.'}
+
+        bookings = (
+            Booking.query.join(Court)
+            .filter(
+                Court.club_id == club_id,
+                Booking.booking_date == target_date,
+                Booking.status == 'active',
+            )
+            .order_by(Booking.start_time.asc())
+            .all()
+        )
+
+        booking_ids = [b.id for b in bookings]
+        records = (
+            AttendanceRecord.query
+            .filter(AttendanceRecord.booking_id.in_(booking_ids))
+            .order_by(AttendanceRecord.check_in_at.desc())
+            .all()
+            if booking_ids else []
+        )
+        by_booking = {}
+        for record in records:
+            by_booking.setdefault(record.booking_id, record)
+
+        result = []
+        for booking in bookings:
+            record = by_booking.get(booking.id)
+            status = 'checked-in' if record and not record.check_out_at else 'checked-out' if record else 'expected'
+            result.append({
+                'id': booking.id,
+                'user_id': booking.user_id,
+                'user_name': booking.user.name,
+                'user_email': booking.user.email,
+                'booking_id': booking.id,
+                'court_name': booking.court.name,
+                'booking_date': str(booking.booking_date),
+                'start_time': str(booking.start_time),
+                'end_time': str(booking.end_time),
+                'attendance_status': status,
+                'attendance_id': record.id if record else None,
+            })
+        return result, None
+
+    @staticmethod
+    def list_attendance(club_id, attendance_date=None):
+        query = (
             AttendanceRecord.query
             .join(Booking, AttendanceRecord.booking_id == Booking.id)
             .join(Court, Booking.court_id == Court.id)
             .filter(Court.club_id == club_id)
-            .order_by(AttendanceRecord.check_in_at.desc())
-            .all()
         )
+        if attendance_date:
+            try:
+                parsed_d = datetime.strptime(attendance_date, '%Y-%m-%d').date()
+                query = query.filter(Booking.booking_date == parsed_d)
+            except ValueError:
+                pass
+        return query.order_by(AttendanceRecord.check_in_at.desc()).all()
+
 
     @staticmethod
-    def check_in_booking(booking_id):
+    def check_in_booking(booking_id, club_id=None):
         booking = Booking.query.get(booking_id)
         if not booking:
             return None, {'code': 'NOT_FOUND', 'message': 'Booking not found.'}
+        if club_id is not None and booking.court.club_id != club_id:
+            return None, {'code': 'FORBIDDEN', 'message': 'Booking does not belong to this club.'}
         if booking.status != 'active':
             return None, {'code': 'VALIDATION_ERROR', 'message': f'Booking is {booking.status}.'}
         existing = AttendanceRecord.query.filter_by(booking_id=booking.id, check_out_at=None).first()
@@ -139,10 +198,12 @@ class StaffService:
         return record, None
 
     @staticmethod
-    def check_out(attendance_id):
+    def check_out(attendance_id, club_id=None):
         record = AttendanceRecord.query.get(attendance_id)
         if not record:
             return None, {'code': 'NOT_FOUND', 'message': 'Attendance record not found.'}
+        if club_id is not None and (not record.booking or record.booking.court.club_id != club_id):
+            return None, {'code': 'FORBIDDEN', 'message': 'Attendance record does not belong to this club.'}
         if record.check_out_at:
             return None, {'code': 'VALIDATION_ERROR', 'message': 'Member is already checked out.'}
         record.check_out_at = datetime.utcnow()

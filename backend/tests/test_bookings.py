@@ -50,12 +50,12 @@ def test_create_booking_conflict(client, auth_headers, sample_club, db_session, 
     # Setup an existing booking
     player1 = make_player(email="player1@test.com")
     court_id = sample_club.courts[0].id
-    today = date.today()
+    future_date = date.today() + timedelta(days=2)
     
     booking = Booking(
         user_id=player1.id,
         court_id=court_id,
-        booking_date=today,
+        booking_date=future_date,
         start_time=time(14, 0),
         end_time=time(15, 0)
     )
@@ -69,7 +69,7 @@ def test_create_booking_conflict(client, auth_headers, sample_club, db_session, 
     
     payload = {
         "court_id": court_id,
-        "booking_date": today.strftime("%Y-%m-%d"),
+        "booking_date": future_date.strftime("%Y-%m-%d"),
         "start_time": "14:30",
         "end_time": "15:30"
     }

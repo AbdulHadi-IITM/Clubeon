@@ -4,7 +4,7 @@
       <div>
         <p class="kicker">Front desk operations</p>
         <h1 class="title mt-1">Today at the club</h1>
-        <p class="muted mt-2 text-sm">Bookings, arrivals and live court status.</p>
+        <p class="muted mt-2 text-sm">Bookings, arrivals and current court status.</p>
       </div>
       <ClubPicker v-model="clubId" @change="load" />
     </div>
@@ -50,7 +50,7 @@
         <div class="flex items-center justify-between">
           <div>
             <h2 class="font-bold text-slate-900">Court status</h2>
-            <p class="muted mt-1 text-xs">Live availability now</p>
+            <p class="muted mt-1 text-xs">Current availability</p>
           </div>
           <router-link to="/staff/availability" class="text-xs font-bold text-indigo-600"
             >Full matrix</router-link

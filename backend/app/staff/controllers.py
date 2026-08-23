@@ -123,13 +123,27 @@ def event_detail(event_id):
     return jsonify(data), 200
 
 
+@staff_bp.route('/attendance/expected', methods=['GET'])
+@role_required('front-desk')
+def expected_attendance():
+    club_id = request.args.get('club_id', type=int)
+    attendance_date = request.args.get('date')
+    if not club_id or not StaffService.get_club(club_id):
+        return jsonify({'code': 'VALIDATION_ERROR', 'message': 'A valid club_id is required.'}), 400
+    rows, error = StaffService.expected_attendance(club_id, attendance_date)
+    if error:
+        return jsonify(error), 400
+    return jsonify(rows), 200
+
+
 @staff_bp.route('/attendance', methods=['GET'])
 @role_required('front-desk')
 def attendance():
     club_id = request.args.get('club_id', type=int)
+    attendance_date = request.args.get('date')
     if not club_id or not StaffService.get_club(club_id):
         return jsonify({'code': 'VALIDATION_ERROR', 'message': 'A valid club_id is required.'}), 400
-    rows = StaffService.list_attendance(club_id)
+    rows = StaffService.list_attendance(club_id, attendance_date)
     return jsonify([{
         'id': r.id,
         'user_id': r.user_id,
@@ -145,14 +159,18 @@ def attendance():
     } for r in rows]), 200
 
 
+
 @staff_bp.route('/attendance/check-in', methods=['POST'])
 @role_required('front-desk')
 def check_in():
     data = request.get_json() or {}
     booking_id = data.get('booking_id')
-    if not booking_id:
-        return jsonify({'code': 'VALIDATION_ERROR', 'message': 'booking_id is required.'}), 400
-    record, error = StaffService.check_in_booking(booking_id)
+    club_id = data.get('club_id')
+    if not booking_id or not club_id:
+        return jsonify({'code': 'VALIDATION_ERROR', 'message': 'booking_id and club_id are required.'}), 400
+    if not StaffService.get_club(int(club_id)):
+        return jsonify({'code': 'VALIDATION_ERROR', 'message': 'A valid club_id is required.'}), 400
+    record, error = StaffService.check_in_booking(booking_id, int(club_id))
     if error:
         return jsonify(error), 409 if error['code'] == 'CONFLICT' else 404 if error['code'] == 'NOT_FOUND' else 400
     return jsonify({'message': 'Member checked in successfully.', 'attendance_id': record.id}), 201
@@ -161,7 +179,10 @@ def check_in():
 @staff_bp.route('/attendance/<int:attendance_id>/check-out', methods=['POST'])
 @role_required('front-desk')
 def check_out(attendance_id):
-    record, error = StaffService.check_out(attendance_id)
+    club_id = request.args.get('club_id', type=int)
+    if not club_id or not StaffService.get_club(club_id):
+        return jsonify({'code': 'VALIDATION_ERROR', 'message': 'A valid club_id is required.'}), 400
+    record, error = StaffService.check_out(attendance_id, club_id)
     if error:
-        return jsonify(error), 404 if error['code'] == 'NOT_FOUND' else 400
+        return jsonify(error), 403 if error['code'] == 'FORBIDDEN' else 404 if error['code'] == 'NOT_FOUND' else 400
     return jsonify({'message': 'Member checked out successfully.'}), 200

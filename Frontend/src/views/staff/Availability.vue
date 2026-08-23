@@ -2,7 +2,7 @@
   <div class="space-y-6">
     <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
       <div>
-        <p class="kicker">Live schedule</p>
+        <p class="kicker">Today's schedule</p>
         <h1 class="title mt-1">Court Availability</h1>
         <p class="muted mt-2 text-sm">
           Scan every court and time slot from one operational matrix.

@@ -15,14 +15,6 @@
         </h1>
       </div>
       <div class="flex items-center gap-2.5">
-        <div
-          class="hidden items-center gap-2 rounded-xl border border-slate-200/80 bg-white/75 px-3 py-2 text-xs font-medium text-slate-500 shadow-sm md:flex"
-        >
-          <span
-            class="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_0_3px_rgba(16,185,129,.11)]"
-          ></span>
-          Live workspace
-        </div>
         <button
           type="button"
           class="relative grid h-10 w-10 place-items-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
