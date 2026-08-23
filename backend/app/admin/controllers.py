@@ -87,3 +87,12 @@ def delete_announcement(announcement_id):
         return jsonify(error), 400
     return jsonify({"message": "Announcement deleted successfully"}), 200
 
+@admin_bp.route('/members', methods=['GET'])
+@role_required('owner')
+def list_members():
+    owner_id = int(get_jwt_identity())
+    members, error = AdminService.list_club_members(owner_id)
+    if error:
+        return jsonify(error), 400
+    return jsonify(members), 200
+

@@ -1,7 +1,11 @@
 from datetime import datetime
+
+from app.auth.models import User
 from app.extensions import db
 from app.bookings.models import Booking, CourtBlock
-from app.clubs.models import Court
+from app.clubs.models import Court, Club
+from app.memberships.models import Membership
+
 
 class AdminService:
     @staticmethod
@@ -123,4 +127,60 @@ class AdminService:
         db.session.delete(announcement)
         db.session.commit()
         return True, None
+
+    @staticmethod
+    def list_club_members(owner_id):
+        club = Club.query.filter_by(owner_id=owner_id).first()
+        if not club:
+            return [], None  # Owner has no club yet
+
+        court_ids = [court.id for court in club.courts]
+
+        # Users with bookings at this club
+        user_ids_with_bookings = set()
+        if court_ids:
+            rows = Booking.query.filter(Booking.court_id.in_(court_ids)) \
+                .with_entities(Booking.user_id).distinct().all()
+            user_ids_with_bookings = {row[0] for row in rows}
+
+        # Users with active memberships (global or at this club)
+        membership_user_ids = set()
+        memberships = Membership.query.filter(
+            (Membership.club_id == club.id) | (Membership.club_id.is_(None)),
+            Membership.status == 'active'
+        ).with_entities(Membership.user_id).distinct().all()
+        membership_user_ids = {row[0] for row in memberships}
+
+        all_user_ids = user_ids_with_bookings.union(membership_user_ids)
+        if not all_user_ids:
+            return [], None
+
+        users = User.query.filter(User.id.in_(all_user_ids)).all()
+
+        result = []
+        for user in users:
+            booking_count = 0
+            if court_ids:
+                booking_count = Booking.query.filter(
+                    Booking.user_id == user.id,
+                    Booking.court_id.in_(court_ids)
+                ).count()
+
+            membership = Membership.query.filter_by(user_id=user.id, status='active').first()
+            plan = membership.plan if membership else None
+
+            result.append({
+                'id': user.id,
+                'name': user.name,
+                'email': user.email,
+                'role': user.role,
+                'booking_count': booking_count,
+                'membership_status': membership.status if membership else 'none',
+                'membership_plan': plan.name if plan else None,
+                'membership_start': str(membership.start_date) if membership else None,
+                'membership_end': str(membership.end_date) if membership else None,
+                'membership_auto_renew': membership.auto_renew if membership else False,
+                'created_at': str(user.created_at) if user.created_at else None,
+            })
+        return result, None
 

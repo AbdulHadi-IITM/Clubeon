@@ -121,6 +121,10 @@ def create_app(config_class=Config):
     from app.notifications.controllers import notifications_bp
     app.register_blueprint(notifications_bp)
 
+    with app.app_context():
+        from app.memberships.services import MembershipService
+        MembershipService.seed_default_plans()
+
     # =========================================================
     # OpenAPI YAML
     # =========================================================
