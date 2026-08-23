@@ -221,8 +221,8 @@
         </transition>
 
         <!-- Clickable Sidebar Profile Card -->
-        <div 
-          class="sidebar-admin-profile clickable-profile" 
+        <div
+          class="sidebar-admin-profile clickable-profile"
           @click.stop="toggleProfilePopover"
           title="Click to view Discord-style Admin Profile"
         >
@@ -623,8 +623,8 @@
                       </div>
                       <h3>Recent Announcements</h3>
                     </div>
-                    <button 
-                      class="view-all-link-btn" 
+                    <button
+                      class="view-all-link-btn"
                       @click="activeNav = 'Announcements'"
                       style="background: none; border: none; font-size: 0.82rem; font-weight: 600; color: #2563eb; cursor: pointer; padding: 0.25rem 0.5rem;"
                     >
@@ -636,9 +636,9 @@
                     No announcements published yet.
                   </div>
                   <div v-else class="announcements-list">
-                    <div 
-                      v-for="item in announcements.slice(0, 3)" 
-                      :key="item.id" 
+                    <div
+                      v-for="item in announcements.slice(0, 3)"
+                      :key="item.id"
                       class="announcement-item"
                       style="cursor: pointer;"
                       @click="openAnnouncementDetails(item)"
@@ -666,23 +666,23 @@
             <section class="kpi-grid">
               <div class="kpi-card">
                 <span class="kpi-title">Total Registered Members</span>
-                <h3 class="kpi-value">1,248</h3>
-                <span class="trend-badge positive">↑ +12.4% this month</span>
+                <h3 class="kpi-value">{{ totalMembers }}</h3>
+                <span class="trend-badge neutral">• All members</span>
               </div>
               <div class="kpi-card">
-                <span class="kpi-title">Permanent Members</span>
-                <h3 class="kpi-value">820</h3>
-                <span class="trend-badge positive">↑ 65.7% Member Base</span>
+                <span class="kpi-title">Active Memberships</span>
+                <h3 class="kpi-value">{{ activeMembers }}</h3>
+                <span class="trend-badge positive">↑ Active plans</span>
               </div>
               <div class="kpi-card">
-                <span class="kpi-title">Guest & Public Players</span>
-                <h3 class="kpi-value">428</h3>
-                <span class="trend-badge neutral">• Pay-per-play</span>
+                <span class="kpi-title">Total Bookings</span>
+                <h3 class="kpi-value">{{ totalBookingsAll }}</h3>
+                <span class="trend-badge neutral">• All time</span>
               </div>
               <div class="kpi-card">
                 <span class="kpi-title">Recent Signups</span>
-                <h3 class="kpi-value">64</h3>
-                <span class="trend-badge positive">↑ Joined This Month</span>
+                <h3 class="kpi-value">{{ totalMembers }}</h3>
+                <span class="trend-badge positive">↑ This month</span>
               </div>
             </section>
 
@@ -691,19 +691,16 @@
               <div class="block-header bookings-toolbar-header">
                 <div>
                   <h3>Club Members Directory</h3>
-                  <span class="subtext">View registered members, membership plans, joined dates, and player details</span>
+                  <span class="subtext">View registered members, membership plans, and booking activity</span>
                 </div>
                 <div class="header-action-buttons">
-                  <button class="export-csv-btn" @click="exportMembersCSV">
-                    📥 Export Members List
-                  </button>
+                  <button class="export-csv-btn" @click="exportMembersCSV">📥 Export CSV</button>
                 </div>
               </div>
 
               <!-- Filter & Search Controls Bar -->
               <div class="card-box bookings-filter-box" style="margin-top: 1rem;">
                 <div class="filter-controls-row">
-                  <!-- Search Input -->
                   <div class="search-input-wrapper">
                     <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                     <input
@@ -717,8 +714,8 @@
 
                   <!-- Plan Filter Pills -->
                   <div class="view-toggle-group">
-                    <button 
-                      v-for="planFilter in ['All', 'Permanent', 'VIP Platinum', 'Public']"
+                    <button
+                      v-for="planFilter in ['All', 'Premium', 'Standard']"
                       :key="planFilter"
                       class="view-toggle-btn"
                       :class="{ active: selectedMemberPlanFilter === planFilter }"
@@ -732,59 +729,61 @@
 
               <!-- Members Table Card -->
               <div class="card-box" style="margin-top: 1rem; padding: 0; overflow: hidden;">
-                <div class="facilities-table-wrapper" style="border: none; border-radius: 0;">
-                  <table class="analytics-table">
-                    <thead>
-                      <tr>
-                        <th>Member Details</th>
-                        <th>Membership Plan</th>
-                        <th>Date Joined</th>
-                        <th>Total Bookings</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr v-for="m in filteredMembersList" :key="m.id">
-                        <td>
-                          <div style="display: flex; align-items: center; gap: 0.75rem;">
-                            <div class="user-avatar-sm" style="background: linear-gradient(135deg, #2563eb, #4f46e5); color: #fff; font-weight: 700; display: grid; place-items: center; border-radius: 999px; width: 32px; height: 32px; font-size: 0.8rem;">{{ m.initials }}</div>
-                            <div>
-                              <strong style="color: #0f172a; font-size: 0.88rem; display: block;">{{ m.name }}</strong>
-                              <span style="font-size: 0.78rem; color: #64748b;">{{ m.email }}</span>
-                            </div>
-                          </div>
-                        </td>
-                        <td>
-                          <span 
-                            class="plan-badge"
-                            :style="{
-                              background: m.plan.includes('VIP') ? '#fef3c7' : (m.plan.includes('Permanent') ? '#eff6ff' : '#f1f5f9'),
-                              color: m.plan.includes('VIP') ? '#b45309' : (m.plan.includes('Permanent') ? '#1d4ed8' : '#475569'),
-                              border: '1px solid ' + (m.plan.includes('VIP') ? '#fde68a' : (m.plan.includes('Permanent') ? '#bfdbfe' : '#e2e8f0')),
-                              padding: '0.25rem 0.65rem',
-                              borderRadius: '999px',
-                              fontSize: '0.78rem',
-                              fontWeight: '700'
-                            }"
-                          >
-                            {{ m.plan }}
-                          </span>
-                        </td>
-                        <td style="font-weight: 600; color: #334155; font-size: 0.82rem;">{{ m.dateJoined }}</td>
-                        <td style="font-weight: 700; color: #0f172a; font-size: 0.84rem;">{{ m.totalBookings }} bookings</td>
-                        <td>
-                          <span class="status-badge-chip status-active">Active Member</span>
-                        </td>
-                        <td>
-                          <button class="action-icon-btn view-btn" @click="viewMemberDetails(m)" title="View Member Profile">
-                            View Profile
-                          </button>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
+                <div v-if="filteredMembersList.length === 0" class="no-bookings-empty" style="padding: 3rem;">
+                  <p class="empty-title">No members found</p>
+                  <p class="empty-sub">Try adjusting your search or filter.</p>
                 </div>
+                <table v-else class="analytics-table">
+                  <thead>
+                  <tr>
+                    <th>Member Details</th>
+                    <th>Membership Plan</th>
+                    <th>Date Joined</th>
+                    <th>Total Bookings</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                  </thead>
+                  <tbody>
+                  <tr v-for="m in filteredMembersList" :key="m.id">
+                    <td>
+                      <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <div class="user-avatar-sm" style="background: linear-gradient(135deg, #2563eb, #4f46e5); color: #fff; font-weight: 700; display: grid; place-items: center; border-radius: 999px; width: 32px; height: 32px; font-size: 0.8rem;">{{ m.initials }}</div>
+                        <div>
+                          <strong style="color: #0f172a; font-size: 0.88rem; display: block;">{{ m.name }}</strong>
+                          <span style="font-size: 0.78rem; color: #64748b;">{{ m.email }}</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+              <span
+                class="plan-badge"
+                :style="{
+                  background: m.plan.includes('VIP') ? '#fef3c7' : (m.plan.includes('Permanent') ? '#eff6ff' : '#f1f5f9'),
+                  color: m.plan.includes('VIP') ? '#b45309' : (m.plan.includes('Permanent') ? '#1d4ed8' : '#475569'),
+                  border: '1px solid ' + (m.plan.includes('VIP') ? '#fde68a' : (m.plan.includes('Permanent') ? '#bfdbfe' : '#e2e8f0')),
+                  padding: '0.25rem 0.65rem',
+                  borderRadius: '999px',
+                  fontSize: '0.78rem',
+                  fontWeight: '700'
+                }"
+              >
+                {{ m.plan }}
+              </span>
+                    </td>
+                    <td style="font-weight: 600; color: #334155; font-size: 0.82rem;">{{ m.dateJoined }}</td>
+                    <td style="font-weight: 700; color: #0f172a; font-size: 0.84rem;">{{ m.totalBookings }} bookings</td>
+                    <td>
+              <span class="status-badge-chip" :class="m.membership_status === 'active' ? 'status-active' : 'status-completed'">
+                {{ m.membership_status === 'active' ? 'Active' : 'Inactive' }}
+              </span>
+                    </td>
+                    <td>
+                      <button class="action-icon-btn view-btn" @click="viewMemberDetails(m)" title="View Member Profile">View Profile</button>
+                    </td>
+                  </tr>
+                  </tbody>
+                </table>
               </div>
             </section>
           </div>
@@ -1079,7 +1078,7 @@
                       </select>
                     </div>
 
-                    <button 
+                    <button
                       v-if="bookingSearchQuery || bookingStatusFilter !== 'All' || bookingFacilityFilter !== 'All' || bookingDateFilter !== 'All'"
                       class="reset-filters-btn"
                       @click="resetBookingFilters"
@@ -1161,18 +1160,18 @@
                             Details
                           </button>
 
-                          <button 
-                            v-if="getEffectiveStatus(b) === 'Confirmed' || getEffectiveStatus(b) === 'Pending'" 
-                            class="action-icon-btn cancel-btn" 
+                          <button
+                            v-if="getEffectiveStatus(b) === 'Confirmed' || getEffectiveStatus(b) === 'Pending'"
+                            class="action-icon-btn cancel-btn"
                             title="Cancel Booking"
                             @click="requestCancelBooking(b)"
                           >
                             Cancel
                           </button>
 
-                          <button 
-                            v-if="getEffectiveStatus(b) === 'Confirmed'" 
-                            class="action-icon-btn complete-btn" 
+                          <button
+                            v-if="getEffectiveStatus(b) === 'Confirmed'"
+                            class="action-icon-btn complete-btn"
                             title="Mark Completed"
                             @click="markBookingCompleted(b)"
                           >
@@ -1222,16 +1221,16 @@
                 </div>
                 <div class="header-action-buttons">
                   <div class="view-toggle-group">
-                    <button 
-                      class="view-toggle-btn" 
+                    <button
+                      class="view-toggle-btn"
                       :class="{ active: eventViewMode === 'grid' }"
                       @click="eventViewMode = 'grid'"
                       title="Grid View"
                     >
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
                     </button>
-                    <button 
-                      class="view-toggle-btn" 
+                    <button
+                      class="view-toggle-btn"
                       :class="{ active: eventViewMode === 'table' }"
                       @click="eventViewMode = 'table'"
                       title="Table View"
@@ -1299,7 +1298,7 @@
                       </select>
                     </div>
 
-                    <button 
+                    <button
                       v-if="eventSearchQuery || eventStatusFilter !== 'All' || eventSportFilter !== 'All' || eventTypeFilter !== 'All'"
                       class="reset-filters-btn"
                       @click="resetEventFilters"
@@ -1328,7 +1327,7 @@
                   <div class="event-card-rich-body">
                     <h4 class="event-rich-title">{{ evt.title }}</h4>
                     <span class="event-type-subtag">{{ evt.type }}</span>
-                    
+
                     <p class="event-rich-desc">{{ evt.description }}</p>
 
                     <div class="event-meta-list">
@@ -1353,8 +1352,8 @@
                     <!-- Capacity Progress Bar -->
                     <div class="capacity-progress-wrapper">
                       <div class="capacity-progress-bar">
-                        <div 
-                          class="capacity-progress-fill" 
+                        <div
+                          class="capacity-progress-fill"
                           :style="{ width: Math.min(100, Math.round((evt.registered / evt.capacity) * 100)) + '%' }"
                           :class="{ full: evt.registered >= evt.capacity }"
                         ></div>
@@ -1452,8 +1451,8 @@
                   <span class="subtext">Facility updates, tournament schedules, policy notices, and court maintenance</span>
                 </div>
                 <div class="header-action-buttons" style="display: flex; gap: 0.75rem; align-items: center;">
-                  <button 
-                    class="btn-secondary-action" 
+                  <button
+                    class="btn-secondary-action"
                     title="Refresh Announcements"
                     @click="refreshAnnouncements"
                     :disabled="notificationStore.isLoading"
@@ -1464,8 +1463,8 @@
                     </svg>
                     <span>Refresh</span>
                   </button>
-                  <button 
-                    class="btn-primary-action" 
+                  <button
+                    class="btn-primary-action"
                     @click="handleCreateAnnouncement"
                     style="display: inline-flex; align-items: center; gap: 0.4rem; background: linear-gradient(135deg, #2563eb, #4f46e5); box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);"
                   >
@@ -1481,7 +1480,7 @@
               <div class="announcements-toolbar" style="margin-bottom: 1.25rem; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem; background: #ffffff; padding: 1rem 1.25rem; border-radius: 1rem; border: 1px solid #e2e8f0; box-shadow: 0 2px 6px rgba(15, 23, 42, 0.02);">
                 <!-- Category Filter Pills -->
                 <div class="filter-pills-group" style="display: flex; flex-wrap: wrap; gap: 0.45rem;">
-                  <button 
+                  <button
                     v-for="cat in [
                       { name: 'All', icon: '✨' },
                       { name: 'General', icon: '📢' },
@@ -1489,7 +1488,7 @@
                       { name: 'Tournament', icon: '🏆' },
                       { name: 'Policy', icon: '📜' },
                       { name: 'Maintenance', icon: '🛠️' }
-                    ]" 
+                    ]"
                     :key="cat.name"
                     class="filter-pill-btn"
                     :class="{ active: announcementsCategoryFilter === cat.name }"
@@ -1506,14 +1505,14 @@
                   <svg style="position: absolute; left: 0.85rem; top: 50%; transform: translateY(-50%); color: #94a3b8;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
-                  <input 
-                    v-model="announcementsSearchQuery" 
-                    type="text" 
-                    placeholder="Search announcements..." 
+                  <input
+                    v-model="announcementsSearchQuery"
+                    type="text"
+                    placeholder="Search announcements..."
                     class="announcement-search-input"
                     style="width: 100%; padding: 0.55rem 0.85rem 0.55rem 2.4rem; border: 1px solid #cbd5e1; border-radius: 0.6rem; font-size: 0.88rem; outline: none; transition: border-color 0.2s;"
                   />
-                  <button 
+                  <button
                     v-if="announcementsSearchQuery"
                     @click="announcementsSearchQuery = ''"
                     style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 0.9rem;"
@@ -1544,9 +1543,9 @@
 
                 <!-- Announcements List -->
                 <div v-else class="announcements-list-rich">
-                  <div 
-                    v-for="item in filteredAnnouncements" 
-                    :key="item.id" 
+                  <div
+                    v-for="item in filteredAnnouncements"
+                    :key="item.id"
                     class="announcement-item-rich"
                     :style="{
                       borderLeftWidth: '5px',
@@ -1572,15 +1571,15 @@
                     </div>
 
                     <div class="announcement-item-actions" style="display: flex; align-items: center; gap: 0.5rem;" @click.stop>
-                      <button 
-                        class="btn-view-announcement" 
+                      <button
+                        class="btn-view-announcement"
                         @click="openAnnouncementDetails(item)"
                         style="display: inline-flex; align-items: center; gap: 0.35rem;"
                       >
                         <span>View Details</span>
                         <span>→</span>
                       </button>
-                      <button 
+                      <button
                         class="btn-icon-trash"
                         title="Delete Announcement"
                         @click="handleDeleteAnnouncement(item)"
@@ -1633,8 +1632,8 @@
                 </div>
                 <div class="header-action-buttons">
                   <div class="view-toggle-group">
-                    <button 
-                      v-for="tf in ['7 Days', '30 Days', '12 Months', 'This Year']" 
+                    <button
+                      v-for="tf in ['7 Days', '30 Days', '12 Months', 'This Year']"
                       :key="tf"
                       class="view-toggle-btn"
                       :class="{ active: analyticsTimeframe === tf }"
@@ -1657,15 +1656,15 @@
                     <p class="chart-card-sub">Monthly trend overview in Indian Rupees (₹)</p>
                   </div>
                   <div class="metric-switch-pills">
-                    <button 
-                      class="metric-pill-btn" 
+                    <button
+                      class="metric-pill-btn"
                       :class="{ active: activeChartMetric === 'revenue' }"
                       @click="activeChartMetric = 'revenue'"
                     >
                       Revenue (₹)
                     </button>
-                    <button 
-                      class="metric-pill-btn" 
+                    <button
+                      class="metric-pill-btn"
                       :class="{ active: activeChartMetric === 'bookings' }"
                       @click="activeChartMetric = 'bookings'"
                     >
@@ -1714,13 +1713,13 @@
                       <!-- Bar Background Track -->
                       <rect :x="b.x" y="30" :width="b.w" height="155" rx="6" ry="6" fill="#f8fafc" />
                       <!-- Gradient Vertical Bar -->
-                      <rect 
-                        :x="b.x" 
-                        :y="activeChartMetric === 'revenue' ? b.y : (185 - (b.vol / 700 * 155))" 
-                        :width="b.w" 
-                        :height="activeChartMetric === 'revenue' ? b.h : (b.vol / 700 * 155)" 
-                        rx="6" 
-                        ry="6" 
+                      <rect
+                        :x="b.x"
+                        :y="activeChartMetric === 'revenue' ? b.y : (185 - (b.vol / 700 * 155))"
+                        :width="b.w"
+                        :height="activeChartMetric === 'revenue' ? b.h : (b.vol / 700 * 155)"
+                        rx="6"
+                        ry="6"
                         :fill="i % 2 === 0 ? 'url(#barBlueGrad)' : 'url(#barIndigoGrad)'"
                         class="graph-point"
                       />
@@ -1743,7 +1742,7 @@
                     <h4>Sport Revenue Breakdown</h4>
                     <span class="widget-badge">Percentage Share</span>
                   </div>
-                  
+
                   <div class="donut-chart-flex-wrapper">
                     <!-- SVG Donut Chart -->
                     <div class="donut-svg-holder">
@@ -1787,11 +1786,11 @@
                     <div v-for="h in hourlyOccupancyData" :key="h.hour" class="bar-col-item" style="display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 0.35rem; flex: 1; height: 100%;">
                       <span class="bar-rate-txt" style="font-size: 0.72rem; font-weight: 700; color: #1e293b;">{{ h.rate }}%</span>
                       <div class="bar-track-vertical" style="height: 120px; width: 14px; border-radius: 999px; background: #f1f5f9; display: flex; align-items: flex-end; overflow: hidden;">
-                        <div 
-                          class="bar-fill-vertical" 
-                          :style="{ 
-                            height: h.rate + '%', 
-                            width: '100%', 
+                        <div
+                          class="bar-fill-vertical"
+                          :style="{
+                            height: h.rate + '%',
+                            width: '100%',
                             borderRadius: '999px',
                             background: h.rate >= 90 ? 'linear-gradient(to top, #2563eb, #4f46e5)' : (h.rate >= 70 ? 'linear-gradient(to top, #059669, #10b981)' : 'linear-gradient(to top, #8b5cf6, #a855f7)'),
                             transition: 'height 0.4s ease'
@@ -1847,7 +1846,7 @@
                           </td>
                           <td style="font-weight: 700; color: #059669;">₹{{ fac.revenue.toLocaleString() }}</td>
                           <td>
-                            <span 
+                            <span
                               class="status-badge-chip"
                               :class="{
                                 'status-active': fac.status === 'High Demand',
@@ -1888,8 +1887,8 @@
                   <div style="margin-top: 1.25rem;">
                     <h5 style="font-size: 0.84rem; font-weight: 700; color: #334155; margin-bottom: 0.5rem;">Payment Gateway Distribution</h5>
                     <div class="stacked-bar-container">
-                      <div 
-                        v-for="pm in paymentMethodBreakdown" 
+                      <div
+                        v-for="pm in paymentMethodBreakdown"
                         :key="pm.method"
                         class="stacked-bar-segment"
                         :style="{ width: pm.percentage + '%', background: pm.color }"
@@ -2267,14 +2266,14 @@
 
             <div class="modal-footer">
               <div style="display: flex; gap: 0.75rem;">
-                <button 
+                <button
                   v-if="selectedBooking.status === 'Confirmed' || selectedBooking.status === 'Pending'"
                   class="cancel-modal-btn danger-btn"
                   @click="requestCancelBooking(selectedBooking)"
                 >
                   ✕ Cancel Booking
                 </button>
-                <button 
+                <button
                   v-if="selectedBooking.status === 'Confirmed'"
                   class="submit-modal-btn success-btn"
                   @click="markBookingCompleted(selectedBooking)"
@@ -2755,11 +2754,11 @@
                   </label>
                   <span style="font-size: 0.75rem; color: #94a3b8;">{{ announcementForm.title.length }}/100</span>
                 </div>
-                <input 
-                  v-model="announcementForm.title" 
-                  type="text" 
+                <input
+                  v-model="announcementForm.title"
+                  type="text"
                   maxlength="100"
-                  class="form-control broadcast-input" 
+                  class="form-control broadcast-input"
                   placeholder="e.g., Scheduled Synthetic Court Resurfacing & Lighting Upgrade"
                   required
                 />
@@ -2771,7 +2770,7 @@
                   Category
                 </label>
                 <div class="category-selector-grid">
-                  <button 
+                  <button
                     v-for="cat in [
                       { name: 'General', icon: '📢', color: 'blue' },
                       { name: 'Broadcast', icon: '📣', color: 'purple' },
@@ -2800,11 +2799,11 @@
                   </label>
                   <span style="font-size: 0.75rem; color: #94a3b8;">{{ announcementForm.body.length }}/500</span>
                 </div>
-                <textarea 
-                  v-model="announcementForm.body" 
-                  rows="5" 
+                <textarea
+                  v-model="announcementForm.body"
+                  rows="5"
                   maxlength="500"
-                  class="form-control broadcast-textarea" 
+                  class="form-control broadcast-textarea"
                   placeholder="Provide comprehensive details, operational timings, affected courts, or rules..."
                   required
                 ></textarea>
@@ -2814,9 +2813,9 @@
             <!-- Modal Footer -->
             <div class="modal-footer" style="display: flex; justify-content: flex-end; align-items: center; gap: 0.85rem; padding: 1.25rem 1.5rem; background: #f8fafc; border-top: 1px solid #e2e8f0; border-radius: 0 0 1rem 1rem;">
               <button type="button" class="cancel-modal-btn" @click="closeCreateAnnouncementModal">Cancel</button>
-              <button 
+              <button
                 type="button"
-                class="submit-modal-btn broadcast-submit-btn" 
+                class="submit-modal-btn broadcast-submit-btn"
                 :disabled="isSubmittingAnnouncement"
                 @click="submitCreateAnnouncement"
               >
@@ -2868,9 +2867,9 @@
             </div>
 
             <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; padding: 1.25rem 1.5rem; background: #f8fafc; border-top: 1px solid #e2e8f0; border-radius: 0 0 1rem 1rem;">
-              <button 
+              <button
                 type="button"
-                class="cancel-modal-btn danger-btn" 
+                class="cancel-modal-btn danger-btn"
                 style="background: #fef2f2; color: #ef4444; border: 1px solid #fecaca; display: inline-flex; align-items: center; gap: 0.35rem;"
                 @click="handleDeleteAnnouncement(selectedAnnouncement)"
               >
@@ -2895,6 +2894,7 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useCourtStore } from '@/stores/courts'
 import { useNotificationStore } from '@/stores/notifications'
+import api from '@/api/axios'
 
 const toast = inject('toast')
 const courtStore = useCourtStore()
@@ -2916,11 +2916,13 @@ const currentDate = ref(
   }),
 )
 
+// =========================================================
+// COURTS STATE
+// =========================================================
 const totalCourts = computed(() => courtStore.courts.length)
 const activeCourtsCount = computed(() => courtStore.courts.filter((c) => c.is_active).length)
 const inactiveCourtsCount = computed(() => courtStore.courts.filter((c) => !c.is_active).length)
 
-// Form state for modals
 const clubForm = ref({
   name: '',
   address: '',
@@ -2933,13 +2935,76 @@ const courtForm = ref({
   court_name: '',
   sport_type: 'tennis',
   is_active: true,
-  use_defaults: true, // new
+  use_defaults: true,
   open_time_override: '',
   close_time_override: '',
   slot_duration_override: '',
 })
 
-// Fetch data on mount
+// =========================================================
+// MEMBERS STATE (REAL DATA)
+// =========================================================
+const memberSearchQuery = ref('')
+const selectedMemberPlanFilter = ref('All')
+const selectedMemberForModal = ref(null)
+const showMemberModal = ref(false)
+const members = ref([])
+
+// Fetch members from backend
+async function fetchMembers() {
+  try {
+    const res = await api.get('/admin/members')
+    members.value = Array.isArray(res.data) ? res.data : []
+  } catch (err) {
+    console.error('Failed to fetch members:', err)
+    if (toast) toast.error('Unable to load members')
+  }
+}
+
+// Watch activeNav to fetch when Members tab is opened
+watch(activeNav, (newTab) => {
+  if (newTab === 'Members') fetchMembers()
+})
+
+// Map real backend data to display fields
+const filteredMembersList = computed(() => {
+  let list = members.value.map(m => ({
+    id: m.id,
+    name: m.name,
+    email: m.email,
+    initials: (m.name || 'M').charAt(0).toUpperCase(),
+    plan: m.membership_plan || 'No Plan',
+    dateJoined: m.created_at
+      ? new Date(m.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+      : '—',
+    totalBookings: m.booking_count || 0,
+    phone: m.phone || '—',
+    membership_status: m.membership_status || 'none'
+  }))
+
+  const q = memberSearchQuery.value.toLowerCase().trim()
+  if (q) {
+    list = list.filter(m =>
+      (m.name && m.name.toLowerCase().includes(q)) ||
+      (m.email && m.email.toLowerCase().includes(q)) ||
+      (m.plan && m.plan.toLowerCase().includes(q))
+    )
+  }
+
+  if (selectedMemberPlanFilter.value !== 'All') {
+    list = list.filter(m => m.plan === selectedMemberPlanFilter.value)
+  }
+  return list
+})
+
+// KPI real values
+const totalMembers = computed(() => members.value.length)
+const activeMembers = computed(() => members.value.filter(m => m.membership_status === 'active').length)
+const totalBookingsAll = computed(() => members.value.reduce((sum, m) => sum + (m.booking_count || 0), 0))
+
+// =========================================================
+// COURTS & CLUB ACTIONS
+// =========================================================
 onMounted(() => {
   courtStore.fetchCourts()
   notificationStore.fetchNotifications()
@@ -2957,7 +3022,6 @@ watch(
         slot_duration_minutes: newClub.slot_duration_minutes || 60,
       }
     } else {
-      // Reset the form if no club exists
       clubForm.value = {
         name: '',
         address: '',
@@ -2970,7 +3034,6 @@ watch(
   { immediate: true },
 )
 
-// Modal Handlers
 const openAddCourtModal = () => {
   courtForm.value = {
     court_name: '',
@@ -2981,7 +3044,6 @@ const openAddCourtModal = () => {
     close_time_override: '',
     slot_duration_override: '',
   }
-
   showAddCourtModal.value = true
 }
 
@@ -3043,7 +3105,6 @@ const handleDeleteCourt = async (courtId) => {
 
 const saveOrCreateClub = async () => {
   if (courtStore.club) {
-    // === UPDATE ===
     const result = await courtStore.updateClubSettings({
       name: clubForm.value.name,
       address: clubForm.value.address,
@@ -3057,7 +3118,6 @@ const saveOrCreateClub = async () => {
       toast.error(result.error || 'Failed to update club settings')
     }
   } else {
-    // === CREATE ===
     if (!clubForm.value.name || !clubForm.value.address) {
       toast.error('Please provide a Club Name and Address')
       return
@@ -3071,7 +3131,6 @@ const saveOrCreateClub = async () => {
     })
     if (result.success) {
       toast.success('Club created successfully! 🏛️')
-      // fetchCourts() is already called inside createClub, so the UI will auto-switch to Update mode.
     } else {
       toast.error(result.error || 'Failed to create club')
     }
@@ -3099,50 +3158,35 @@ const sportLabel = (value) => {
   return sport ? `${sport.icon} ${sport.label}` : '🏟️ Multi-purpose'
 }
 
-// Header title and subtitle reactive computation based on active sidebar tab
+// =========================================================
+// HEADER & NAVIGATION
+// =========================================================
 const headerTitle = computed(() => {
   switch (activeNav.value) {
-    case 'Members':
-      return 'Members Management'
-    case 'Courts':
-      return 'Facility & Courts'
-    case 'Bookings':
-      return 'Bookings & Reservations'
-    case 'Events':
-      return 'Events & Tournaments'
-    case 'Announcements':
-      return 'Announcements & Broadcasts'
-    case 'Analytics':
-      return 'Performance & Analytics'
-    case 'Settings':
-      return 'System Settings'
-    default:
-      return 'Admin Dashboard'
+    case 'Members': return 'Members Management'
+    case 'Courts': return 'Facility & Courts'
+    case 'Bookings': return 'Bookings & Reservations'
+    case 'Events': return 'Events & Tournaments'
+    case 'Announcements': return 'Announcements & Broadcasts'
+    case 'Analytics': return 'Performance & Analytics'
+    case 'Settings': return 'System Settings'
+    default: return 'Admin Dashboard'
   }
 })
 
 const headerSubtitle = computed(() => {
   switch (activeNav.value) {
-    case 'Members':
-      return 'Overview of registered club members, pending requests, and player accounts.'
-    case 'Courts':
-      return 'Monitor court availability, status, and maintenance schedules.'
-    case 'Bookings':
-      return 'Track active reservations, upcoming court slots, and cancellations.'
-    case 'Events':
-      return 'Organize tournaments, coaching sessions, and social club activities.'
-    case 'Announcements':
-      return 'Broadcast facility notices, schedule updates, and tournament alerts.'
-    case 'Analytics':
-      return 'Detailed statistics on booking trends, peak hours, and membership growth.'
-    case 'Settings':
-      return 'Configure club information, operating hours, and notification preferences.'
-    default:
-      return 'Welcome back, Administrator • Monitor club operations and analytics.'
+    case 'Members': return 'Overview of registered club members, pending requests, and player accounts.'
+    case 'Courts': return 'Monitor court availability, status, and maintenance schedules.'
+    case 'Bookings': return 'Track active reservations, upcoming court slots, and cancellations.'
+    case 'Events': return 'Organize tournaments, coaching sessions, and social club activities.'
+    case 'Announcements': return 'Broadcast facility notices, schedule updates, and tournament alerts.'
+    case 'Analytics': return 'Detailed statistics on booking trends, peak hours, and membership growth.'
+    case 'Settings': return 'Configure club information, operating hours, and notification preferences.'
+    default: return 'Welcome back, Administrator • Monitor club operations and analytics.'
   }
 })
 
-// Primary Sidebar Navigation Items
 const primaryNavItems = ref([
   { name: 'Dashboard', icon: 'dashboard' },
   { name: 'Members', icon: 'members' },
@@ -3164,269 +3208,35 @@ const handleLogout = async () => {
   router.push({ name: 'login' })
 }
 
-const handleMemberAction = (action, name) => {
-  alert(`${action} request for ${name}`)
-}
-
-// KPI Cards mock data
+// =========================================================
+// DASHBOARD MOCK DATA (keep as is if needed, but can be dynamic)
+// =========================================================
 const kpiCards = ref([
-  {
-    title: 'Total Members',
-    value: '1,248',
-    icon: 'members',
-    colorClass: 'blue',
-    trend: '+12.4% this month',
-    trendType: 'positive',
-  },
-  {
-    title: 'Active Courts',
-    value: '14 / 16',
-    icon: 'courts',
-    colorClass: 'emerald',
-    trend: '87.5% operational',
-    trendType: 'neutral',
-  },
-  {
-    title: "Today's Bookings",
-    value: '42',
-    icon: 'bookings',
-    colorClass: 'purple',
-    trend: '+8 vs yesterday',
-    trendType: 'positive',
-  },
-  {
-    title: 'Active Events',
-    value: '6',
-    icon: 'events',
-    colorClass: 'orange',
-    trend: '2 starting today',
-    trendType: 'neutral',
-  },
+  { title: 'Total Members', value: '1,248', icon: 'members', colorClass: 'blue', trend: '+12.4% this month', trendType: 'positive' },
+  { title: 'Active Courts', value: '14 / 16', icon: 'courts', colorClass: 'emerald', trend: '87.5% operational', trendType: 'neutral' },
+  { title: "Today's Bookings", value: '42', icon: 'bookings', colorClass: 'purple', trend: '+8 vs yesterday', trendType: 'positive' },
+  { title: 'Active Events', value: '6', icon: 'events', colorClass: 'orange', trend: '2 starting today', trendType: 'neutral' },
 ])
 
-// Quick Actions mock list
-const quickActions = ref([
-  {
-    title: 'Manage Members',
-    desc: 'View & edit member profiles',
-    icon: 'users',
-    colorClass: 'blue',
-  },
-  {
-    title: 'Manage Courts',
-    desc: 'Update court availability',
-    icon: 'court',
-    colorClass: 'emerald',
-  },
-  {
-    title: 'Manage Events',
-    desc: 'Create & schedule tournaments',
-    icon: 'calendar',
-    colorClass: 'purple',
-  },
-  {
-    title: 'Announcements',
-    desc: 'Broadcast news & updates',
-    icon: 'megaphone',
-    colorClass: 'orange',
-  },
-  {
-    title: 'View Analytics',
-    desc: 'Detailed revenue & stats',
-    icon: 'chart',
-    colorClass: 'indigo',
-  },
-])
-
-const handleQuickAction = (actionTitle) => {
-  if (actionTitle === 'Manage Members') activeNav.value = 'Members'
-  else if (actionTitle === 'Manage Courts') activeNav.value = 'Courts'
-  else if (actionTitle === 'Manage Events') activeNav.value = 'Events'
-  else if (actionTitle === 'Announcements') activeNav.value = 'Announcements'
-  else if (actionTitle === 'View Analytics') activeNav.value = 'Analytics'
-  else alert(`Quick Action triggered: ${actionTitle}`)
-}
-
-// Pending Requests mock data for Members tab
-const pendingRequests = ref([
-  {
-    name: 'John Smith',
-    email: 'john.smith@example.com',
-    initials: 'JS',
-    plan: 'Gold Member',
-    date: 'Applied Jul 22',
-  },
-  {
-    name: 'Sarah Jenkins',
-    email: 'sarah.j@example.com',
-    initials: 'SJ',
-    plan: 'Regular Member',
-    date: 'Applied Jul 21',
-  },
-  {
-    name: 'Mike Ross',
-    email: 'mike.ross@example.com',
-    initials: 'MR',
-    plan: 'VIP Pass',
-    date: 'Applied Jul 20',
-  },
-])
-
-// Bookings Management State & Logic
+// =========================================================
+// BOOKINGS STATE
+// =========================================================
 const bookingsList = ref([
-  {
-    id: 'BK-101',
-    player: 'John Doe',
-    email: 'john.doe@example.com',
-    phone: '+1 (555) 234-5678',
-    facility: 'Tennis Court 2',
-    sport: 'Tennis',
-    date: '2026-08-09',
-    dateDisplay: 'Today',
-    time: '5:00 PM - 7:00 PM',
-    duration: '2.0 hrs',
-    amount: 50,
-    paymentStatus: 'Paid',
-    paymentMethod: 'Credit Card (Stripe)',
-    status: 'Confirmed',
-    initials: 'JD',
-    userType: 'Member (VIP)',
-    createdAt: '2026-08-09 10:15 AM',
-    notes: 'Player requested hard court surface preference.'
-  },
-  {
-    id: 'BK-102',
-    player: 'Jane Smith',
-    email: 'jane.smith@example.com',
-    phone: '+1 (555) 345-6789',
-    facility: 'Badminton Arena A',
-    sport: 'Badminton',
-    date: '2026-08-09',
-    dateDisplay: 'Today',
-    time: '6:00 PM - 7:30 PM',
-    duration: '1.5 hrs',
-    amount: 35,
-    paymentStatus: 'Paid',
-    paymentMethod: 'UPI / Digital Wallet',
-    status: 'Confirmed',
-    initials: 'JS',
-    userType: 'Member (Standard)',
-    createdAt: '2026-08-09 11:30 AM',
-    notes: 'Double badminton session.'
-  },
-  {
-    id: 'BK-103',
-    player: 'Robert Paul',
-    email: 'robert.paul@example.com',
-    phone: '+1 (555) 456-7890',
-    facility: 'Squash Court 2',
-    sport: 'Squash',
-    date: '2026-08-09',
-    dateDisplay: 'Today',
-    time: '7:00 PM - 8:00 PM',
-    duration: '1.0 hr',
-    amount: 25,
-    paymentStatus: 'Refunded',
-    paymentMethod: 'Credit Card',
-    status: 'Cancelled',
-    initials: 'RP',
-    userType: 'Casual Player',
-    createdAt: '2026-08-08 09:45 AM',
-    notes: 'Cancelled by user due to personal conflict.'
-  },
-  {
-    id: 'BK-104',
-    player: 'Alice Johnson',
-    email: 'alice.johnson@example.com',
-    phone: '+1 (555) 567-8901',
-    facility: 'Tennis Court 1',
-    sport: 'Tennis',
-    date: '2026-08-10',
-    dateDisplay: 'Tomorrow',
-    time: '09:00 AM - 11:00 AM',
-    duration: '2.0 hrs',
-    amount: 60,
-    paymentStatus: 'Paid',
-    paymentMethod: 'Credit Card',
-    status: 'Confirmed',
-    initials: 'AJ',
-    userType: 'Member (VIP)',
-    createdAt: '2026-08-08 14:20 PM',
-    notes: 'Coaching session booking.'
-  },
-  {
-    id: 'BK-105',
-    player: 'Michael Brown',
-    email: 'michael.b@example.com',
-    phone: '+1 (555) 678-9012',
-    facility: 'Swimming Lane 1',
-    sport: 'Swimming',
-    date: '2026-08-10',
-    dateDisplay: 'Tomorrow',
-    time: '07:00 AM - 08:00 AM',
-    duration: '1.0 hr',
-    amount: 20,
-    paymentStatus: 'Paid',
-    paymentMethod: 'Debit Card',
-    status: 'Completed',
-    initials: 'MB',
-    userType: 'Casual Player',
-    createdAt: '2026-08-07 16:10 PM',
-    notes: 'Morning swim session.'
-  },
-  {
-    id: 'BK-106',
-    player: 'Sophia Martinez',
-    email: 'sophia.m@example.com',
-    phone: '+1 (555) 789-0123',
-    facility: 'Badminton Arena B',
-    sport: 'Badminton',
-    date: '2026-08-11',
-    dateDisplay: 'Aug 11',
-    time: '04:00 PM - 05:30 PM',
-    duration: '1.5 hrs',
-    amount: 35,
-    paymentStatus: 'Pending',
-    paymentMethod: 'Pay at Desk',
-    status: 'Pending',
-    initials: 'SM',
-    userType: 'Guest',
-    createdAt: '2026-08-09 15:00 PM',
-    notes: 'Pending walk-in payment at desk.'
-  },
-  {
-    id: 'BK-107',
-    player: 'David Lee',
-    email: 'david.lee@example.com',
-    phone: '+1 (555) 890-1234',
-    facility: 'Squash Court 1',
-    sport: 'Squash',
-    date: '2026-08-12',
-    dateDisplay: 'Aug 12',
-    time: '06:00 PM - 07:00 PM',
-    duration: '1.0 hr',
-    amount: 30,
-    paymentStatus: 'Paid',
-    paymentMethod: 'Credit Card',
-    status: 'Confirmed',
-    initials: 'DL',
-    userType: 'Member (Standard)',
-    createdAt: '2026-08-09 16:30 PM',
-    notes: 'Regular member slot.'
-  }
+  { id: 'BK-101', player: 'John Doe', email: 'john.doe@example.com', phone: '+1 (555) 234-5678', facility: 'Tennis Court 2', sport: 'Tennis', date: '2026-08-09', dateDisplay: 'Today', time: '5:00 PM - 7:00 PM', duration: '2.0 hrs', amount: 50, paymentStatus: 'Paid', paymentMethod: 'Credit Card (Stripe)', status: 'Confirmed', initials: 'JD', userType: 'Member (VIP)', createdAt: '2026-08-09 10:15 AM', notes: 'Player requested hard court surface preference.' },
+  { id: 'BK-102', player: 'Jane Smith', email: 'jane.smith@example.com', phone: '+1 (555) 345-6789', facility: 'Badminton Arena A', sport: 'Badminton', date: '2026-08-09', dateDisplay: 'Today', time: '6:00 PM - 7:30 PM', duration: '1.5 hrs', amount: 35, paymentStatus: 'Paid', paymentMethod: 'UPI / Digital Wallet', status: 'Confirmed', initials: 'JS', userType: 'Member (Standard)', createdAt: '2026-08-09 11:30 AM', notes: 'Double badminton session.' },
+  { id: 'BK-103', player: 'Robert Paul', email: 'robert.paul@example.com', phone: '+1 (555) 456-7890', facility: 'Squash Court 2', sport: 'Squash', date: '2026-08-09', dateDisplay: 'Today', time: '7:00 PM - 8:00 PM', duration: '1.0 hr', amount: 25, paymentStatus: 'Refunded', paymentMethod: 'Credit Card', status: 'Cancelled', initials: 'RP', userType: 'Casual Player', createdAt: '2026-08-08 09:45 AM', notes: 'Cancelled by user due to personal conflict.' },
+  { id: 'BK-104', player: 'Alice Johnson', email: 'alice.johnson@example.com', phone: '+1 (555) 567-8901', facility: 'Tennis Court 1', sport: 'Tennis', date: '2026-08-10', dateDisplay: 'Tomorrow', time: '09:00 AM - 11:00 AM', duration: '2.0 hrs', amount: 60, paymentStatus: 'Paid', paymentMethod: 'Credit Card', status: 'Confirmed', initials: 'AJ', userType: 'Member (VIP)', createdAt: '2026-08-08 14:20 PM', notes: 'Coaching session booking.' },
+  { id: 'BK-105', player: 'Michael Brown', email: 'michael.b@example.com', phone: '+1 (555) 678-9012', facility: 'Swimming Lane 1', sport: 'Swimming', date: '2026-08-10', dateDisplay: 'Tomorrow', time: '07:00 AM - 08:00 AM', duration: '1.0 hr', amount: 20, paymentStatus: 'Paid', paymentMethod: 'Debit Card', status: 'Completed', initials: 'MB', userType: 'Casual Player', createdAt: '2026-08-07 16:10 PM', notes: 'Morning swim session.' },
+  { id: 'BK-106', player: 'Sophia Martinez', email: 'sophia.m@example.com', phone: '+1 (555) 789-0123', facility: 'Badminton Arena B', sport: 'Badminton', date: '2026-08-11', dateDisplay: 'Aug 11', time: '04:00 PM - 05:30 PM', duration: '1.5 hrs', amount: 35, paymentStatus: 'Pending', paymentMethod: 'Pay at Desk', status: 'Pending', initials: 'SM', userType: 'Guest', createdAt: '2026-08-09 15:00 PM', notes: 'Pending walk-in payment at desk.' },
+  { id: 'BK-107', player: 'David Lee', email: 'david.lee@example.com', phone: '+1 (555) 890-1234', facility: 'Squash Court 1', sport: 'Squash', date: '2026-08-12', dateDisplay: 'Aug 12', time: '06:00 PM - 07:00 PM', duration: '1.0 hr', amount: 30, paymentStatus: 'Paid', paymentMethod: 'Credit Card', status: 'Confirmed', initials: 'DL', userType: 'Member (Standard)', createdAt: '2026-08-09 16:30 PM', notes: 'Regular member slot.' }
 ])
 
-// Keep recentBookings alias for any legacy usage
-const recentBookings = bookingsList
-
-// Filters & Controls state
 const bookingSearchQuery = ref('')
 const bookingStatusFilter = ref('All')
 const bookingFacilityFilter = ref('All')
 const bookingDateFilter = ref('All')
 const bookingSortBy = ref('newest')
 
-// Modals state
 const showBookingDetailsModal = ref(false)
 const selectedBooking = ref(null)
 const showNewBookingModal = ref(false)
@@ -3449,7 +3259,6 @@ const newBookingForm = reactive({
   notes: ''
 })
 
-// Time-based completion logic helpers
 function isTimeCompleted(booking) {
   if (!booking || booking.status === 'Cancelled' || booking.status === 'Completed') return false
   const today = new Date().toISOString().split('T')[0]
@@ -3473,11 +3282,10 @@ function resetBookingFilters() {
   bookingSortBy.value = 'newest'
 }
 
-// Filtered Bookings computed property
 const filteredBookings = computed(() => {
   return bookingsList.value.filter(b => {
     const q = bookingSearchQuery.value.trim().toLowerCase()
-    const matchesSearch = !q || 
+    const matchesSearch = !q ||
       b.id.toLowerCase().includes(q) ||
       b.player.toLowerCase().includes(q) ||
       b.email.toLowerCase().includes(q) ||
@@ -3485,8 +3293,7 @@ const filteredBookings = computed(() => {
 
     const effStatus = getEffectiveStatus(b)
     const matchesStatus = bookingStatusFilter.value === 'All' || effStatus.toLowerCase() === bookingStatusFilter.value.toLowerCase()
-
-    const matchesFacility = bookingFacilityFilter.value === 'All' || 
+    const matchesFacility = bookingFacilityFilter.value === 'All' ||
       b.sport.toLowerCase() === bookingFacilityFilter.value.toLowerCase() ||
       b.facility.toLowerCase().includes(bookingFacilityFilter.value.toLowerCase())
 
@@ -3509,18 +3316,15 @@ const filteredBookings = computed(() => {
   })
 })
 
-// KPI calculations
 const bookingKpis = computed(() => {
   const total = bookingsList.value.length
   const confirmed = bookingsList.value.filter(b => getEffectiveStatus(b) === 'Confirmed').length
   const completed = bookingsList.value.filter(b => getEffectiveStatus(b) === 'Completed').length
   const autoCompleted = bookingsList.value.filter(b => isTimeCompleted(b)).length
   const cancelled = bookingsList.value.filter(b => b.status === 'Cancelled').length
-
   return { total, confirmed, completed, autoCompleted, cancelled }
 })
 
-// Action Functions
 function openBookingDetails(booking) {
   selectedBooking.value = booking
   showBookingDetailsModal.value = true
@@ -3554,12 +3358,8 @@ function confirmCancelBooking() {
 
 function markBookingCompleted(booking) {
   const target = bookingsList.value.find(b => b.id === booking.id)
-  if (target) {
-    target.status = 'Completed'
-  }
-  if (selectedBooking.value && selectedBooking.value.id === booking.id) {
-    selectedBooking.value.status = 'Completed'
-  }
+  if (target) target.status = 'Completed'
+  if (selectedBooking.value && selectedBooking.value.id === booking.id) selectedBooking.value.status = 'Completed'
   if (toast) toast.success(`Booking ${booking.id} marked as Completed!`)
 }
 
@@ -3582,7 +3382,7 @@ function handleCreateNewBooking() {
   }
   const newId = `BK-${100 + bookingsList.value.length + 1}`
   const initials = newBookingForm.player.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) || 'BK'
-  
+
   const createdBooking = {
     id: newId,
     player: newBookingForm.player,
@@ -3623,7 +3423,7 @@ function exportBookingsCSV() {
     b.paymentStatus,
     b.status
   ])
-  
+
   const csvContent = [headers.join(','), ...rows.map(e => e.join(','))].join('\n')
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
   const url = URL.createObjectURL(blob)
@@ -3636,7 +3436,9 @@ function exportBookingsCSV() {
   if (toast) toast.success('Bookings exported to CSV!')
 }
 
-// Analytics - Booking Trends mock data
+// =========================================================
+// ANALYTICS DATA (MOCK)
+// =========================================================
 const bookingTrends = ref([
   { sport: 'Tennis Courts', count: 189, percentage: 45, colorClass: 'bar-blue' },
   { sport: 'Badminton Arenas', count: 126, percentage: 30, colorClass: 'bar-emerald' },
@@ -3644,15 +3446,15 @@ const bookingTrends = ref([
   { sport: 'Swimming Lanes', count: 42, percentage: 10, colorClass: 'bar-purple' },
 ])
 
-// Analytics - Court Utilization mock data
 const courtUtilization = ref([
   { period: 'Prime Hours (5 PM - 10 PM)', rate: 92, colorClass: 'bar-blue' },
   { period: 'Afternoon (12 PM - 5 PM)', rate: 68, colorClass: 'bar-indigo' },
   { period: 'Morning (6 AM - 12 PM)', rate: 54, colorClass: 'bar-purple' },
 ])
 
-
-// Announcements & Broadcasts Live State & CRUD logic
+// =========================================================
+// ANNOUNCEMENTS STATE
+// =========================================================
 const announcementsSearchQuery = ref('')
 const announcementsCategoryFilter = ref('All')
 const showCreateAnnouncementModal = ref(false)
@@ -3666,33 +3468,25 @@ const announcementForm = ref({
   body: '',
 })
 
-// Bind announcements reactively from notificationStore
 const announcements = computed(() => notificationStore.announcements)
 
 const filteredAnnouncements = computed(() => {
   let list = announcements.value
   if (announcementsCategoryFilter.value !== 'All') {
-    list = list.filter(
-      (item) => item.category.toLowerCase() === announcementsCategoryFilter.value.toLowerCase(),
-    )
+    list = list.filter(item => item.category.toLowerCase() === announcementsCategoryFilter.value.toLowerCase())
   }
   if (announcementsSearchQuery.value.trim()) {
     const q = announcementsSearchQuery.value.toLowerCase()
-    list = list.filter(
-      (item) =>
-        (item.title && item.title.toLowerCase().includes(q)) ||
-        (item.body && item.body.toLowerCase().includes(q)),
+    list = list.filter(item =>
+      (item.title && item.title.toLowerCase().includes(q)) ||
+      (item.body && item.body.toLowerCase().includes(q))
     )
   }
   return list
 })
 
 const openCreateAnnouncementModal = () => {
-  announcementForm.value = {
-    title: '',
-    category: 'General',
-    body: '',
-  }
+  announcementForm.value = { title: '', category: 'General', body: '' }
   showCreateAnnouncementModal.value = true
 }
 
@@ -3742,7 +3536,6 @@ const submitCreateAnnouncement = async () => {
     toast ? toast.error('Please enter announcement message content') : alert('Please enter announcement message content')
     return
   }
-
   isSubmittingAnnouncement.value = true
   const result = await notificationStore.createAnnouncement({
     title: announcementForm.value.title.trim(),
@@ -3762,9 +3555,7 @@ const submitCreateAnnouncement = async () => {
 const openAnnouncementDetails = (item) => {
   selectedAnnouncement.value = item
   showAnnouncementDetailsModal.value = true
-  if (!item.is_read) {
-    notificationStore.markAsRead(item.id)
-  }
+  if (!item.is_read) notificationStore.markAsRead(item.id)
 }
 
 const closeAnnouncementDetails = () => {
@@ -3781,15 +3572,15 @@ const handleDeleteAnnouncement = (item) => {
   if (!item) return
   if (confirm(`Are you sure you want to delete "${item.title}"?`)) {
     notificationStore.deleteAnnouncement(item.id)
-    if (selectedAnnouncement.value && selectedAnnouncement.value.id === item.id) {
-      closeAnnouncementDetails()
-    }
+    if (selectedAnnouncement.value && selectedAnnouncement.value.id === item.id) closeAnnouncementDetails()
     toast ? toast.success('Announcement removed') : null
   }
 }
 
-// --- EVENTS MANAGEMENT STATE & CRUD LOGIC ---
-const eventViewMode = ref('grid') // 'grid' | 'table'
+// =========================================================
+// EVENTS STATE
+// =========================================================
+const eventViewMode = ref('grid')
 const eventSearchQuery = ref('')
 const eventStatusFilter = ref('All')
 const eventSportFilter = ref('All')
@@ -3806,94 +3597,13 @@ const editingEvent = ref(null)
 const eventToDelete = ref(null)
 
 const eventsList = ref([
-  {
-    id: 'EVT-201',
-    title: 'Apex Summer Tennis Open 2026',
-    type: 'Tournament',
-    sport: 'Tennis',
-    date: '2026-08-28',
-    dateDisplay: 'Aug 28 - Aug 30, 2026',
-    time: '09:00 AM - 06:00 PM',
-    venue: 'Tennis Courts 1 & 2',
-    capacity: 32,
-    registered: 32,
-    fee: 500,
-    status: 'Upcoming',
-    organizer: 'Head Coach David',
-    description: 'Annual competitive tennis tournament featuring singles and doubles knockouts with trophy prizes and ranking points.',
-    participants: ['John Doe', 'Alice Johnson', 'Michael Brown', 'Sophia Martinez', 'Robert Paul', 'David Lee', 'Emma Wilson', 'James Taylor']
-  },
-  {
-    id: 'EVT-202',
-    title: 'Masterclass Badminton Clinic',
-    type: 'Coaching Clinic',
-    sport: 'Badminton',
-    date: '2026-08-20',
-    dateDisplay: 'Aug 20, 2026',
-    time: '04:00 PM - 07:00 PM',
-    venue: 'Badminton Arena A',
-    capacity: 20,
-    registered: 16,
-    fee: 350,
-    status: 'Upcoming',
-    organizer: 'Coach Lin Dan',
-    description: 'Intensive footwork and smash technique coaching clinic for intermediate and advanced badminton players.',
-    participants: ['Jane Smith', 'Chris Evans', 'Sarah Parker', 'Tom Holland', 'Zendaya Coleman']
-  },
-  {
-    id: 'EVT-203',
-    title: 'Squash Club Championship 2026',
-    type: 'Tournament',
-    sport: 'Squash',
-    date: '2026-09-05',
-    dateDisplay: 'Sep 05, 2026',
-    time: '10:00 AM - 05:00 PM',
-    venue: 'Squash Courts 1 & 2',
-    capacity: 16,
-    registered: 12,
-    fee: 400,
-    status: 'Upcoming',
-    organizer: 'Squash Director Alex',
-    description: 'Club championship event for squash enthusiasts. Round-robin format followed by knockout finals.',
-    participants: ['Robert Paul', 'David Lee', 'Mark Ruffalo', 'Scarlett Johansson']
-  },
-  {
-    id: 'EVT-204',
-    title: 'Weekend Swimming Sprint Challenge',
-    type: 'Social League',
-    sport: 'Swimming',
-    date: '2026-08-15',
-    dateDisplay: 'Aug 15, 2026',
-    time: '07:00 AM - 11:00 AM',
-    venue: 'Olympic Swimming Pool',
-    capacity: 25,
-    registered: 25,
-    fee: 0,
-    status: 'Ongoing',
-    organizer: 'Swim Coach Maria',
-    description: 'Fun weekend sprint relays and freestyle 50m challenges open to all club members. Refreshments included.',
-    participants: ['Michael Brown', 'John Doe', 'Alice Johnson', 'Kevin Hart']
-  },
-  {
-    id: 'EVT-205',
-    title: 'Junior Tennis Grassroots Camp',
-    type: 'Coaching Clinic',
-    sport: 'Tennis',
-    date: '2026-07-10',
-    dateDisplay: 'Jul 10, 2026',
-    time: '09:00 AM - 12:00 PM',
-    venue: 'Tennis Court 3',
-    capacity: 15,
-    registered: 15,
-    fee: 250,
-    status: 'Completed',
-    organizer: 'Coach Serena',
-    description: 'Introductory tennis drills and fun games designed for kids aged 8 to 14.',
-    participants: ['Leo Messi', 'Cristiano R.', 'Neymar Jr.']
-  }
+  { id: 'EVT-201', title: 'Apex Summer Tennis Open 2026', type: 'Tournament', sport: 'Tennis', date: '2026-08-28', dateDisplay: 'Aug 28 - Aug 30, 2026', time: '09:00 AM - 06:00 PM', venue: 'Tennis Courts 1 & 2', capacity: 32, registered: 32, fee: 500, status: 'Upcoming', organizer: 'Head Coach David', description: 'Annual competitive tennis tournament featuring singles and doubles knockouts with trophy prizes and ranking points.', participants: ['John Doe', 'Alice Johnson', 'Michael Brown', 'Sophia Martinez', 'Robert Paul', 'David Lee', 'Emma Wilson', 'James Taylor'] },
+  { id: 'EVT-202', title: 'Masterclass Badminton Clinic', type: 'Coaching Clinic', sport: 'Badminton', date: '2026-08-20', dateDisplay: 'Aug 20, 2026', time: '04:00 PM - 07:00 PM', venue: 'Badminton Arena A', capacity: 20, registered: 16, fee: 350, status: 'Upcoming', organizer: 'Coach Lin Dan', description: 'Intensive footwork and smash technique coaching clinic for intermediate and advanced badminton players.', participants: ['Jane Smith', 'Chris Evans', 'Sarah Parker', 'Tom Holland', 'Zendaya Coleman'] },
+  { id: 'EVT-203', title: 'Squash Club Championship 2026', type: 'Tournament', sport: 'Squash', date: '2026-09-05', dateDisplay: 'Sep 05, 2026', time: '10:00 AM - 05:00 PM', venue: 'Squash Courts 1 & 2', capacity: 16, registered: 12, fee: 400, status: 'Upcoming', organizer: 'Squash Director Alex', description: 'Club championship event for squash enthusiasts. Round-robin format followed by knockout finals.', participants: ['Robert Paul', 'David Lee', 'Mark Ruffalo', 'Scarlett Johansson'] },
+  { id: 'EVT-204', title: 'Weekend Swimming Sprint Challenge', type: 'Social League', sport: 'Swimming', date: '2026-08-15', dateDisplay: 'Aug 15, 2026', time: '07:00 AM - 11:00 AM', venue: 'Olympic Swimming Pool', capacity: 25, registered: 25, fee: 0, status: 'Ongoing', organizer: 'Swim Coach Maria', description: 'Fun weekend sprint relays and freestyle 50m challenges open to all club members. Refreshments included.', participants: ['Michael Brown', 'John Doe', 'Alice Johnson', 'Kevin Hart'] },
+  { id: 'EVT-205', title: 'Junior Tennis Grassroots Camp', type: 'Coaching Clinic', sport: 'Tennis', date: '2026-07-10', dateDisplay: 'Jul 10, 2026', time: '09:00 AM - 12:00 PM', venue: 'Tennis Court 3', capacity: 15, registered: 15, fee: 250, status: 'Completed', organizer: 'Coach Serena', description: 'Introductory tennis drills and fun games designed for kids aged 8 to 14.', participants: ['Leo Messi', 'Cristiano R.', 'Neymar Jr.'] }
 ])
 
-// Alias upcomingEvents to keep dashboard home components in sync
 const upcomingEvents = computed(() => {
   return eventsList.value.map(e => ({
     id: e.id,
@@ -3907,36 +3617,18 @@ const upcomingEvents = computed(() => {
   }))
 })
 
-// Event Form State
 const eventForm = reactive({
-  title: '',
-  sport: 'Tennis',
-  type: 'Tournament',
+  title: '', sport: 'Tennis', type: 'Tournament',
   date: new Date().toISOString().split('T')[0],
-  time: '10:00 AM - 04:00 PM',
-  venue: 'Tennis Court 1',
-  capacity: 16,
-  fee: 0,
-  status: 'Upcoming',
-  organizer: 'Club Staff',
-  description: ''
+  time: '10:00 AM - 04:00 PM', venue: 'Tennis Court 1', capacity: 16,
+  fee: 0, status: 'Upcoming', organizer: 'Club Staff', description: ''
 })
 
 const editEventForm = reactive({
-  id: '',
-  title: '',
-  sport: 'Tennis',
-  type: 'Tournament',
-  date: '',
-  time: '',
-  venue: '',
-  capacity: 16,
-  fee: 0,
-  status: 'Upcoming',
-  description: ''
+  id: '', title: '', sport: 'Tennis', type: 'Tournament', date: '',
+  time: '', venue: '', capacity: 16, fee: 0, status: 'Upcoming', description: ''
 })
 
-// Computed Properties for Events
 const filteredEvents = computed(() => {
   return eventsList.value.filter(e => {
     const q = eventSearchQuery.value.trim().toLowerCase()
@@ -3944,11 +3636,9 @@ const filteredEvents = computed(() => {
       e.title.toLowerCase().includes(q) ||
       e.venue.toLowerCase().includes(q) ||
       e.organizer.toLowerCase().includes(q)
-
     const matchesStatus = eventStatusFilter.value === 'All' || e.status.toLowerCase() === eventStatusFilter.value.toLowerCase()
     const matchesSport = eventSportFilter.value === 'All' || e.sport.toLowerCase() === eventSportFilter.value.toLowerCase()
     const matchesType = eventTypeFilter.value === 'All' || e.type.toLowerCase() === eventTypeFilter.value.toLowerCase()
-
     return matchesSearch && matchesStatus && matchesSport && matchesType
   }).sort((a, b) => {
     if (eventSortBy.value === 'date') return a.date.localeCompare(b.date)
@@ -3965,11 +3655,9 @@ const eventsKpis = computed(() => {
   const totalRegistered = eventsList.value.reduce((sum, e) => sum + e.registered, 0)
   const totalCapacity = eventsList.value.reduce((sum, e) => sum + e.capacity, 0)
   const totalRevenue = eventsList.value.reduce((sum, e) => sum + (e.registered * e.fee), 0)
-
   return { total, upcoming, totalRegistered, totalCapacity, totalRevenue }
 })
 
-// Event Action Methods
 function resetEventFilters() {
   eventSearchQuery.value = ''
   eventStatusFilter.value = 'All'
@@ -3995,23 +3683,14 @@ function handleCreateEvent() {
   }
   const newId = `EVT-${200 + eventsList.value.length + 1}`
   const createdEvent = {
-    id: newId,
-    title: eventForm.title,
-    type: eventForm.type,
-    sport: eventForm.sport,
-    date: eventForm.date,
-    dateDisplay: new Date(eventForm.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-    time: eventForm.time,
-    venue: eventForm.venue,
-    capacity: Number(eventForm.capacity) || 16,
-    registered: 0,
-    fee: Number(eventForm.fee) || 0,
-    status: eventForm.status,
+    id: newId, title: eventForm.title, type: eventForm.type, sport: eventForm.sport,
+    date: eventForm.date, dateDisplay: new Date(eventForm.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+    time: eventForm.time, venue: eventForm.venue, capacity: Number(eventForm.capacity) || 16,
+    registered: 0, fee: Number(eventForm.fee) || 0, status: eventForm.status,
     organizer: eventForm.organizer || 'Club Admin',
     description: eventForm.description || 'Club event scheduled by administrator.',
     participants: []
   }
-
   eventsList.value.unshift(createdEvent)
   showCreateEventModal.value = false
   if (toast) toast.success(`Event "${createdEvent.title}" created successfully!`)
@@ -4066,7 +3745,6 @@ function handleUpdateEvent() {
     target.status = editEventForm.status
     target.description = editEventForm.description
   }
-
   showEditEventModal.value = false
   editingEvent.value = null
   if (toast) toast.success('Event details updated successfully!')
@@ -4108,7 +3786,9 @@ function removeParticipant(event, index) {
   }
 }
 
-// --- ANALYTICS TAB REACTIVE STATE & EXPORT ---
+// =========================================================
+// ANALYTICS TAB REACTIVE STATE & EXPORT
+// =========================================================
 const analyticsTimeframe = ref('30 Days')
 const activeChartMetric = ref('revenue')
 
@@ -4120,15 +3800,9 @@ const sportRevenueBreakdown = ref([
 ])
 
 const hourlyOccupancyData = ref([
-  { hour: '06:00 AM', rate: 42 },
-  { hour: '08:00 AM', rate: 68 },
-  { hour: '10:00 AM', rate: 54 },
-  { hour: '12:00 PM', rate: 60 },
-  { hour: '02:00 PM', rate: 72 },
-  { hour: '04:00 PM', rate: 85 },
-  { hour: '06:00 PM', rate: 96 },
-  { hour: '08:00 PM', rate: 92 },
-  { hour: '10:00 PM', rate: 38 }
+  { hour: '06:00 AM', rate: 42 }, { hour: '08:00 AM', rate: 68 }, { hour: '10:00 AM', rate: 54 },
+  { hour: '12:00 PM', rate: 60 }, { hour: '02:00 PM', rate: 72 }, { hour: '04:00 PM', rate: 85 },
+  { hour: '06:00 PM', rate: 96 }, { hour: '08:00 PM', rate: 92 }, { hour: '10:00 PM', rate: 38 }
 ])
 
 const topPerformingFacilities = ref([
@@ -4145,11 +3819,8 @@ const paymentMethodBreakdown = ref([
 ])
 
 const financialSummary = ref({
-  grossRevenue: '₹4,82,500',
-  operationalCosts: '₹1,12,000',
-  maintenanceTaxes: '₹38,500',
-  netProfit: '₹3,32,000',
-  profitMargin: '+68.8%'
+  grossRevenue: '₹4,82,500', operationalCosts: '₹1,12,000',
+  maintenanceTaxes: '₹38,500', netProfit: '₹3,32,000', profitMargin: '+68.8%'
 })
 
 function exportAnalyticsCSV() {
@@ -4163,27 +3834,17 @@ function exportAnalyticsCSV() {
     ['Retention Rate', '94.8%', 'Member Satisfaction'],
     ['---', '---', '---'],
     ['Monthly Revenue Trend', 'Revenue (INR)', 'Booking Volume'],
-    ['Jan', '2,45,000', '320'],
-    ['Feb', '2,80,000', '380'],
-    ['Mar', '3,10,000', '420'],
-    ['Apr', '2,90,000', '390'],
-    ['May', '3,60,000', '490'],
-    ['Jun', '4,20,000', '560'],
-    ['Jul', '4,50,000', '610'],
-    ['Aug', '4,82,000', '648'],
+    ['Jan', '2,45,000', '320'], ['Feb', '2,80,000', '380'], ['Mar', '3,10,000', '420'],
+    ['Apr', '2,90,000', '390'], ['May', '3,60,000', '490'], ['Jun', '4,20,000', '560'],
+    ['Jul', '4,50,000', '610'], ['Aug', '4,82,000', '648'],
     ['---', '---', '---'],
     ['Sport Revenue Breakdown', 'Percentage', 'Revenue (INR)'],
-    ['Tennis Courts', '45%', '2,17,125'],
-    ['Badminton Arenas', '30%', '1,44,750'],
-    ['Squash Courts', '15%', '72,375'],
-    ['Swimming Lanes', '10%', '48,250'],
+    ['Tennis Courts', '45%', '2,17,125'], ['Badminton Arenas', '30%', '1,44,750'],
+    ['Squash Courts', '15%', '72,375'], ['Swimming Lanes', '10%', '48,250'],
     ['---', '---', '---'],
     ['Court Utilization', 'Occupancy Rate', 'Period'],
-    ['Prime Hours (5 PM - 10 PM)', '92%', 'Evening'],
-    ['Afternoon (12 PM - 5 PM)', '68%', 'Afternoon'],
-    ['Morning (6 AM - 12 PM)', '54%', 'Morning'],
+    ['Prime Hours (5 PM - 10 PM)', '92%', 'Evening'], ['Afternoon (12 PM - 5 PM)', '68%', 'Afternoon'], ['Morning (6 AM - 12 PM)', '54%', 'Morning'],
   ]
-
   const csvContent = [headers.join(','), ...rows.map(e => e.map(cell => `"${cell}"`).join(','))].join('\n')
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
   const url = URL.createObjectURL(blob)
@@ -4196,62 +3857,34 @@ function exportAnalyticsCSV() {
   if (toast) toast.success('Analytics report downloaded successfully! 📊')
 }
 
-// --- MEMBERS DIRECTORY REACTIVE STATE ---
-const memberSearchQuery = ref('')
-const selectedMemberPlanFilter = ref('All')
-const selectedMemberForModal = ref(null)
-const showMemberModal = ref(false)
-
-const membersList = ref([
-  { id: 1, name: 'Alex Morgan', email: 'alex.morgan@clubdash.com', initials: 'AM', plan: 'VIP Platinum', dateJoined: 'Jan 15, 2025', totalBookings: 34, phone: '+91 98765 43210' },
-  { id: 2, name: 'Sarah Jenkins', email: 'sarah.j@example.com', initials: 'SJ', plan: 'Permanent Gold', dateJoined: 'Feb 02, 2025', totalBookings: 28, phone: '+91 98765 43211' },
-  { id: 3, name: 'David Miller', email: 'david.m@example.com', initials: 'DM', plan: 'Permanent Member', dateJoined: 'Mar 10, 2025', totalBookings: 19, phone: '+91 98765 43212' },
-  { id: 4, name: 'Elena Rostova', email: 'elena.r@example.com', initials: 'ER', plan: 'Public Pay-per-play', dateJoined: 'Apr 05, 2025', totalBookings: 8, phone: '+91 98765 43213' },
-  { id: 5, name: 'Marcus Chen', email: 'marcus.c@example.com', initials: 'MC', plan: 'Permanent Gold', dateJoined: 'May 18, 2025', totalBookings: 42, phone: '+91 98765 43214' },
-  { id: 6, name: 'Priya Sharma', email: 'priya.s@example.com', initials: 'PS', plan: 'VIP Platinum', dateJoined: 'Jun 22, 2025', totalBookings: 51, phone: '+91 98765 43215' },
-  { id: 7, name: 'Rohan Gupta', email: 'rohan.g@example.com', initials: 'RG', plan: 'Public Pay-per-play', dateJoined: 'Jul 14, 2025', totalBookings: 12, phone: '+91 98765 43216' },
-  { id: 8, name: 'Emily Taylor', email: 'emily.t@example.com', initials: 'ET', plan: 'Permanent Member', dateJoined: 'Aug 01, 2025', totalBookings: 15, phone: '+91 98765 43217' }
-])
-
-const filteredMembersList = computed(() => {
-  return membersList.value.filter(m => {
-    const matchesSearch = 
-      !memberSearchQuery.value ||
-      m.name.toLowerCase().includes(memberSearchQuery.value.toLowerCase()) ||
-      m.email.toLowerCase().includes(memberSearchQuery.value.toLowerCase()) ||
-      m.plan.toLowerCase().includes(memberSearchQuery.value.toLowerCase())
-
-    const matchesPlan = 
-      selectedMemberPlanFilter.value === 'All' ||
-      (selectedMemberPlanFilter.value === 'Permanent' && m.plan.includes('Permanent')) ||
-      (selectedMemberPlanFilter.value === 'VIP Platinum' && m.plan.includes('VIP')) ||
-      (selectedMemberPlanFilter.value === 'Public' && m.plan.includes('Public'))
-
-    return matchesSearch && matchesPlan
-  })
-})
-
+// =========================================================
+// MEMBER DETAILS & EXPORT (UPDATED)
+// =========================================================
 function viewMemberDetails(member) {
   selectedMemberForModal.value = member
   showMemberModal.value = true
 }
 
 function exportMembersCSV() {
-  const headers = ['ID', 'Name', 'Email', 'Plan', 'Date Joined', 'Total Bookings', 'Phone']
-  const rows = membersList.value.map(m => [m.id, `"${m.name}"`, m.email, `"${m.plan}"`, `"${m.dateJoined}"`, m.totalBookings, `"${m.phone}"`])
-  const csvContent = [headers.join(','), ...rows.map(e => e.join(','))].join('\n')
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-  const url = URL.createObjectURL(blob)
+  const headers = ['Name', 'Email', 'Membership Plan', 'Booking Count', 'Status']
+  const rows = filteredMembersList.value.map(m => [
+    m.name,
+    m.email,
+    m.plan,
+    m.totalBookings,
+    m.membership_status
+  ])
+  const csv = [headers, ...rows].map(r => r.join(',')).join('\n')
+  const blob = new Blob([csv], { type: 'text/csv' })
   const link = document.createElement('a')
-  link.setAttribute('href', url)
-  link.setAttribute('download', `club_members_directory_${new Date().toISOString().split('T')[0]}.csv`)
-  document.body.appendChild(link)
+  link.href = URL.createObjectURL(blob)
+  link.download = 'club_members.csv'
   link.click()
-  document.body.removeChild(link)
-  if (toast) toast.success('Members list exported to CSV successfully!')
 }
 
-// --- DISCORD-STYLE ADMIN PROFILE STATE ---
+// =========================================================
+// DISCORD-STYLE ADMIN PROFILE STATE
+// =========================================================
 const showProfilePopover = ref(false)
 
 const adminProfile = reactive({
