@@ -75,6 +75,18 @@ class MembershipService:
         each with 1, 3, 6, 12 month durations) if they don't already exist.
         Safe to call multiple times (idempotent).
         """
+        # This runs from create_app(), which can happen before the schema
+        # exists (a fresh database awaiting `flask db upgrade`, or the test
+        # suite, which calls db.create_all() after the app is built). Querying
+        # a missing table raises and would take the whole app down, so skip.
+        from sqlalchemy import inspect as sa_inspect
+
+        try:
+            if not sa_inspect(db.engine).has_table(MembershipPlan.__tablename__):
+                return
+        except Exception:
+            return
+
         plans_data = [
             {"name": "Standard", "duration_months": 1,  "price": 499,  "discount_percentage": 50},
             {"name": "Standard", "duration_months": 3,  "price": 1299, "discount_percentage": 50},

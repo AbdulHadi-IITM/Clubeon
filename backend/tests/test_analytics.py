@@ -131,7 +131,7 @@ def test_member_analytics(client, app, db_session, make_player):
     club, court1, _ = _club_with_courts(db_session, owner)
 
     future = date.today() + timedelta(days=3)
-    plan = MembershipPlan(club_id=club.id, name="Gold", price_monthly=999.0,
+    plan = MembershipPlan(club_id=club.id, name="Gold", duration_months=1, price=999.0,
                           is_active=True)
     db_session.add(plan)
     db_session.commit()
