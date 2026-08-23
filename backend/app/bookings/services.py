@@ -184,3 +184,39 @@ class BookingService:
         booking.status = 'released'
         db.session.commit()
         return True, None
+
+    @staticmethod
+    def get_club_bookings(club_id, booking_date=None, status=None, court_id=None):
+        """
+        All bookings for a club, for the owner/front-desk views.
+
+        Optional filters: booking_date (YYYY-MM-DD), status, court_id.
+        """
+        from app.clubs.models import Court
+
+        court_ids = [c.id for c in Court.query.filter_by(club_id=club_id).all()]
+        if not court_ids:
+            return [], None
+
+        query = Booking.query.filter(Booking.court_id.in_(court_ids))
+
+        if booking_date:
+            try:
+                parsed = datetime.strptime(booking_date, "%Y-%m-%d").date()
+            except ValueError:
+                return None, {"code": "VALIDATION_ERROR",
+                              "message": "date must be in YYYY-MM-DD format."}
+            query = query.filter(Booking.booking_date == parsed)
+
+        if status:
+            query = query.filter(Booking.status == status)
+
+        if court_id:
+            if court_id not in court_ids:
+                return None, {"code": "FORBIDDEN",
+                              "message": "That court does not belong to your club."}
+            query = query.filter(Booking.court_id == court_id)
+
+        bookings = query.order_by(Booking.booking_date.desc(),
+                                  Booking.start_time.desc()).all()
+        return bookings, None

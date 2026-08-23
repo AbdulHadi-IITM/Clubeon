@@ -76,7 +76,7 @@ def test_membership_is_activated_on_successful_payment(
     app = stripe_cfg
     user = make_player(email="mem_activate@test.com")
     plan = MembershipPlan(club_id=sample_club.id, name="Gold",
-                          price_monthly=999.0, is_active=True)
+                          duration_months=1, price=999.0, is_active=True)
     db_session.add(plan)
     db_session.commit()
     plan_id, club_id = plan.id, sample_club.id
@@ -114,7 +114,7 @@ def test_membership_fulfilment_is_idempotent(
     app = stripe_cfg
     user = make_player(email="mem_idem@test.com")
     plan = MembershipPlan(club_id=sample_club.id, name="Silver",
-                          price_monthly=499.0, is_active=True)
+                          duration_months=1, price=499.0, is_active=True)
     db_session.add(plan)
     db_session.commit()
 
@@ -252,7 +252,7 @@ def test_failed_payment_does_not_fulfil(
     app = stripe_cfg
     user = make_player(email="mem_fail@test.com")
     plan = MembershipPlan(club_id=sample_club.id, name="Bronze",
-                          price_monthly=199.0, is_active=True)
+                          duration_months=1, price=199.0, is_active=True)
     db_session.add(plan)
     db_session.commit()
 
@@ -274,7 +274,7 @@ def test_late_failure_cannot_downgrade_completed_payment(
     app = stripe_cfg
     user = make_player(email="mem_late_fail@test.com")
     plan = MembershipPlan(club_id=sample_club.id, name="Plat",
-                          price_monthly=1299.0, is_active=True)
+                          duration_months=1, price=1299.0, is_active=True)
     db_session.add(plan)
     db_session.commit()
 
@@ -299,7 +299,7 @@ def test_cannot_pay_twice_for_same_item(
     app = stripe_cfg
     user = make_player(email="dbl@test.com")
     plan = MembershipPlan(club_id=sample_club.id, name="Once",
-                          price_monthly=299.0, is_active=True)
+                          duration_months=1, price=299.0, is_active=True)
     db_session.add(plan)
     db_session.commit()
 
@@ -320,7 +320,7 @@ def test_payment_status_endpoint_reports_fulfilment(
     app = stripe_cfg
     user = make_player(email="status@test.com")
     plan = MembershipPlan(club_id=sample_club.id, name="Status",
-                          price_monthly=350.0, is_active=True)
+                          duration_months=1, price=350.0, is_active=True)
     db_session.add(plan)
     db_session.commit()
 
@@ -346,7 +346,7 @@ def test_payment_status_is_private_to_owner(
     owner_user = make_player(email="priv_owner@test.com")
     intruder = make_player(email="priv_intruder@test.com")
     plan = MembershipPlan(club_id=sample_club.id, name="Priv",
-                          price_monthly=100.0, is_active=True)
+                          duration_months=1, price=100.0, is_active=True)
     db_session.add(plan)
     db_session.commit()
 

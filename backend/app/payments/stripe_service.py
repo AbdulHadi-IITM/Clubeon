@@ -117,6 +117,14 @@ class StripeService:
         currency = (currency or current_app.config.get("STRIPE_DEFAULT_CURRENCY", "inr")).lower()
         currency_code = currency.upper()
 
+        # Already paid for? Don't let the user be charged twice.
+        already_paid = Payment.query.filter_by(
+            user_id=user_id, payment_type=payment_type,
+            reference_id=reference_id, status="completed").first()
+        if already_paid:
+            return None, {"code": "ALREADY_PAID",
+                          "message": "This item has already been paid for."}
+
         # --- amount resolved server-side from the referenced entity ---
         amount, err = StripeService.resolve_amount(user_id, payment_type, reference_id)
         if err:

@@ -50,7 +50,9 @@ def test_create_booking_conflict(client, auth_headers, sample_club, db_session, 
     # Setup an existing booking
     player1 = make_player(email="player1@test.com")
     court_id = sample_club.courts[0].id
-    today = date.today()
+    # Must be a future date: create_booking rejects past slots before it ever
+    # reaches the overlap check, so using today made this test fail after 14:30.
+    today = date.today() + timedelta(days=1)
     
     booking = Booking(
         user_id=player1.id,
