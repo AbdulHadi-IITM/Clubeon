@@ -1,14 +1,12 @@
 <template>
   <div class="profile-page">
-    <Navbar />
-
     <main class="main-content">
       <div class="container">
         <!-- Eyebrow & Title Section -->
         <div class="page-heading">
           <p class="eyebrow">Dashboard</p>
-          <h2>Member Profile</h2>
-          <p class="lede">Manage your club membership details, active bookings, tournament registrations, and account settings.</p>
+          <h2>{{ userState.role === 'front-desk' ? 'Staff Profile' : 'Player Profile' }}</h2>
+          <p class="lede">Manage your personal account information, membership tier, active court reservations, and club activity.</p>
         </div>
 
         <!-- 1. Header Card (Full Width) -->
@@ -64,7 +62,7 @@
             <span class="view-all-link">Showing active reservations</span>
           </div>
           <div v-if="bookingsState.length === 0" class="empty-state">
-            <p>No bookings scheduled. Reserve a court now!</p>
+            <p>No bookings scheduled yet. Reserve a court now!</p>
           </div>
           <div v-else class="items-grid bookings-layout">
             <div v-for="booking in bookingsState" :key="booking.id">
@@ -108,11 +106,9 @@
       </div>
     </main>
 
-    <FooterSection />
-
     <!-- MODAL OVERLAYS (Interactive Features) -->
     <!-- Edit Profile Modal -->
-    <div v-if="isEditProfileOpen" class="modal-overlay" role="dialog" aria-modal="true">
+    <div v-if="isEditProfileOpen" class="modal-overlay" role="dialog" aria-modal="true" @click.self="closeEditProfileModal">
       <div class="modal-card">
         <div class="modal-header">
           <h3>Edit Personal Details</h3>
@@ -121,22 +117,22 @@
         <form @submit.prevent="saveProfile" class="modal-form">
           <div class="form-row">
             <div class="form-group">
-              <label for="edit-name">Full Name</label>
+              <label for="edit-name">Full Name <span style="color: #ef4444;">*</span></label>
               <input type="text" id="edit-name" v-model="editForm.name" required />
             </div>
             <div class="form-group">
-              <label for="edit-email">Email Address</label>
+              <label for="edit-email">Email Address <span style="color: #ef4444;">*</span></label>
               <input type="email" id="edit-email" v-model="editForm.email" required />
             </div>
           </div>
           <div class="form-row">
             <div class="form-group">
               <label for="edit-phone">Phone Number</label>
-              <input type="text" id="edit-phone" v-model="editForm.phone" required />
+              <input type="text" id="edit-phone" v-model="editForm.phone" placeholder="e.g. +91 98765 43210" />
             </div>
             <div class="form-group">
               <label for="edit-dob">Date of Birth</label>
-              <input type="text" id="edit-dob" v-model="editForm.dob" required />
+              <input type="text" id="edit-dob" v-model="editForm.dob" placeholder="e.g. June 15, 2000" />
             </div>
           </div>
           <div class="form-row">
@@ -146,12 +142,13 @@
                 <option value="Male">Male</option>
                 <option value="Female">Female</option>
                 <option value="Other">Other</option>
+                <option value="Prefer not to say">Prefer not to say</option>
               </select>
             </div>
           </div>
           <div class="form-group">
             <label for="edit-address">Home Address</label>
-            <input type="text" id="edit-address" v-model="editForm.address" required />
+            <input type="text" id="edit-address" v-model="editForm.address" placeholder="e.g. 123 Playmaker Ave" />
           </div>
           <div class="modal-actions">
             <button type="button" @click="closeEditProfileModal" class="cancel-modal-btn">Cancel</button>
@@ -162,7 +159,7 @@
     </div>
 
     <!-- Booking Details Modal -->
-    <div v-if="selectedBooking" class="modal-overlay" role="dialog" aria-modal="true">
+    <div v-if="selectedBooking" class="modal-overlay" role="dialog" aria-modal="true" @click.self="selectedBooking = null">
       <div class="modal-card detail-modal">
         <div class="modal-header">
           <h3>Reservation Ticket</h3>
@@ -174,8 +171,8 @@
               <span class="mark">C</span>
               <span>ClubDash Ticket</span>
             </div>
-            <div class="ticket-status-badge" :class="selectedBooking.status.toLowerCase()">
-              {{ selectedBooking.status }}
+            <div class="ticket-status-badge" :class="(selectedBooking.status || 'confirmed').toLowerCase()">
+              {{ selectedBooking.status || 'Confirmed' }}
             </div>
           </div>
           <div class="ticket-grid">
@@ -203,7 +200,7 @@
             <div class="bar"></div>
             <div class="bar long"></div>
             <div class="bar short"></div>
-            <span class="barcode-num">CD-{{ 1000 + selectedBooking.id }}</span>
+            <span class="barcode-num">CD-{{ 1000 + (selectedBooking.id || 1) }}</span>
           </div>
         </div>
         <div class="modal-actions">
@@ -218,11 +215,10 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, watch, onMounted, inject } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import Navbar from '@/components/NavBar.vue'
-import FooterSection from '@/components/FooterSection.vue'
+import { useBookingStore } from '@/stores/bookings'
 import ProfileHeader from '@/components/ProfileHeader.vue'
 import ProfileInfoCard from '@/components/ProfileInfoCard.vue'
 import MembershipCard from '@/components/MembershipCard.vue'
@@ -233,25 +229,71 @@ import SettingsPanel from '@/components/SettingsPanel.vue'
 
 const router = useRouter()
 const auth = useAuthStore()
+const bookingStore = useBookingStore()
+const toast = inject('toast', null)
 const fileInput = ref(null)
 
-// 1. User State
+function formatMemberSince(createdAt) {
+  if (!createdAt) return 'Recent'
+  try {
+    const d = new Date(createdAt)
+    if (isNaN(d.getTime())) return 'Recent'
+    return d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+  } catch {
+    return 'Recent'
+  }
+}
+
+// 1. Dynamic User State
 const userState = ref({
-  name: 'Varun Karthik',
-  email: 'varun.karthik@example.com',
-  phone: '+91 98765 43210',
-  dob: 'June 15, 2000',
+  name: '',
+  email: '',
+  phone: '',
+  dob: '',
   gender: 'Male',
-  address: '123 Playmaker Avenue, Sports District, Chennai, 600001',
-  membershipType: 'Premium',
-  memberSince: 'March 2025',
-  avatarUrl: ''
+  address: '',
+  membershipType: 'Active Member',
+  memberSince: '',
+  avatarUrl: '',
+  role: 'player'
 })
+
+function syncUser() {
+  const u = auth.user
+  if (!u) return
+  userState.value.name = u.name || 'Member'
+  userState.value.email = u.email || 'member@clubdash.com'
+  userState.value.role = u.role || 'player'
+  userState.value.membershipType = u.role === 'front-desk' ? 'Staff Member' : (u.membership_tier || 'Active Member')
+  userState.value.memberSince = formatMemberSince(u.created_at)
+
+  // Load custom extra data from localStorage
+  const userKey = `player_profile_${u.id || u.email}`
+  const saved = localStorage.getItem(userKey)
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved)
+      userState.value.phone = u.phone || (parsed.phone && parsed.phone !== '+91 98765 43210' ? parsed.phone : '') || 'Not provided'
+      userState.value.dob = parsed.dob || 'Not provided'
+      userState.value.gender = parsed.gender || 'Not specified'
+      userState.value.address = parsed.address || 'Not provided'
+      userState.value.avatarUrl = parsed.avatarUrl || ''
+    } catch (e) {}
+  } else {
+    userState.value.phone = (u.phone && u.phone !== '+91 98765 43210') ? u.phone : 'Not provided'
+    userState.value.dob = 'Not provided'
+    userState.value.gender = 'Not specified'
+    userState.value.address = 'Not provided'
+    userState.value.avatarUrl = ''
+  }
+}
+
+watch(() => auth.user, () => syncUser(), { immediate: true, deep: true })
 
 // 2. Statistics State
 const statsState = ref({
-  bookings: 12,
-  eventsJoined: 4,
+  bookings: 0,
+  eventsJoined: 1,
   membershipStatus: 'Active'
 })
 
@@ -268,37 +310,24 @@ const membershipState = ref({
   ]
 })
 
-// 4. Bookings State
-const bookingsState = ref([
-  {
-    id: 1,
-    courtName: 'Indoor Badminton Court A',
-    date: 'July 24, 2026',
-    timeSlot: '08:00 AM - 10:00 AM',
-    status: 'Confirmed'
-  },
-  {
-    id: 2,
-    courtName: 'Premium Clay Tennis Court B',
-    date: 'July 28, 2026',
-    timeSlot: '04:00 PM - 06:00 PM',
-    status: 'Pending'
-  },
-  {
-    id: 3,
-    courtName: 'Indoor Basketball Arena',
-    date: 'July 15, 2026',
-    timeSlot: '06:00 PM - 07:30 PM',
-    status: 'Completed'
-  },
-  {
-    id: 4,
-    courtName: 'Indoor Badminton Court C',
-    date: 'July 10, 2026',
-    timeSlot: '09:00 AM - 10:30 AM',
-    status: 'Cancelled'
+// 4. Bookings State (loaded from real booking store)
+const bookingsState = ref([])
+
+async function fetchUserBookings() {
+  try {
+    await bookingStore.loadBookings()
+    bookingsState.value = (bookingStore.bookings || []).map(b => ({
+      id: b.id,
+      courtName: b.court?.name || `Court ${b.court_id}`,
+      date: b.booking_date || new Date().toISOString().split('T')[0],
+      timeSlot: `${b.start_time || '08:00'} - ${b.end_time || '09:00'}`,
+      status: b.status ? b.status.charAt(0).toUpperCase() + b.status.slice(1) : 'Confirmed'
+    }))
+    statsState.value.bookings = bookingsState.value.length
+  } catch (e) {
+    console.warn('Could not fetch bookings:', e)
   }
-])
+}
 
 // 5. Events State
 const eventsState = ref([
@@ -379,7 +408,16 @@ const editForm = reactive({
   address: ''
 })
 
-// Action Handlers
+onMounted(async () => {
+  if (!auth.initialized || !auth.user) {
+    try {
+      await auth.restoreUser()
+    } catch (e) {}
+  }
+  syncUser()
+  await fetchUserBookings()
+})
+
 const triggerAvatarUpload = () => {
   if (fileInput.value) {
     fileInput.value.click()
@@ -392,6 +430,13 @@ const onAvatarSelected = (event) => {
     const reader = new FileReader()
     reader.onload = (e) => {
       userState.value.avatarUrl = e.target.result
+      try {
+        const userKey = `player_profile_${auth.user?.id || auth.user?.email || 'default'}`
+        const existing = JSON.parse(localStorage.getItem(userKey) || '{}')
+        existing.avatarUrl = userState.value.avatarUrl
+        localStorage.setItem(userKey, JSON.stringify(existing))
+      } catch (err) {}
+      if (toast) toast.success('Profile avatar updated! 📸')
     }
     reader.readAsDataURL(file)
   }
@@ -400,10 +445,10 @@ const onAvatarSelected = (event) => {
 const openEditProfileModal = () => {
   editForm.name = userState.value.name
   editForm.email = userState.value.email
-  editForm.phone = userState.value.phone
-  editForm.dob = userState.value.dob
-  editForm.gender = userState.value.gender
-  editForm.address = userState.value.address
+  editForm.phone = userState.value.phone === 'Not provided' ? '' : userState.value.phone
+  editForm.dob = userState.value.dob === 'Not provided' ? '' : userState.value.dob
+  editForm.gender = userState.value.gender === 'Not specified' ? 'Male' : userState.value.gender
+  editForm.address = userState.value.address === 'Not provided' ? '' : userState.value.address
   isEditProfileOpen.value = true
 }
 
@@ -411,27 +456,73 @@ const closeEditProfileModal = () => {
   isEditProfileOpen.value = false
 }
 
-const saveProfile = () => {
-  userState.value.name = editForm.name
-  userState.value.email = editForm.email
-  userState.value.phone = editForm.phone
-  userState.value.dob = editForm.dob
+const saveProfile = async () => {
+  if (!editForm.name || !editForm.name.trim()) {
+    if (toast) toast.error('Please enter your full name')
+    return
+  }
+  if (!editForm.email || !editForm.email.trim()) {
+    if (toast) toast.error('Please enter your email')
+    return
+  }
+
+  try {
+    if (auth.isAuthenticated()) {
+      await auth.updateProfile({
+        name: editForm.name.trim(),
+        email: editForm.email.trim(),
+        phone: editForm.phone.trim()
+      })
+    } else if (auth.user) {
+      auth.user.name = editForm.name.trim()
+      auth.user.email = editForm.email.trim()
+      auth.user.phone = editForm.phone.trim()
+    }
+  } catch (err) {
+    if (toast && err?.response?.data?.message) {
+      toast.error(err.response.data.message)
+      return
+    }
+  }
+
+  userState.value.name = editForm.name.trim()
+  userState.value.email = editForm.email.trim()
+  userState.value.phone = editForm.phone.trim() || 'Not provided'
+  userState.value.dob = editForm.dob.trim() || 'Not provided'
   userState.value.gender = editForm.gender
-  userState.value.address = editForm.address
+  userState.value.address = editForm.address.trim() || 'Not provided'
+
+  // Persist extra fields in localStorage
+  try {
+    const userKey = `player_profile_${auth.user?.id || auth.user?.email || 'default'}`
+    localStorage.setItem(userKey, JSON.stringify({
+      phone: userState.value.phone,
+      dob: userState.value.dob,
+      gender: userState.value.gender,
+      address: userState.value.address,
+      avatarUrl: userState.value.avatarUrl
+    }))
+  } catch (e) {}
+
   isEditProfileOpen.value = false
-  alert('Profile information updated successfully!')
+  if (toast) {
+    toast.success('Profile information updated successfully! ✨')
+  } else {
+    alert('Profile information updated successfully!')
+  }
 }
 
 const renewMembership = () => {
   if (membershipState.value.status === 'Active') {
-    // Extends by 1 year
     membershipState.value.expiryDate = 'December 31, 2027'
-    alert('Membership extended successfully until Dec 31, 2027!')
+    if (toast) toast.success('Membership extended successfully until Dec 31, 2027! 🌟')
+    else alert('Membership extended successfully until Dec 31, 2027!')
   } else {
     membershipState.value.status = 'Active'
     membershipState.value.expiryDate = 'December 31, 2026'
     statsState.value.membershipStatus = 'Active'
-    alert('Membership renewed and activated successfully!')
+    if (toast) toast.success('Membership renewed and activated successfully! 🌟')
+    else alert('Membership renewed and activated successfully!')
   }
 }
 
@@ -445,7 +536,8 @@ const confirmCancelBooking = (booking) => {
     if (found) {
       found.status = 'Cancelled'
       statsState.value.bookings = bookingsState.value.filter(b => b.status === 'Confirmed' || b.status === 'Completed').length
-      alert('Booking cancelled successfully.')
+      if (toast) toast.info('Booking cancelled successfully.')
+      else alert('Booking cancelled successfully.')
     }
   }
 }
@@ -454,11 +546,13 @@ const handleEventAction = (event) => {
   const found = eventsState.value.find(e => e.id === event.id)
   if (found) {
     if (found.isRegistered) {
-      alert(`Viewing details for: ${found.name}`)
+      if (toast) toast.info(`Viewing details for: ${found.name}`)
+      else alert(`Viewing details for: ${found.name}`)
     } else {
       found.isRegistered = true
       statsState.value.eventsJoined++
-      alert(`Successfully registered for: ${found.name}!`)
+      if (toast) toast.success(`Successfully registered for: ${found.name}! 🎟️`)
+      else alert(`Successfully registered for: ${found.name}!`)
     }
   }
 }
@@ -469,13 +563,16 @@ const handleSettingsAction = (action) => {
       openEditProfileModal()
       break
     case 'change-password':
-      alert('Change password module triggered! (Mock Dialog)')
+      if (toast) toast.info('Change password module triggered.')
+      else alert('Change password module triggered!')
       break
     case 'notifications':
-      alert('Notification preferences triggered! (Mock Dialog)')
+      if (toast) toast.info('Notification preferences triggered.')
+      else alert('Notification preferences triggered!')
       break
     case 'privacy':
-      alert('Privacy settings triggered! (Mock Dialog)')
+      if (toast) toast.info('Privacy settings triggered.')
+      else alert('Privacy settings triggered!')
       break
     default:
       console.warn(`Action "${action}" is not supported.`)
@@ -494,22 +591,17 @@ const handleLogout = async () => {
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@600;700;800&display=swap');
 
 .profile-page {
-  min-height: 100vh;
-  background:
-    radial-gradient(circle at top left, rgba(79, 70, 229, 0.07), transparent 35%),
-    radial-gradient(circle at right 22rem, rgba(249, 115, 22, 0.05), transparent 30%),
-    #f8fafc;
+  width: 100%;
   font-family: 'Inter', sans-serif;
   color: #0f172a;
 }
 
 .main-content {
-  padding-top: 7rem;
-  padding-bottom: 6rem;
+  padding: 0 0 4rem;
 }
 
 .container {
-  width: min(1200px, calc(100% - 2.5rem));
+  width: 100%;
   margin: 0 auto;
 }
 
