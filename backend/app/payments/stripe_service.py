@@ -181,10 +181,13 @@ class StripeService:
                     "reference_id": reference_id,
                 },
             )
-        except stripe.StripeError as e:
+        except Exception as e:
             # Mark the payment as failed if Stripe rejects it
             payment.status = "failed"
-            db.session.commit()
+            try:
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
             message = getattr(e, "user_message", None) or str(e)
             return None, {"code": "PAYMENT_GATEWAY_ERROR", "message": message}
 

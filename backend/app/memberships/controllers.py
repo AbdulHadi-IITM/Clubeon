@@ -26,27 +26,30 @@ def get_plans():
 @memberships_bp.route('/subscribe', methods=['POST'])
 @jwt_required()
 def subscribe():
-    user_id = int(get_jwt_identity())
-    data = request.get_json()
-    
-    plan_id = data.get('plan_id')
-    auto_renew = data.get('auto_renew', False)
-    
-    if not plan_id:
-        return jsonify({"code": "VALIDATION_ERROR", "message": "plan_id is required"}), 400
+    try:
+        user_id = int(get_jwt_identity())
+        data = request.get_json(silent=True) or {}
         
-    membership, error = MembershipService.subscribe(user_id, plan_id, auto_renew)
-    
-    if error:
-        status_code = 400
-        if error['code'] == 'CONFLICT': status_code = 409
-        elif error['code'] == 'NOT_FOUND': status_code = 404
-        return jsonify(error), status_code
+        plan_id = data.get('plan_id')
+        auto_renew = data.get('auto_renew', False)
         
-    return jsonify({
-        "message": "Subscribed successfully",
-        "membership_id": membership.id
-    }), 201
+        if not plan_id:
+            return jsonify({"code": "VALIDATION_ERROR", "message": "plan_id is required"}), 400
+            
+        membership, error = MembershipService.subscribe(user_id, plan_id, auto_renew)
+        
+        if error:
+            status_code = 400
+            if error.get('code') == 'CONFLICT': status_code = 409
+            elif error.get('code') == 'NOT_FOUND': status_code = 404
+            return jsonify(error), status_code
+            
+        return jsonify({
+            "message": "Subscribed successfully",
+            "membership_id": membership.id
+        }), 201
+    except Exception as e:
+        return jsonify({"code": "INTERNAL_ERROR", "message": str(e)}), 400
 
 @memberships_bp.route('/my-memberships', methods=['GET'])
 @jwt_required()

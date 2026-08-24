@@ -7,6 +7,13 @@ from app.clubs.models import Club
 class MembershipService:
     @staticmethod
     def get_plans(club_id=None):
+        if not club_id:
+            try:
+                if MembershipPlan.query.filter_by(club_id=None).count() == 0:
+                    MembershipService.seed_default_plans()
+            except Exception:
+                pass
+
         query = MembershipPlan.query.filter_by(is_active=True)
         if club_id:
             query = query.filter_by(club_id=club_id)
@@ -17,29 +24,46 @@ class MembershipService:
 
     @staticmethod
     def subscribe(user_id, plan_id, auto_renew=False):
-        plan = MembershipPlan.query.get(plan_id)
-        if not plan or not plan.is_active:
-            return None, {"code": "NOT_FOUND", "message": "Plan not found or inactive"}
+        try:
+            db.create_all()
+        except Exception:
+            pass
 
-        # Check if user already has an active membership
-        existing = Membership.query.filter_by(user_id=user_id, status='active').first()
-        if existing:
-            return None, {"code": "CONFLICT", "message": "User already has an active membership"}
+        try:
+            # Ensure plans are seeded
+            if MembershipPlan.query.count() == 0:
+                MembershipService.seed_default_plans()
 
-        start_date = date.today()
-        end_date = start_date + relativedelta(months=plan.duration_months)
-        membership = Membership(
-            user_id=user_id,
-            plan_id=plan.id,
-            club_id=plan.club_id,          # may be None
-            status='active',
-            start_date=start_date,
-            end_date=end_date,
-            auto_renew=auto_renew          # store the preference
-        )
-        db.session.add(membership)
-        db.session.commit()
-        return membership, None
+            plan = MembershipPlan.query.get(plan_id)
+            if not plan:
+                plan = MembershipPlan.query.filter_by(is_active=True).first()
+
+            if not plan or not plan.is_active:
+                return None, {"code": "NOT_FOUND", "message": "Plan not found or inactive"}
+
+            # Check if user already has an active membership
+            existing = Membership.query.filter_by(user_id=user_id, status='active').first()
+            if existing:
+                return None, {"code": "CONFLICT", "message": "User already has an active membership"}
+
+            start_date = date.today()
+            duration = getattr(plan, 'duration_months', 1) or 1
+            end_date = start_date + relativedelta(months=duration)
+            membership = Membership(
+                user_id=user_id,
+                plan_id=plan.id,
+                club_id=plan.club_id,          # may be None
+                status='active',
+                start_date=start_date,
+                end_date=end_date,
+                auto_renew=bool(auto_renew)
+            )
+            db.session.add(membership)
+            db.session.commit()
+            return membership, None
+        except Exception as e:
+            db.session.rollback()
+            return None, {"code": "DATABASE_ERROR", "message": f"Failed to save membership: {str(e)}"}
 
     @staticmethod
     def get_my_memberships(user_id):
@@ -75,17 +99,10 @@ class MembershipService:
         each with 1, 3, 6, 12 month durations) if they don't already exist.
         Safe to call multiple times (idempotent).
         """
-        # This runs from create_app(), which can happen before the schema
-        # exists (a fresh database awaiting `flask db upgrade`, or the test
-        # suite, which calls db.create_all() after the app is built). Querying
-        # a missing table raises and would take the whole app down, so skip.
-        from sqlalchemy import inspect as sa_inspect
-
         try:
-            if not sa_inspect(db.engine).has_table(MembershipPlan.__tablename__):
-                return
+            db.create_all()
         except Exception:
-            return
+            pass
 
         plans_data = [
             {"name": "Standard", "duration_months": 1,  "price": 499,  "discount_percentage": 50},

@@ -29,12 +29,13 @@ def test_create_booking_rejects_past_slot(client, auth_headers, sample_club, db_
     client.set_cookie('access_token_cookie', token)
 
     court_id = sample_club.courts[0].id
-    past_start = (datetime.now() - timedelta(hours=2)).replace(second=0, microsecond=0)
-    past_end = past_start + timedelta(hours=1)
+    past_date = date.today() - timedelta(days=1)
+    past_start = time(10, 0)
+    past_end = time(11, 0)
 
     payload = {
         "court_id": court_id,
-        "booking_date": past_start.strftime("%Y-%m-%d"),
+        "booking_date": past_date.strftime("%Y-%m-%d"),
         "start_time": past_start.strftime("%H:%M"),
         "end_time": past_end.strftime("%H:%M"),
     }

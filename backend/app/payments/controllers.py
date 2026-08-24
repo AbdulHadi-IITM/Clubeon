@@ -51,30 +51,33 @@ def webhook():
 @jwt_required()
 def stripe_create_payment_intent():
     """Create a Stripe PaymentIntent for the authenticated user."""
-    user_id = int(get_jwt_identity())
-    data = request.get_json(silent=True) or {}
+    try:
+        user_id = int(get_jwt_identity())
+        data = request.get_json(silent=True) or {}
 
-    # Amount is derived server-side from the referenced entity, never trusted
-    # from the client.
-    result, error = StripeService.create_payment_intent(
-        user_id=user_id,
-        payment_type=data.get('payment_type'),
-        reference_id=data.get('reference_id'),
-        currency=data.get('currency'),
-    )
+        # Amount is derived server-side from the referenced entity, never trusted
+        # from the client.
+        result, error = StripeService.create_payment_intent(
+            user_id=user_id,
+            payment_type=data.get('payment_type'),
+            reference_id=data.get('reference_id'),
+            currency=data.get('currency'),
+        )
 
-    if error:
-        status_map = {
-            'VALIDATION_ERROR': 400,
-            'NOT_FOUND': 404,
-            'FORBIDDEN': 403,
-            'ALREADY_PAID': 409,
-            'CONFIG_ERROR': 503,
-            'PAYMENT_GATEWAY_ERROR': 502,
-        }
-        return jsonify(error), status_map.get(error['code'], 400)
+        if error:
+            status_map = {
+                'VALIDATION_ERROR': 400,
+                'NOT_FOUND': 404,
+                'FORBIDDEN': 403,
+                'ALREADY_PAID': 409,
+                'CONFIG_ERROR': 503,
+                'PAYMENT_GATEWAY_ERROR': 502,
+            }
+            return jsonify(error), status_map.get(error['code'], 400)
 
-    return jsonify(result), 201
+        return jsonify(result), 201
+    except Exception as exc:
+        return jsonify({"code": "PAYMENT_GATEWAY_ERROR", "message": str(exc)}), 502
 
 
 @payments_bp.route('/stripe/webhook', methods=['POST'])

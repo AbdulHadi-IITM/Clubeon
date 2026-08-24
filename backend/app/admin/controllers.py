@@ -68,6 +68,22 @@ def get_admin_bookings():
     return jsonify([serialize_admin_booking(b) for b in bookings]), 200
 
 
+@admin_bp.route('/bookings', methods=['POST'])
+@role_required('owner')
+def create_admin_booking():
+    """Create a manual booking for a player/court under the owner's club."""
+    owner_id = int(get_jwt_identity())
+    data = request.get_json() or {}
+    booking, error = AdminService.create_booking(owner_id, data)
+    if error:
+        status_code = 400
+        if error.get('code') == 'FORBIDDEN': status_code = 403
+        elif error.get('code') == 'NOT_FOUND': status_code = 404
+        return jsonify(error), status_code
+    return jsonify(serialize_admin_booking(booking)), 201
+
+
+
 @admin_bp.route('/members/<int:member_id>/bookings', methods=['GET'])
 @role_required('owner')
 def get_member_bookings(member_id):

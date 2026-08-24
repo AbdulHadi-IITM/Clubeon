@@ -210,6 +210,9 @@
 
               <!-- Action Footer -->
               <div class="discord-actions-footer">
+                <button class="upload-btn-pill" style="background: #2563eb; color: #ffffff;" @click="openEditProfileModal">
+                  ✎ Edit Profile
+                </button>
                 <label class="upload-btn-pill">
                   📷 Upload Photo
                   <input type="file" accept="image/*" @change="handleAvatarUpload" style="display: none;" />
@@ -646,7 +649,7 @@
                   </div>
 
                   <div class="announcements-list">
-                    <div v-for="item in announcements" :key="item.id" class="announcement-item">
+                    <div v-for="item in announcements" :key="item.id" class="announcement-item" style="cursor: pointer;" @click="openAnnouncementDetails(item)">
                       <div class="announcement-top">
                         <span class="announcement-badge" :class="item.categoryClass">{{
                           item.category
@@ -667,23 +670,23 @@
             <section class="kpi-grid">
               <div class="kpi-card">
                 <span class="kpi-title">Total Registered Members</span>
-                <h3 class="kpi-value">1,248</h3>
-                <span class="trend-badge positive">↑ +12.4% this month</span>
+                <h3 class="kpi-value">{{ totalMembers }}</h3>
+                <span class="trend-badge neutral">• All members</span>
               </div>
               <div class="kpi-card">
-                <span class="kpi-title">Permanent Members</span>
-                <h3 class="kpi-value">820</h3>
-                <span class="trend-badge positive">↑ 65.7% Member Base</span>
+                <span class="kpi-title">Active Memberships</span>
+                <h3 class="kpi-value">{{ activeMembers }}</h3>
+                <span class="trend-badge positive">↑ Active plans</span>
               </div>
               <div class="kpi-card">
-                <span class="kpi-title">Guest & Public Players</span>
-                <h3 class="kpi-value">428</h3>
-                <span class="trend-badge neutral">• Pay-per-play</span>
+                <span class="kpi-title">Total Bookings</span>
+                <h3 class="kpi-value">{{ totalBookingsAll }}</h3>
+                <span class="trend-badge neutral">• All time</span>
               </div>
               <div class="kpi-card">
                 <span class="kpi-title">Recent Signups</span>
-                <h3 class="kpi-value">64</h3>
-                <span class="trend-badge positive">↑ Joined This Month</span>
+                <h3 class="kpi-value">{{ totalMembers }}</h3>
+                <span class="trend-badge positive">↑ This month</span>
               </div>
             </section>
 
@@ -719,7 +722,7 @@
                   <!-- Plan Filter Pills -->
                   <div class="view-toggle-group">
                     <button 
-                      v-for="planFilter in ['All', 'Permanent', 'VIP Platinum', 'Public']"
+                      v-for="planFilter in ['All', 'Premium', 'Standard']"
                       :key="planFilter"
                       class="view-toggle-btn"
                       :class="{ active: selectedMemberPlanFilter === planFilter }"
@@ -1419,21 +1422,30 @@
                   <h3>Broadcast Announcements</h3>
                   <span class="subtext">Facility updates, policy changes, and tournament news</span>
                 </div>
-                <button class="btn-primary-action" @click="handleCreateAnnouncement">
+                <button class="btn-primary-action" @click="openCreateAnnouncementModal">
                   + Create Announcement
                 </button>
               </div>
 
-              <div class="card-box">
-                <div class="announcements-list">
-                  <div v-for="item in announcements" :key="item.id" class="announcement-item">
-                    <div class="announcement-top">
-                      <span class="announcement-badge" :class="item.categoryClass">{{
-                        item.category
-                      }}</span>
-                      <span class="announcement-date">{{ item.date }}</span>
+              <div class="card-box" style="padding: 1.5rem;">
+                <div v-if="announcements.length === 0" class="no-bookings-empty" style="padding: 2.5rem 1rem; text-align: center;">
+                  <span style="font-size: 2.5rem; display: block; margin-bottom: 0.5rem;">📢</span>
+                  <p class="empty-title" style="font-weight: 700; color: #0f172a; margin: 0 0 0.25rem 0;">No announcements broadcasted yet</p>
+                  <p class="empty-sub" style="font-size: 0.875rem; color: #64748b; margin: 0;">Create an announcement to broadcast notices to your club members and staff.</p>
+                </div>
+                <div v-else class="announcements-list">
+                  <div v-for="item in announcements" :key="item.id" class="announcement-item" style="padding: 1rem 1.25rem; border-radius: 0.75rem; border: 1px solid #e2e8f0; margin-bottom: 0.875rem; background: #ffffff; box-shadow: 0 1px 3px rgba(0,0,0,0.03); cursor: pointer;" @click="openAnnouncementDetails(item)">
+                    <div class="announcement-top" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+                      <div style="display: flex; align-items: center; gap: 0.6rem;">
+                        <span class="announcement-badge" :class="item.categoryClass">{{ item.category }}</span>
+                        <span class="announcement-date" style="color: #64748b; font-size: 0.8rem; font-weight: 500;">{{ item.date }}</span>
+                      </div>
+                      <button class="action-icon-btn cancel-btn" style="padding: 0.3rem 0.6rem; font-size: 0.75rem; border-radius: 0.375rem;" @click.stop="handleDeleteAnnouncement(item.id)" title="Delete Announcement">
+                        ✕ Delete
+                      </button>
                     </div>
-                    <h4 class="announcement-title">{{ item.title }}</h4>
+                    <h4 class="announcement-title" style="margin: 0 0 0.35rem 0; font-size: 1rem; font-weight: 700; color: #0f172a;">{{ item.title }}</h4>
+                    <p v-if="item.body" style="font-size: 0.875rem; color: #475569; margin: 0; line-height: 1.5;">{{ item.body }}</p>
                   </div>
                 </div>
               </div>
@@ -2533,6 +2545,20 @@
                 <span style="font-weight: 700; color: #2563eb;">{{ selectedMemberForModal.plan }}</span>
               </div>
               <div class="setting-row">
+                <span class="setting-label">Membership Status</span>
+                <span class="status-badge-chip" :class="selectedMemberForModal.membership_status === 'active' ? 'status-active' : 'status-completed'">
+                  {{ selectedMemberForModal.membership_status === 'active' ? 'Active' : 'Inactive' }}
+                </span>
+              </div>
+              <div v-if="selectedMemberForModal.membership_start" class="setting-row">
+                <span class="setting-label">Plan Validity</span>
+                <span class="setting-val">{{ selectedMemberForModal.membership_start }} to {{ selectedMemberForModal.membership_end || 'Continuous' }}</span>
+              </div>
+              <div class="setting-row">
+                <span class="setting-label">Auto Renew</span>
+                <span class="setting-val">{{ selectedMemberForModal.membership_auto_renew ? 'Enabled' : 'Disabled' }}</span>
+              </div>
+              <div class="setting-row">
                 <span class="setting-label">Date Joined</span>
                 <span class="setting-val">{{ selectedMemberForModal.dateJoined }}</span>
               </div>
@@ -2544,14 +2570,243 @@
                 <span class="setting-label">Contact Phone</span>
                 <span class="setting-val">{{ selectedMemberForModal.phone }}</span>
               </div>
-              <div class="setting-row">
-                <span class="setting-label">Account Status</span>
-                <span class="status-badge-chip status-active">Active & Verified</span>
-              </div>
             </div>
             <div class="modal-footer">
               <button class="cancel-modal-btn" @click="showMemberModal = false">Close</button>
             </div>
+          </div>
+        </div>
+
+        <!-- BROADCAST ANNOUNCEMENT MODAL -->
+        <div v-if="showAnnouncementModal" class="modal-overlay" @click.self="showAnnouncementModal = false">
+          <div class="modal-card">
+            <div class="modal-header">
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <span style="font-size: 1.25rem;">📢</span>
+                <h3 style="margin: 0;">Broadcast Announcement</h3>
+              </div>
+              <button class="close-modal-btn" @click="showAnnouncementModal = false">✕</button>
+            </div>
+            <form @submit.prevent="submitCreateAnnouncement" class="modal-form">
+              <div class="form-group">
+                <label>Title *</label>
+                <input type="text" v-model="announcementForm.title" placeholder="e.g. Facility Maintenance & Schedule Update" required class="settings-input" />
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Category</label>
+                  <select v-model="announcementForm.category" class="settings-input">
+                    <option value="General">General</option>
+                    <option value="Maintenance">Maintenance</option>
+                    <option value="Tournament">Tournament</option>
+                    <option value="Policy">Policy</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Target Audience</label>
+                  <select v-model="announcementForm.target_audience" class="settings-input">
+                    <option value="all">All Members & Staff</option>
+                    <option value="members">Members Only</option>
+                    <option value="staff">Staff Only</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Announcement Message *</label>
+                <textarea v-model="announcementForm.body" rows="3" placeholder="Enter details for the announcement broadcast..." required class="settings-input" style="height: auto;"></textarea>
+              </div>
+              <div class="modal-footer" style="padding-top: 1rem;">
+                <button type="button" class="cancel-modal-btn" @click="showAnnouncementModal = false">Cancel</button>
+                <button type="submit" class="submit-modal-btn" :disabled="isBroadcasting">
+                  {{ isBroadcasting ? 'Broadcasting...' : '📢 Broadcast Now' }}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- ANNOUNCEMENT DETAILS MODAL -->
+        <div v-if="showAnnouncementDetailsModal && selectedAnnouncement" class="modal-overlay" @click.self="closeAnnouncementDetails">
+          <div class="modal-card modal-card-details" style="max-width: 580px; width: 95vw;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #1e293b, #0f172a); color: #ffffff; border-radius: 1rem 1rem 0 0; padding: 1.25rem 1.5rem;">
+              <div style="display: flex; align-items: center; gap: 0.6rem;">
+                <span class="announcement-badge" :class="selectedAnnouncement.categoryClass" style="font-size: 0.82rem; padding: 0.35rem 0.75rem;">
+                  📢 {{ selectedAnnouncement.category }}
+                </span>
+                <span style="font-size: 0.82rem; color: #94a3b8;">
+                  {{ selectedAnnouncement.date }}
+                </span>
+              </div>
+              <button class="close-modal-btn" @click="closeAnnouncementDetails" style="color: #94a3b8; background: rgba(255,255,255,0.08); border-radius: 999px; width: 32px; height: 32px; display: grid; place-items: center; border: none; font-size: 1rem; cursor: pointer;">✕</button>
+            </div>
+
+            <div class="modal-body" style="padding: 1.5rem;">
+              <h3 style="font-size: 1.25rem; font-weight: 800; color: #0f172a; margin: 0 0 1rem; line-height: 1.35; letter-spacing: -0.01em;">
+                {{ selectedAnnouncement.title }}
+              </h3>
+
+              <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 0.85rem; padding: 1.25rem; margin-bottom: 1.25rem;">
+                <h5 style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; margin: 0 0 0.5rem; font-weight: 700;">Announcement Details</h5>
+                <p style="font-size: 0.95rem; color: #334155; line-height: 1.65; white-space: pre-wrap; margin: 0;">
+                  {{ selectedAnnouncement.body || 'No detailed message description provided.' }}
+                </p>
+              </div>
+
+              <div class="announcement-meta-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                <div class="meta-card" style="background: #f8fafc; padding: 0.75rem; border-radius: 0.5rem; border: 1px solid #e2e8f0;">
+                  <span class="meta-label" style="display: block; font-size: 0.75rem; color: #64748b;">Category</span>
+                  <span class="meta-val font-bold" style="font-weight: 700; color: #0f172a;">{{ selectedAnnouncement.category }}</span>
+                </div>
+                <div class="meta-card" style="background: #f8fafc; padding: 0.75rem; border-radius: 0.5rem; border: 1px solid #e2e8f0;">
+                  <span class="meta-label" style="display: block; font-size: 0.75rem; color: #64748b;">Date Published</span>
+                  <span class="meta-val" style="color: #0f172a;">{{ selectedAnnouncement.date }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; padding: 1.25rem 1.5rem; background: #f8fafc; border-top: 1px solid #e2e8f0; border-radius: 0 0 1rem 1rem;">
+              <button
+                type="button"
+                class="cancel-modal-btn danger-btn"
+                style="background: #fef2f2; color: #ef4444; border: 1px solid #fecaca; display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.5rem 1rem; border-radius: 0.5rem; cursor: pointer;"
+                @click="handleDeleteAnnouncement(selectedAnnouncement.id)"
+              >
+                <span>✕ Delete Announcement</span>
+              </button>
+              <button type="button" class="cancel-modal-btn" @click="closeAnnouncementDetails">Close</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- EDIT ADMIN PROFILE MODAL -->
+        <div v-if="showEditProfileModal" class="modal-overlay" @click.self="closeEditProfileModal">
+          <div class="modal-card" style="max-width: 520px; width: 95vw; max-height: 90vh; overflow-y: auto;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #1e293b, #0f172a); color: #ffffff; border-radius: 1rem 1rem 0 0; padding: 1.25rem 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+              <div style="display: flex; align-items: center; gap: 0.85rem;">
+                <div style="width: 42px; height: 42px; border-radius: 12px; background: linear-gradient(135deg, #3b82f6, #6366f1); display: grid; place-items: center; font-size: 1.35rem; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);">
+                  👤
+                </div>
+                <div>
+                  <h3 style="margin: 0; font-size: 1.2rem; font-weight: 800; color: #ffffff; letter-spacing: -0.02em;">Edit Admin Profile</h3>
+                  <span style="font-size: 0.82rem; color: #94a3b8;">Update administrative contact details & credentials</span>
+                </div>
+              </div>
+              <button type="button" class="close-modal-btn" @click="closeEditProfileModal" style="color: #94a3b8; background: rgba(255,255,255,0.08); border-radius: 999px; width: 32px; height: 32px; display: grid; place-items: center; border: none; font-size: 1rem; cursor: pointer;">✕</button>
+            </div>
+
+            <form @submit.prevent="saveAdminProfile" class="modal-body" style="padding: 1.5rem;">
+              <div style="display: flex; align-items: center; gap: 1.25rem; margin-bottom: 1.5rem; padding: 1rem; background: #f8fafc; border-radius: 0.85rem; border: 1px solid #e2e8f0;">
+                <div style="position: relative; width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, #2563eb, #4f46e5); color: #ffffff; display: grid; place-items: center; font-size: 1.3rem; font-weight: 800; overflow: hidden; flex-shrink: 0; box-shadow: 0 4px 12px rgba(37,99,235,0.3);">
+                  <img v-if="editProfileForm.avatarUrl" :src="editProfileForm.avatarUrl" alt="Avatar preview" style="width: 100%; height: 100%; object-fit: cover;" />
+                  <span v-else>{{ getInitials(editProfileForm.name || adminProfile.name) }}</span>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 0.4rem; flex: 1;">
+                  <span style="font-size: 0.85rem; font-weight: 700; color: #1e293b;">Profile Avatar</span>
+                  <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                    <label class="modal-upload-btn" style="background: #2563eb; color: #ffffff; font-size: 0.78rem; font-weight: 600; padding: 0.4rem 0.85rem; border-radius: 0.5rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.35rem;">
+                      📷 Choose Photo
+                      <input type="file" accept="image/*" @change="handleEditAvatarUpload" style="display: none;" />
+                    </label>
+                    <button v-if="editProfileForm.avatarUrl" type="button" @click="removeEditAvatar" style="background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; font-size: 0.78rem; font-weight: 600; padding: 0.4rem 0.85rem; border-radius: 0.5rem; cursor: pointer;">
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-group" style="margin-bottom: 1.15rem;">
+                <label class="form-label" style="display: block; font-size: 0.82rem; font-weight: 700; color: #334155; margin-bottom: 0.35rem;">
+                  Full Name <span style="color: #ef4444;">*</span>
+                </label>
+                <input
+                  v-model="editProfileForm.name"
+                  type="text"
+                  required
+                  placeholder="e.g. Alex Morgan"
+                  class="settings-input"
+                />
+              </div>
+
+              <div class="form-group" style="margin-bottom: 1.15rem;">
+                <label class="form-label" style="display: block; font-size: 0.82rem; font-weight: 700; color: #334155; margin-bottom: 0.35rem;">
+                  Email Address <span style="color: #ef4444;">*</span>
+                </label>
+                <input
+                  v-model="editProfileForm.email"
+                  type="email"
+                  required
+                  placeholder="admin@clubdash.com"
+                  class="settings-input"
+                />
+              </div>
+
+              <div class="form-group" style="margin-bottom: 1.15rem;">
+                <label class="form-label" style="display: block; font-size: 0.82rem; font-weight: 700; color: #334155; margin-bottom: 0.35rem;">
+                  Phone Number
+                </label>
+                <input
+                  v-model="editProfileForm.phone"
+                  type="tel"
+                  placeholder="+1 (555) 234-5678"
+                  class="settings-input"
+                />
+              </div>
+
+              <div class="modal-footer" style="padding-top: 1rem; display: flex; justify-content: flex-end; gap: 0.75rem;">
+                <button type="button" class="cancel-modal-btn" @click="closeEditProfileModal">Cancel</button>
+                <button type="submit" class="submit-modal-btn">Save Changes</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- FIRST-TIME ADMIN PHONE SETUP MODAL -->
+        <div v-if="showFirstTimePhoneModal" class="modal-overlay" style="z-index: 500;">
+          <div class="modal-card" style="max-width: 440px; width: 95vw; border-radius: 1.25rem; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);">
+            <div style="background: linear-gradient(135deg, #1e293b, #0f172a); color: #ffffff; padding: 1.5rem; text-align: center; position: relative;">
+              <div style="width: 52px; height: 52px; border-radius: 16px; background: linear-gradient(135deg, #2563eb, #4f46e5); display: grid; place-items: center; font-size: 1.6rem; margin: 0 auto 0.75rem; box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);">
+                📱
+              </div>
+              <h3 style="margin: 0 0 0.35rem; font-size: 1.25rem; font-weight: 800; color: #ffffff; letter-spacing: -0.02em;">Welcome to ClubDash</h3>
+              <p style="margin: 0; font-size: 0.85rem; color: #94a3b8; line-height: 1.4;">
+                Please provide your contact phone number to complete your administrator setup.
+              </p>
+            </div>
+
+            <form @submit.prevent="submitFirstTimePhone" style="padding: 1.5rem; background: #ffffff;">
+              <div class="form-group" style="margin-bottom: 1.25rem;">
+                <label class="form-label" style="display: block; font-size: 0.85rem; font-weight: 700; color: #1e293b; margin-bottom: 0.45rem;">
+                  Admin Phone Number <span style="color: #ef4444;">*</span>
+                </label>
+                <input
+                  v-model="firstTimePhoneInput"
+                  type="tel"
+                  required
+                  placeholder="e.g. +91 98765 43210"
+                  class="settings-input"
+                  autofocus
+                />
+                <span style="display: block; font-size: 0.75rem; color: #64748b; margin-top: 0.4rem;">
+                  🔒 You will only be asked for this once upon your first login.
+                </span>
+              </div>
+
+              <div style="display: flex; gap: 0.75rem; justify-content: flex-end; align-items: center; margin-top: 1.5rem;">
+                <button
+                  type="button"
+                  @click="skipFirstTimePhone"
+                  class="cancel-modal-btn"
+                >
+                  Skip for Now
+                </button>
+                <button
+                  type="submit"
+                  class="submit-modal-btn"
+                >
+                  Save & Continue
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       </div>
@@ -2615,6 +2870,12 @@ onMounted(() => {
   loadBookings()
   loadMembers()
   loadEvents()
+  loadAnnouncements()
+  loadAdminAnalytics()
+})
+
+watch(activeNav, (newTab) => {
+  if (newTab === 'Members') loadMembers()
 })
 
 watch(
@@ -3179,37 +3440,36 @@ function closeNewBookingModal() {
 }
 
 function handleCreateNewBooking() {
-  if (!newBookingForm.player || !newBookingForm.email) {
-    if (toast) toast.error('Please enter player name and email.')
+  if (!newBookingForm.player || !newBookingForm.date) {
+    if (toast) toast.error('Please enter player name and date.')
     return
   }
-  const newId = `BK-${100 + bookingsList.value.length + 1}`
-  const initials = newBookingForm.player.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) || 'BK'
+  const court = courtStore.courts.find(c => c.name === newBookingForm.facility) || courtStore.courts[0]
+  if (!court) {
+    if (toast) toast.error('No court available for booking.')
+    return
+  }
   
-  const createdBooking = {
-    id: newId,
-    player: newBookingForm.player,
-    email: newBookingForm.email,
-    phone: newBookingForm.phone || '+1 (555) 000-0000',
-    facility: newBookingForm.facility,
-    sport: newBookingForm.sport,
+  const times = (newBookingForm.time || '10:00 AM - 11:00 AM').split(' - ')
+  const payload = {
+    court_id: court.id,
     date: newBookingForm.date,
-    dateDisplay: newBookingForm.date,
-    time: newBookingForm.time,
-    duration: newBookingForm.duration || '1.0 hr',
-    amount: Number(newBookingForm.amount) || 0,
-    paymentStatus: newBookingForm.paymentStatus,
-    paymentMethod: 'Admin Manual Entry',
-    status: newBookingForm.status,
-    initials: initials,
-    userType: newBookingForm.userType,
-    createdAt: new Date().toLocaleString(),
-    notes: newBookingForm.notes || 'Created manually by Admin'
+    start_time: times[0]?.trim() || '10:00',
+    end_time: times[1]?.trim() || '11:00',
+    email: newBookingForm.email
   }
 
-  bookingsList.value.unshift(createdBooking)
-  showNewBookingModal.value = false
-  if (toast) toast.success(`New booking ${newId} created successfully!`)
+  api.post('/admin/bookings', payload)
+    .then(() => {
+      showNewBookingModal.value = false
+      if (toast) toast.success('New booking recorded successfully! 🎉')
+      loadBookings()
+      loadAdminAnalytics()
+    })
+    .catch(err => {
+      const msg = err.response?.data?.message || 'Failed to create booking'
+      if (toast) toast.error(msg)
+    })
 }
 
 function exportBookingsCSV() {
@@ -3291,16 +3551,197 @@ const courtUtilization = computed(() => {
   ]
 })
 
-// Announcements reactive state
-const announcements = ref([
-  {
-    id: 1,
-    title: 'Club facility schedule and operational hours updated.',
-    date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-    category: 'General',
-    categoryClass: 'blue',
-  },
-])
+// Announcements reactive state & real DB operations
+const announcements = ref([])
+const showAnnouncementModal = ref(false)
+const isBroadcasting = ref(false)
+const announcementForm = reactive({
+  title: '',
+  body: '',
+  category: 'General',
+  target_audience: 'all'
+})
+
+async function loadAnnouncements() {
+  try {
+    const { data } = await api.get('/admin/announcements')
+    announcements.value = Array.isArray(data) ? data.map(a => ({
+      id: a.id,
+      title: a.title,
+      body: a.body || '',
+      date: a.created_at ? new Date(a.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Today',
+      category: (a.type || a.category || 'General').toUpperCase(),
+      categoryClass: a.type === 'maintenance' ? 'orange' : (a.type === 'tournament' ? 'purple' : 'blue')
+    })) : []
+  } catch (err) {
+    console.warn('Failed to load announcements:', err)
+  }
+}
+
+function openCreateAnnouncementModal() {
+  announcementForm.title = ''
+  announcementForm.body = ''
+  announcementForm.category = 'General'
+  announcementForm.target_audience = 'all'
+  showAnnouncementModal.value = true
+}
+
+async function submitCreateAnnouncement() {
+  if (!announcementForm.title || !announcementForm.body) {
+    if (toast) toast.error('Please enter announcement title and details.')
+    return
+  }
+  isBroadcasting.value = true
+  try {
+    await api.post('/admin/announcements', {
+      title: announcementForm.title,
+      body: announcementForm.body,
+      type: announcementForm.category.toLowerCase(),
+      target_audience: announcementForm.target_audience
+    })
+    showAnnouncementModal.value = false
+    if (toast) toast.success('Announcement broadcasted successfully! 📢')
+    await loadAnnouncements()
+  } catch (err) {
+    const msg = err.response?.data?.message || 'Failed to broadcast announcement'
+    if (toast) toast.error(msg)
+  } finally {
+    isBroadcasting.value = false
+  }
+}
+
+async function handleDeleteAnnouncement(id) {
+  try {
+    await api.delete(`/admin/announcements/${id}`)
+    if (toast) toast.success('Announcement removed.')
+    if (selectedAnnouncement.value && selectedAnnouncement.value.id === id) {
+      closeAnnouncementDetails()
+    }
+    await loadAnnouncements()
+  } catch (err) {
+    const msg = err.response?.data?.message || 'Failed to delete announcement'
+    if (toast) toast.error(msg)
+  }
+}
+
+// Announcements details modal
+const selectedAnnouncement = ref(null)
+const showAnnouncementDetailsModal = ref(false)
+
+function openAnnouncementDetails(item) {
+  selectedAnnouncement.value = item
+  showAnnouncementDetailsModal.value = true
+}
+
+function closeAnnouncementDetails() {
+  showAnnouncementDetailsModal.value = false
+  selectedAnnouncement.value = null
+}
+
+// Edit Admin Profile & Avatar handlers
+const showEditProfileModal = ref(false)
+const editProfileForm = reactive({
+  name: '',
+  email: '',
+  phone: '',
+  avatarUrl: null
+})
+
+function getInitials(name) {
+  if (!name) return 'AD'
+  const parts = name.trim().split(' ').filter(Boolean)
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+  } else if (parts.length === 1 && parts[0].length > 0) {
+    return parts[0].slice(0, 2).toUpperCase()
+  }
+  return 'AD'
+}
+
+function openEditProfileModal() {
+  editProfileForm.name = adminProfile.name || auth.user?.name || ''
+  editProfileForm.email = adminProfile.email || auth.user?.email || ''
+  editProfileForm.phone = adminProfile.phone || auth.user?.phone || ''
+  editProfileForm.avatarUrl = adminProfile.avatarUrl || auth.user?.avatarUrl || null
+  showEditProfileModal.value = true
+}
+
+function closeEditProfileModal() {
+  showEditProfileModal.value = false
+}
+
+function handleEditAvatarUpload(e) {
+  const file = e.target.files[0]
+  if (!file) return
+  const reader = new FileReader()
+  reader.onload = (ev) => {
+    editProfileForm.avatarUrl = ev.target.result
+  }
+  reader.readAsDataURL(file)
+}
+
+function removeEditAvatar() {
+  editProfileForm.avatarUrl = null
+}
+
+async function saveAdminProfile() {
+  if (!editProfileForm.name || !editProfileForm.email) {
+    if (toast) toast.error('Please enter name and email.')
+    return
+  }
+  adminProfile.name = editProfileForm.name
+  adminProfile.email = editProfileForm.email
+  adminProfile.phone = editProfileForm.phone
+  adminProfile.avatarUrl = editProfileForm.avatarUrl
+  adminProfile.initials = getInitials(editProfileForm.name)
+
+  try {
+    if (auth.isAuthenticated()) {
+      await auth.updateProfile({
+        name: editProfileForm.name,
+        phone: editProfileForm.phone,
+      })
+    }
+  } catch (err) {
+    console.warn('Failed to persist profile:', err)
+  }
+
+  showEditProfileModal.value = false
+  if (toast) toast.success('Profile updated successfully! 👤')
+}
+
+// First-time phone prompt
+const showFirstTimePhoneModal = ref(false)
+const firstTimePhoneInput = ref('')
+
+async function submitFirstTimePhone() {
+  const phoneVal = firstTimePhoneInput.value.trim()
+  if (!phoneVal) {
+    if (toast) toast.error('Please enter a valid phone number.')
+    return
+  }
+
+  try {
+    if (auth.isAuthenticated()) {
+      await auth.updateProfile({ phone: phoneVal })
+    }
+  } catch (err) {
+    console.warn('Error saving initial phone:', err)
+  }
+
+  adminProfile.phone = phoneVal
+  const userKey = `phone_prompt_done_${auth.user?.id || auth.user?.email || 'default'}`
+  localStorage.setItem(userKey, 'true')
+
+  showFirstTimePhoneModal.value = false
+  if (toast) toast.success('Phone number saved successfully! 📱')
+}
+
+function skipFirstTimePhone() {
+  const userKey = `phone_prompt_done_${auth.user?.id || auth.user?.email || 'default'}`
+  localStorage.setItem(userKey, 'true')
+  showFirstTimePhoneModal.value = false
+}
 
 // --- EVENTS MANAGEMENT REAL DB STATE & CRUD ---
 const eventViewMode = ref('grid') // 'grid' | 'table'
@@ -3407,7 +3848,6 @@ function resetEventFilters() {
   eventSortBy.value = 'date'
 }
 
-
 const eventsKpis = computed(() => {
   const total = eventsList.value.length
   const upcoming = eventsList.value.filter(e => e.status === 'Upcoming' || e.status === 'Ongoing').length
@@ -3446,34 +3886,31 @@ function closeCreateEventModal() {
   showCreateEventModal.value = false
 }
 
-function handleCreateEvent() {
-  if (!createEventForm.title) {
-    if (toast) toast.error('Please enter an event title.')
+async function handleCreateEvent() {
+  if (!createEventForm.title || !createEventForm.date) {
+    if (toast) toast.error('Please enter an event title and date.')
     return
   }
-
-  const newId = `EVT-${200 + eventsList.value.length + 1}`
-  const createdEvent = {
-    id: newId,
-    title: createEventForm.title,
-    sport: createEventForm.sport,
-    type: createEventForm.type,
-    date: createEventForm.date,
-    dateDisplay: createEventForm.date,
-    time: createEventForm.time,
-    venue: createEventForm.venue || 'Club Arena',
-    capacity: Number(createEventForm.capacity) || 30,
-    registered: 0,
-    fee: Number(createEventForm.fee) || 0,
-    status: 'Upcoming',
-    organizer: createEventForm.organizer || 'Club Admin',
-    description: createEventForm.description || '',
-    participants: []
+  try {
+    const times = (createEventForm.time || '10:00 AM - 12:00 PM').split(' - ')
+    const payload = {
+      club_id: courtStore.club?.id,
+      title: createEventForm.title,
+      description: createEventForm.description || '',
+      event_date: createEventForm.date,
+      start_time: times[0]?.trim() || '10:00:00',
+      end_time: times[1]?.trim() || '12:00:00',
+      max_attendees: Number(createEventForm.capacity) || 50,
+      registration_fee: Number(createEventForm.fee) || 0
+    }
+    await api.post('/events', payload)
+    showCreateEventModal.value = false
+    if (toast) toast.success(`Event "${createEventForm.title}" created successfully! 🎉`)
+    await loadEvents()
+  } catch (err) {
+    const msg = err.response?.data?.message || 'Failed to create event'
+    if (toast) toast.error(msg)
   }
-
-  eventsList.value.unshift(createdEvent)
-  showCreateEventModal.value = false
-  if (toast) toast.success(`Event "${createdEvent.title}" created successfully! 🎉`)
 }
 
 function openEditEventModal(event) {
@@ -3498,26 +3935,30 @@ function closeEditEventModal() {
   editingEvent.value = null
 }
 
-function handleUpdateEvent() {
+async function handleUpdateEvent() {
   if (!editingEvent.value) return
-  const target = eventsList.value.find(e => e.id === editingEvent.value.id)
-  if (target) {
-    target.title = editEventForm.title
-    target.sport = editEventForm.sport
-    target.type = editEventForm.type
-    target.date = editEventForm.date
-    target.dateDisplay = editEventForm.date
-    target.time = editEventForm.time
-    target.venue = editEventForm.venue
-    target.capacity = Number(editEventForm.capacity) || 0
-    target.fee = Number(editEventForm.fee) || 0
-    target.status = editEventForm.status
-    target.organizer = editEventForm.organizer
-    target.description = editEventForm.description
+  try {
+    const eventId = Number(String(editingEvent.value.id).replace('EVT-', '')) || editingEvent.value.id
+    const times = (editEventForm.time || '10:00 AM - 12:00 PM').split(' - ')
+    const payload = {
+      title: editEventForm.title,
+      description: editEventForm.description || '',
+      event_date: editEventForm.date,
+      start_time: times[0]?.trim() || '10:00:00',
+      end_time: times[1]?.trim() || '12:00:00',
+      max_attendees: Number(editEventForm.capacity) || 50,
+      registration_fee: Number(editEventForm.fee) || 0,
+      status: (editEventForm.status || 'upcoming').toLowerCase()
+    }
+    await api.put(`/events/${eventId}`, payload)
+    showEditEventModal.value = false
+    editingEvent.value = null
+    if (toast) toast.success('Event updated successfully! ✨')
+    await loadEvents()
+  } catch (err) {
+    const msg = err.response?.data?.message || 'Failed to update event'
+    if (toast) toast.error(msg)
   }
-  showEditEventModal.value = false
-  editingEvent.value = null
-  if (toast) toast.success('Event updated successfully! ✨')
 }
 
 function requestDeleteEvent(event) {
@@ -3530,21 +3971,38 @@ function closeDeleteEventModal() {
   eventToDelete.value = null
 }
 
-function confirmDeleteEvent() {
+async function confirmDeleteEvent() {
   if (!eventToDelete.value) return
-  eventsList.value = eventsList.value.filter(e => e.id !== eventToDelete.value.id)
-  showDeleteEventModal.value = false
-  if (selectedEvent.value?.id === eventToDelete.value.id) {
-    selectedEvent.value = null
-    showEventDetailsModal.value = false
+  try {
+    const eventId = Number(String(eventToDelete.value.id).replace('EVT-', '')) || eventToDelete.value.id
+    await api.delete(`/events/${eventId}`)
+    showDeleteEventModal.value = false
+    if (selectedEvent.value?.id === eventToDelete.value.id) {
+      selectedEvent.value = null
+      showEventDetailsModal.value = false
+    }
+    if (toast) toast.success(`Event "${eventToDelete.value.title}" deleted.`)
+    eventToDelete.value = null
+    await loadEvents()
+  } catch (err) {
+    const msg = err.response?.data?.message || 'Failed to delete event'
+    if (toast) toast.error(msg)
   }
-  if (toast) toast.success(`Event ${eventToDelete.value.title} removed.`)
-  eventToDelete.value = null
 }
 
-// --- ANALYTICS TAB DYNAMIC DERIVED STATE ---
+// --- ANALYTICS TAB DYNAMIC DERIVED STATE & REAL DB API ---
 const analyticsTimeframe = ref('30 Days')
 const activeChartMetric = ref('revenue')
+const adminAnalyticsData = ref(null)
+
+async function loadAdminAnalytics() {
+  try {
+    const { data } = await api.get('/admin/analytics')
+    adminAnalyticsData.value = data
+  } catch (err) {
+    console.warn('Failed to load admin analytics:', err)
+  }
+}
 
 const sportRevenueBreakdown = computed(() => {
   if (!bookingsList.value.length) return []
@@ -3606,7 +4064,9 @@ const paymentMethodBreakdown = computed(() => {
 })
 
 const financialSummary = computed(() => {
-  const total = bookingsList.value.reduce((sum, b) => sum + (Number(b.amount) || 40), 0)
+  const total = adminAnalyticsData.value?.total_revenue != null
+    ? adminAnalyticsData.value.total_revenue
+    : bookingsList.value.reduce((sum, b) => sum + (Number(b.amount) || 40), 0)
   return {
     grossRevenue: `₹${total.toLocaleString()}`,
     operationalCosts: `₹${Math.round(total * 0.25).toLocaleString()}`,
@@ -3658,12 +4118,18 @@ async function loadMembers() {
         id: m.id,
         name,
         email: m.email || '—',
+        role: m.role || 'player',
         initials,
-        plan: m.plan || 'Standard Member',
-        dateJoined: m.date_joined || 'Recent',
-        totalBookings: m.bookings_count || 0,
-        phone: m.phone || '+1 (555) 000-0000',
-        status: m.status || 'Active'
+        plan: m.membership_plan || m.plan || 'Standard',
+        membership_plan: m.membership_plan || m.plan || 'Standard',
+        membership_status: m.membership_status || 'none',
+        membership_start: m.membership_start || null,
+        membership_end: m.membership_end || null,
+        membership_auto_renew: Boolean(m.membership_auto_renew),
+        dateJoined: m.date_joined || (m.created_at ? new Date(m.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Recent'),
+        totalBookings: m.booking_count || m.bookings_count || 0,
+        phone: m.phone || '+91 98765 43210',
+        status: m.membership_status === 'active' ? 'Active' : (m.status || 'Active')
       }
     }) : []
   } catch (e) {
@@ -3689,14 +4155,26 @@ const filteredMembersList = computed(() => {
   })
 })
 
+const totalMembers = computed(() => membersList.value.length)
+const activeMembers = computed(() => membersList.value.filter(m => m.membership_status === 'active' || m.status === 'Active').length)
+const totalBookingsAll = computed(() => membersList.value.reduce((sum, m) => sum + (m.totalBookings || 0), 0))
+
 function viewMemberDetails(member) {
   selectedMemberForModal.value = member
   showMemberModal.value = true
 }
 
 function exportMembersCSV() {
-  const headers = ['ID', 'Name', 'Email', 'Plan', 'Date Joined', 'Total Bookings', 'Phone']
-  const rows = membersList.value.map(m => [m.id, `"${m.name}"`, m.email, `"${m.plan}"`, `"${m.dateJoined}"`, m.totalBookings, `"${m.phone}"`])
+  const headers = ['Name', 'Email', 'Membership Plan', 'Booking Count', 'Status', 'Start Date', 'End Date']
+  const rows = filteredMembersList.value.map(m => [
+    `"${m.name}"`,
+    m.email,
+    `"${m.plan}"`,
+    m.totalBookings,
+    m.membership_status === 'active' ? 'Active' : 'Inactive',
+    m.membership_start || '—',
+    m.membership_end || '—'
+  ])
   const csvContent = [headers.join(','), ...rows.map(e => e.join(','))].join('\n')
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
   const url = URL.createObjectURL(blob)

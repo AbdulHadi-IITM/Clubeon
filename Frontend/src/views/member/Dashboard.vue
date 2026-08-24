@@ -148,6 +148,8 @@
             >My Bookings</router-link
           ><router-link to="/member/events" class="btn btn-soft text-center"
             >Explore Events</router-link
+          ><router-link to="/member/membership" class="btn btn-soft text-center"
+            >Membership Plans</router-link
           >
         </div>
         <div class="mt-6 border-t border-slate-100 pt-5">

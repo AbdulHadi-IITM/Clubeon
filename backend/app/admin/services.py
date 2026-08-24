@@ -57,6 +57,59 @@ class AdminService:
         return True, None
 
     @staticmethod
+    def create_booking(owner_id, data):
+        from datetime import datetime, time, date
+        from app.bookings.models import Booking
+        from app.clubs.models import Court, Club
+        from app.auth.models import User
+
+        court_id = data.get('court_id')
+        date_str = data.get('date') or data.get('booking_date')
+        start_time_str = data.get('start_time') or '10:00'
+        end_time_str = data.get('end_time') or '11:00'
+        player_email = data.get('email')
+
+        if not court_id or not date_str:
+            return None, {"code": "VALIDATION_ERROR", "message": "court_id and date are required"}
+
+        court = Court.query.get(court_id)
+        if not court:
+            return None, {"code": "NOT_FOUND", "message": "Court not found"}
+        if court.club.owner_id != owner_id:
+            return None, {"code": "FORBIDDEN", "message": "Not authorized to book courts for this club"}
+
+        user = User.query.filter_by(email=player_email).first() if player_email else None
+        user_id = user.id if user else owner_id
+
+        if isinstance(date_str, str):
+            b_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+        else:
+            b_date = date_str
+
+        def parse_t(t):
+            if isinstance(t, str):
+                parts = t.split(':')
+                return time(int(parts[0]), int(parts[1]))
+            return t
+
+        st = parse_t(start_time_str)
+        et = parse_t(end_time_str)
+
+        booking = Booking(
+            user_id=user_id,
+            court_id=court_id,
+            booking_date=b_date,
+            start_time=st,
+            end_time=et,
+            status='confirmed',
+            is_peak_hour=False
+        )
+        db.session.add(booking)
+        db.session.commit()
+        return booking, None
+
+
+    @staticmethod
     def get_bookings(owner_id, member_id=None, status=None, court_id=None, date_str=None, search=None):
         """Return bookings belonging to clubs owned by this admin.
 
@@ -150,41 +203,75 @@ class AdminService:
         return block, None
 
     @staticmethod
-    def get_members(owner_id):
+    def list_club_members(owner_id):
         from app.auth.models import User
         from app.bookings.models import Booking
         from app.clubs.models import Court, Club
         from app.memberships.models import Membership
 
-        users = User.query.filter(User.role.in_(['player', 'member', 'front-desk', 'owner'])).all()
+        club = Club.query.filter_by(owner_id=owner_id).first()
+        if not club:
+            users = User.query.filter(User.role.in_(['player', 'member', 'front-desk', 'owner'])).all()
+        else:
+            court_ids = [court.id for court in club.courts]
+            user_ids_with_bookings = set()
+            if court_ids:
+                rows = Booking.query.filter(Booking.court_id.in_(court_ids)) \
+                    .with_entities(Booking.user_id).distinct().all()
+                user_ids_with_bookings = {row[0] for row in rows}
+
+            memberships = Membership.query.filter(
+                (Membership.club_id == club.id) | (Membership.club_id.is_(None)),
+                Membership.status == 'active'
+            ).with_entities(Membership.user_id).distinct().all()
+            membership_user_ids = {row[0] for row in memberships}
+
+            all_user_ids = user_ids_with_bookings.union(membership_user_ids)
+            if not all_user_ids:
+                users = User.query.filter(User.role.in_(['player', 'member', 'front-desk', 'owner'])).all()
+            else:
+                users = User.query.filter(User.id.in_(all_user_ids)).all()
+
         result = []
-        for u in users:
-            b_count = (
-                Booking.query
-                .join(Booking.court)
-                .join(Court.club)
-                .filter(Club.owner_id == owner_id, Booking.user_id == u.id)
-                .count()
-            )
-            active_m = Membership.query.filter_by(user_id=u.id, status='active').first()
-            plan_name = active_m.plan.name if active_m and active_m.plan else ('VIP Pass' if u.role == 'owner' else 'Standard Member')
-            
+        for user in users:
+            booking_count = 0
+            if club and club.courts:
+                court_ids = [court.id for court in club.courts]
+                booking_count = Booking.query.filter(
+                    Booking.user_id == user.id,
+                    Booking.court_id.in_(court_ids)
+                ).count()
+            else:
+                booking_count = Booking.query.filter_by(user_id=user.id).count()
+
+            membership = Membership.query.filter_by(user_id=user.id, status='active').first()
+            plan = membership.plan if membership else None
+
             result.append({
-                'id': u.id,
-                'name': u.name,
-                'email': u.email,
-                'role': u.role,
-                'status': 'Active' if u.is_active else 'Suspended',
-                'plan': plan_name,
-                'bookings_count': b_count,
-                'phone': '+1 (555) 234-5678',
-                'date_joined': u.created_at.strftime('%b %d, %Y') if u.created_at else 'Jan 15, 2026',
+                'id': user.id,
+                'name': user.name,
+                'email': user.email,
+                'role': user.role,
+                'status': 'Active' if getattr(user, 'is_active', True) else 'Suspended',
+                'booking_count': booking_count,
+                'bookings_count': booking_count,
+                'totalBookings': booking_count,
+                'membership_status': membership.status if membership else 'none',
+                'membership_plan': plan.name if plan else None,
+                'plan': plan.name if plan else ('Premium' if user.role == 'owner' else 'Standard'),
+                'membership_start': str(membership.start_date) if membership else None,
+                'membership_end': str(membership.end_date) if membership else None,
+                'membership_auto_renew': membership.auto_renew if membership else False,
+                'created_at': str(user.created_at) if user.created_at else None,
+                'date_joined': user.created_at.strftime('%b %d, %Y') if user.created_at else 'Jan 15, 2026',
+                'phone': user.phone if user.phone else '+91 98765 43210',
             })
-        return result
+        return result, None
 
     @staticmethod
-    def list_club_members(owner_id):
-        return AdminService.get_members(owner_id), None
+    def get_members(owner_id):
+        res, _ = AdminService.list_club_members(owner_id)
+        return res
 
     @staticmethod
     def get_events(owner_id):

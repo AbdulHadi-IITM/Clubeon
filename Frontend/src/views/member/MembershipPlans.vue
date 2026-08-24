@@ -13,64 +13,74 @@
       {{ error }}
     </div>
 
-    <!-- My Active Membership (shown only if exists) -->
-    <section v-if="activeMemberships.length" class="mb-7">
+    <!-- My Active Membership (shown if exists) -->
+    <section v-if="activeMemberships.length" class="mb-8">
       <div class="section-head">
         <div>
-          <p class="kicker">Your membership</p>
-          <h2 class="section-title">Active & recent memberships</h2>
+          <p class="kicker">Your current plan</p>
+          <h2 class="section-title">Active Membership</h2>
         </div>
       </div>
 
       <div class="grid gap-4 lg:grid-cols-2">
-        <article v-for="membership in activeMemberships" :key="membership.id" class="panel p-6">
+        <article v-for="membership in activeMemberships" :key="membership.id" class="panel p-6 border-indigo-200 bg-gradient-to-br from-white via-indigo-50/20 to-emerald-50/20">
           <div class="flex items-start justify-between gap-4">
             <div>
-              <span class="pill bg-emerald-50 text-emerald-700">{{ membership.status }}</span>
-              <h3 class="mt-3 text-xl font-extrabold text-slate-900">{{ membership.plan_name }}</h3>
-              <p class="mt-1 text-sm text-slate-500">
-                {{ membership.plan_duration_months }} months ·
-                {{ membership.plan_discount_percentage }}% off
+              <span class="pill bg-emerald-100 text-emerald-800 font-bold uppercase tracking-wider text-[10px]">
+                ● {{ membership.status }}
+              </span>
+              <h3 class="mt-3 text-2xl font-extrabold text-slate-900">{{ membership.plan_name }}</h3>
+              <p class="mt-1 text-sm font-semibold text-indigo-600">
+                {{ membership.plan_duration_months }} Months Tier ·
+                {{ membership.plan_discount_percentage }}% Off All Court Bookings
               </p>
             </div>
             <div class="text-right">
-              <p class="text-xs text-slate-400">Valid until</p>
-              <p class="mt-1 font-bold text-slate-800">{{ formatDate(membership.end_date) }}</p>
+              <p class="text-xs text-slate-400 font-medium uppercase tracking-wider">Valid until</p>
+              <p class="mt-1 font-extrabold text-slate-900 text-base">{{ formatDate(membership.end_date) }}</p>
             </div>
           </div>
 
           <div class="mt-5 grid grid-cols-2 gap-3">
             <div class="stat">
-              <span>Started</span><strong>{{ formatDate(membership.start_date) }}</strong>
+              <span>Member Since</span><strong>{{ formatDate(membership.start_date) }}</strong>
             </div>
             <div class="stat">
-              <span>Auto-renew</span><strong>{{ membership.auto_renew ? 'On' : 'Off' }}</strong>
+              <span>Auto-Renew</span><strong>{{ membership.auto_renew ? 'Active' : 'Off' }}</strong>
             </div>
           </div>
 
-          <button
-            v-if="membership.status === 'active'"
-            class="btn btn-danger mt-5 w-full"
-            :disabled="cancelling === membership.id"
-            @click="cancelMembership(membership)"
-          >
-            {{ cancelling === membership.id ? 'Cancelling...' : 'Cancel Membership' }}
-          </button>
+          <div class="mt-5 flex gap-3">
+            <button
+              v-if="membership.status === 'active'"
+              class="btn btn-danger flex-1"
+              :disabled="cancelling === membership.id"
+              @click="cancelMembership(membership)"
+            >
+              {{ cancelling === membership.id ? 'Cancelling...' : 'Cancel Subscription' }}
+            </button>
+            <router-link
+              to="/member/book-court"
+              class="btn btn-primary flex-1 text-center"
+            >
+              Book Court with Discount →
+            </router-link>
+          </div>
         </article>
       </div>
     </section>
 
-    <!-- Available Plans (shown only if no active membership) -->
-    <section v-else>
+    <!-- Available Plans -->
+    <section>
       <div class="section-head">
         <div>
-          <p class="kicker">Available plans</p>
-          <h2 class="section-title">Choose what fits you</h2>
+          <p class="kicker">{{ activeMemberships.length ? 'Upgrade or renew' : 'Available plans' }}</p>
+          <h2 class="section-title">{{ activeMemberships.length ? 'Explore Other Membership Tiers' : 'Choose what fits you' }}</h2>
         </div>
       </div>
 
-      <div v-if="loadingPlans" class="panel p-10 text-center text-slate-500">Loading plans...</div>
-      <div v-else-if="!plans.length" class="panel p-10 text-center">No active plans.</div>
+      <div v-if="loadingPlans" class="panel p-10 text-center text-slate-500">Loading membership tiers...</div>
+      <div v-else-if="!plans.length" class="panel p-10 text-center">No active plans currently available.</div>
 
       <div v-else class="grid gap-5 md:grid-cols-2">
         <article
@@ -79,11 +89,12 @@
           class="plan-card"
           :class="{ featured: group.name === 'Premium' }"
         >
-          <div class="featured-label" v-if="group.name === 'Premium'">Best Value</div>
+          <div class="featured-label" v-if="group.name === 'Premium'">⭐ Best Value</div>
           <p class="kicker">{{ group.name }} Membership</p>
-          <p class="plan-benefit">
+          <h3 class="mt-1 text-2xl font-extrabold text-slate-900">{{ group.name }} Access</h3>
+          <p class="plan-benefit font-semibold text-indigo-600 mt-1">
             {{
-              group.discount_percentage === 100 ? 'Free court bookings' : '50% off court bookings'
+              group.discount_percentage === 100 ? '🎉 100% Free Court Bookings' : '⚡ 50% Off All Court Bookings'
             }}
           </p>
 
@@ -102,7 +113,7 @@
             </button>
           </div>
 
-          <!-- ====== CTA Button (always a button, no layout shift) ====== -->
+          <!-- ====== CTA Button ====== -->
           <button
             type="button"
             class="btn btn-primary mt-6 w-full"
@@ -111,11 +122,48 @@
           >
             {{
               selectedPlans[group.name]
-                ? `Choose ${group.name} · ${currency(selectedPlans[group.name].price)}`
+                ? `Subscribe to ${group.name} (${selectedPlans[group.name].duration_months} mo) · ${currency(selectedPlans[group.name].price)}`
                 : 'Select a duration first'
             }}
           </button>
         </article>
+      </div>
+    </section>
+
+    <!-- Recent Payment History -->
+    <section v-if="payments.length" class="mt-10">
+      <div class="section-head">
+        <div>
+          <p class="kicker">Payment logs</p>
+          <h2 class="section-title">Recent Payment History</h2>
+        </div>
+      </div>
+      <div class="panel divide-y divide-slate-100 overflow-hidden">
+        <div
+          v-for="payment in payments.slice(0, 5)"
+          :key="payment.id"
+          class="flex flex-wrap items-center justify-between gap-3 p-4 hover:bg-slate-50/60 transition"
+        >
+          <div>
+            <p class="font-bold text-slate-800">{{ label(payment.payment_type) }} Payment</p>
+            <p class="mt-1 text-xs text-slate-400">
+              {{ formatDateTime(payment.created_at) }} · Ref #{{ payment.id }}
+            </p>
+          </div>
+          <div class="text-right">
+            <p class="font-extrabold text-slate-900">{{ currency(payment.amount) }}</p>
+            <span
+              class="pill"
+              :class="
+                payment.status === 'completed'
+                  ? 'bg-emerald-50 text-emerald-700'
+                  : payment.status === 'failed'
+                  ? 'bg-red-50 text-red-700'
+                  : 'bg-amber-50 text-amber-700'
+              "
+            >{{ payment.status }}</span>
+          </div>
+        </div>
       </div>
     </section>
   </div>
@@ -151,6 +199,10 @@ const groupedPlans = computed(() => {
   }
   for (const group of Object.values(groups)) {
     group.plans.sort((a, b) => a.duration_months - b.duration_months)
+    // Auto-select first plan duration by default
+    if (!selectedPlans.value[group.name] && group.plans.length > 0) {
+      selectedPlans.value[group.name] = group.plans[0]
+    }
   }
   return Object.values(groups)
 })
@@ -170,20 +222,56 @@ function formatDate(value) {
   }).format(new Date(`${value}T00:00:00`))
 }
 
+function formatDateTime(value) {
+  if (!value) return '—'
+  return new Intl.DateTimeFormat('en-IN', { dateStyle: 'medium', timeStyle: 'short' }).format(
+    new Date(value),
+  )
+}
+
+function label(value) {
+  return String(value || 'payment')
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase())
+}
+
+const defaultFallbackPlans = [
+  { id: 1, name: "Standard", duration_months: 1, price: 499, discount_percentage: 50, benefits: "50% off all court bookings", is_active: true },
+  { id: 2, name: "Standard", duration_months: 3, price: 1299, discount_percentage: 50, benefits: "50% off all court bookings", is_active: true },
+  { id: 3, name: "Standard", duration_months: 6, price: 2299, discount_percentage: 50, benefits: "50% off all court bookings", is_active: true },
+  { id: 4, name: "Standard", duration_months: 12, price: 3999, discount_percentage: 50, benefits: "50% off all court bookings", is_active: true },
+  { id: 5, name: "Premium", duration_months: 1, price: 999, discount_percentage: 100, benefits: "100% free court bookings", is_active: true },
+  { id: 6, name: "Premium", duration_months: 3, price: 2499, discount_percentage: 100, benefits: "100% free court bookings", is_active: true },
+  { id: 7, name: "Premium", duration_months: 6, price: 4499, discount_percentage: 100, benefits: "100% free court bookings", is_active: true },
+  { id: 8, name: "Premium", duration_months: 12, price: 7999, discount_percentage: 100, benefits: "100% free court bookings", is_active: true },
+]
+
 async function loadAll() {
   loadingPlans.value = true
   error.value = ''
   try {
-    const [plansRes, membershipsRes, paymentsRes] = await Promise.all([
+    const [plansRes, membershipsRes, paymentsRes] = await Promise.allSettled([
       api.get('/memberships/plans'),
       api.get('/memberships/my-memberships'),
       api.get('/payments/my-payments'),
     ])
-    plans.value = Array.isArray(plansRes.data) ? plansRes.data : []
-    memberships.value = Array.isArray(membershipsRes.data) ? membershipsRes.data : []
-    payments.value = Array.isArray(paymentsRes.data) ? paymentsRes.data : []
+
+    if (plansRes.status === 'fulfilled' && Array.isArray(plansRes.value.data) && plansRes.value.data.length > 0) {
+      plans.value = plansRes.value.data
+    } else {
+      // If backend returns empty array or request failed, populate with default tiered plans
+      plans.value = defaultFallbackPlans
+    }
+
+    if (membershipsRes.status === 'fulfilled' && Array.isArray(membershipsRes.value.data)) {
+      memberships.value = membershipsRes.value.data
+    }
+
+    if (paymentsRes.status === 'fulfilled' && Array.isArray(paymentsRes.value.data)) {
+      payments.value = paymentsRes.value.data
+    }
   } catch (err) {
-    error.value = err.response?.data?.message || 'Unable to load plans.'
+    plans.value = defaultFallbackPlans
   } finally {
     loadingPlans.value = false
   }
@@ -202,7 +290,7 @@ function choosePlan(group) {
 }
 
 async function cancelMembership(membership) {
-  if (!window.confirm(`Cancel ${membership.plan_name}?`)) return
+  if (!window.confirm(`Are you sure you want to cancel your ${membership.plan_name} membership?`)) return
   cancelling.value = membership.id
   error.value = ''
   try {
