@@ -2,30 +2,30 @@
   <div class="space-y-6">
     <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
       <div>
-        <h1 class="text-2xl font-bold gradient-text">Bookings</h1>
-        <p class="text-sm text-gray-500 mt-1">Manage the club's booking schedule.</p>
+        <h1 class="text-2xl font-bold title">Bookings</h1>
+        <p class="text-sm text-slate-500 mt-1">Manage the club's booking schedule.</p>
       </div>
       <div class="flex flex-col sm:flex-row gap-3">
         <ClubPicker v-model="clubId" @change="load" />
         <div>
-          <label class="block text-xs text-gray-500 mb-2">Date</label
+          <label class="block text-xs text-slate-500 mb-2">Date</label
           ><input v-model="selectedDate" type="date" class="input-field" @change="load" />
         </div>
       </div>
     </div>
-    <div v-if="error" class="glass p-4 text-red-400 text-sm">{{ error }}</div>
-    <div class="glass overflow-hidden">
-      <div class="p-4 border-b border-white/5 flex items-center justify-between">
-        <p class="text-sm text-gray-400">{{ bookings.length }} bookings</p>
-        <button class="text-xs text-primary-400" @click="load">Refresh</button>
+    <div v-if="error" class="panel p-4 text-red-600 text-sm">{{ error }}</div>
+    <div class="panel overflow-hidden">
+      <div class="p-4 border-b border-slate-200 flex items-center justify-between">
+        <p class="text-sm text-slate-500">{{ bookings.length }} bookings</p>
+        <button class="text-xs text-indigo-600" @click="load">Refresh</button>
       </div>
-      <div v-if="loading" class="p-10 text-center text-gray-500">Loading bookings...</div>
-      <div v-else-if="!bookings.length" class="p-10 text-center text-gray-500">
+      <div v-if="loading" class="p-10 text-center text-slate-500">Loading bookings...</div>
+      <div v-else-if="!bookings.length" class="p-10 text-center text-slate-500">
         No bookings found.
       </div>
       <div v-else class="overflow-x-auto">
         <table class="w-full text-left">
-          <thead class="text-xs text-gray-500 border-b border-white/5">
+          <thead class="text-xs text-slate-500 border-b border-slate-200">
             <tr>
               <th class="p-4">Time</th>
               <th class="p-4">Court</th>
@@ -35,22 +35,22 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="b in bookings" :key="b.id" class="border-b border-white/5">
-              <td class="p-4 text-sm text-gray-300">
+            <tr v-for="b in bookings" :key="b.id" class="border-b border-slate-200">
+              <td class="p-4 text-sm text-slate-700">
                 {{ time(b.start_time) }} – {{ time(b.end_time) }}
               </td>
-              <td class="p-4 text-sm text-gray-300">
+              <td class="p-4 text-sm text-slate-700">
                 <div class="flex items-center gap-2.5">
-                  <img :src="getSportImage(b.court_name)" :alt="b.court_name" class="w-8 h-8 rounded-lg object-cover shadow-sm border border-white/10 shrink-0" />
+                  <img :src="getSportImage(b.court_name)" :alt="b.court_name" class="w-8 h-8 rounded-lg object-cover shadow-sm border border-slate-200 shrink-0" />
                   <span>{{ b.court_name }}</span>
                 </div>
               </td>
               <td class="p-4">
-                <p class="text-sm text-gray-200">{{ b.user_name }}</p>
-                <p class="text-xs text-gray-500">{{ b.user_email }}</p>
+                <p class="text-sm text-slate-900">{{ b.user_name }}</p>
+                <p class="text-xs text-slate-500">{{ b.user_email }}</p>
               </td>
               <td class="p-4">
-                <span class="text-xs px-2 py-1 rounded-full bg-white/5 text-gray-300">{{
+                <span class="text-xs px-2 py-1 rounded-full bg-white/5 text-slate-700">{{
                   b.status
                 }}</span>
               </td>
@@ -61,7 +61,7 @@
                     params: { bookingId: b.id },
                     query: { club_id: clubId },
                   }"
-                  class="text-xs text-primary-400"
+                  class="text-xs text-indigo-600"
                   >View</router-link
                 ><button
                   v-if="b.status === 'active'"
@@ -69,7 +69,7 @@
                   @click="checkIn(b)"
                 >
                   Check in</button
-                ><span v-else class="text-xs text-gray-600">—</span>
+                ><span v-else class="text-xs text-slate-400">—</span>
               </td>
             </tr>
           </tbody>

@@ -378,6 +378,7 @@ async function checkOut(r) {
   }
 }
 </script>
+
 <style scoped>
 .panel {
   background: rgba(255, 255, 255, 0.95);
@@ -514,4 +515,3 @@ async function checkOut(r) {
   flex-shrink: 0;
 }
 </style>
-

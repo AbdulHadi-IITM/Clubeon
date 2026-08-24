@@ -11,7 +11,7 @@
       <div class="hero-content">
         <div class="hero-badge">
           <span class="badge-dot"></span>
-          Trusted by 50+ sports clubs worldwide
+          One workspace for bookings, members and events
         </div>
         <h1 class="hero-title">
           <span class="title-line">Book Courts.</span>
@@ -24,26 +24,26 @@
         </p>
         <div class="hero-actions">
           <router-link to="/register" class="hero-btn-primary">
-            Start Free Trial
+            Create free account
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
           </router-link>
           <router-link to="/public" class="hero-btn-secondary">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            View Demo
+            See live availability
           </router-link>
         </div>
         <div class="hero-stats">
           <div class="hero-stat">
-            <span class="stat-number">10K+</span>
-            <span class="stat-label">Active Members</span>
+            <span class="stat-number">10</span>
+            <span class="stat-label">Sports supported</span>
           </div>
           <div class="hero-stat">
-            <span class="stat-number">500+</span>
-            <span class="stat-label">Courts Managed</span>
+            <span class="stat-number">3</span>
+            <span class="stat-label">Roles: member, staff, owner</span>
           </div>
           <div class="hero-stat">
-            <span class="stat-number">99.9%</span>
-            <span class="stat-label">Uptime</span>
+            <span class="stat-number">Stripe</span>
+            <span class="stat-label">Secure card payments</span>
           </div>
         </div>
       </div>

@@ -1,3 +1,4 @@
+from datetime import datetime
 from flask import Blueprint, jsonify, request
 from app.auth.decorators import role_required
 from app.staff.services import StaffService
@@ -160,15 +161,21 @@ def attendance():
 
 
 
+
 @staff_bp.route('/attendance/check-in', methods=['POST'])
 @role_required('front-desk')
 def check_in():
     data = request.get_json() or {}
     booking_id = data.get('booking_id')
     club_id = data.get('club_id')
-    if not booking_id or not club_id:
-        return jsonify({'code': 'VALIDATION_ERROR', 'message': 'booking_id and club_id are required.'}), 400
-    if not StaffService.get_club(int(club_id)):
+    if not booking_id:
+        return jsonify({'code': 'VALIDATION_ERROR', 'message': 'booking_id is required.'}), 400
+    if not club_id:
+        from app.bookings.models import Booking
+        b = Booking.query.get(booking_id)
+        if b and b.court:
+            club_id = b.court.club_id
+    if not club_id or not StaffService.get_club(int(club_id)):
         return jsonify({'code': 'VALIDATION_ERROR', 'message': 'A valid club_id is required.'}), 400
     record, error = StaffService.check_in_booking(booking_id, int(club_id))
     if error:
@@ -180,6 +187,11 @@ def check_in():
 @role_required('front-desk')
 def check_out(attendance_id):
     club_id = request.args.get('club_id', type=int)
+    if not club_id:
+        from app.attendance.models import AttendanceRecord
+        r = AttendanceRecord.query.get(attendance_id)
+        if r and r.booking and r.booking.court:
+            club_id = r.booking.court.club_id
     if not club_id or not StaffService.get_club(club_id):
         return jsonify({'code': 'VALIDATION_ERROR', 'message': 'A valid club_id is required.'}), 400
     record, error = StaffService.check_out(attendance_id, club_id)

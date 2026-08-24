@@ -469,9 +469,10 @@ router.beforeEach(async (to) => {
 router.afterEach((to) => {
   const title = to.meta?.title
 
-  document.title = title
+  // The landing route's own title is the brand, so don't render "ClubDash | ClubDash".
+  document.title = title && title !== 'ClubDash'
     ? `${title} | ClubDash`
-    : 'ClubDash'
+    : 'ClubDash — Sports Club Management'
 })
 
 export default router

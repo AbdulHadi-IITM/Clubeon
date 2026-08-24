@@ -2,59 +2,59 @@
   <div class="space-y-6">
     <div class="flex items-center justify-between gap-4">
       <div>
-        <router-link to="/staff/bookings" class="text-xs text-primary-400"
+        <router-link to="/staff/bookings" class="text-xs text-indigo-600"
           >← Back to bookings</router-link
         >
-        <h1 class="text-2xl font-bold gradient-text mt-2">Booking Details</h1>
-        <p class="text-sm text-gray-500 mt-1">Operational details for the selected booking.</p>
+        <h1 class="text-2xl font-bold title mt-2">Booking Details</h1>
+        <p class="text-sm text-slate-500 mt-1">Operational details for the selected booking.</p>
       </div>
       <ClubPicker v-model="clubId" @change="load" />
     </div>
-    <div v-if="error" class="glass p-4 text-sm text-red-400">{{ error }}</div>
-    <div v-if="loading" class="glass p-10 text-center text-gray-500">Loading booking...</div>
+    <div v-if="error" class="state-error">{{ error }}</div>
+    <div v-if="loading" class="panel state-note">Loading booking...</div>
     <template v-else-if="booking">
       <section class="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        <div class="glass p-5 lg:col-span-2">
+        <div class="panel p-5 lg:col-span-2">
           <div class="flex items-start justify-between gap-4">
             <div>
-              <p class="text-xs text-gray-500">Booking #{{ booking.id }}</p>
-              <h2 class="text-xl font-semibold text-white mt-1">{{ booking.court_name }}</h2>
-              <p class="text-sm text-gray-500 mt-1">{{ booking.club_name }}</p>
+              <p class="text-xs text-slate-500">Booking #{{ booking.id }}</p>
+              <h2 class="text-xl font-semibold text-slate-900 mt-1">{{ booking.court_name }}</h2>
+              <p class="text-sm text-slate-500 mt-1">{{ booking.club_name }}</p>
             </div>
-            <span class="text-xs px-3 py-1.5 rounded-full bg-white/5 text-gray-300">{{
+            <span class="text-xs px-3 py-1.5 rounded-full bg-slate-100 text-slate-700">{{
               booking.status
             }}</span>
           </div>
           <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-7">
             <div>
-              <p class="text-xs text-gray-500">Date</p>
-              <p class="text-sm text-gray-200 mt-1">{{ formatDate(booking.date) }}</p>
+              <p class="text-xs text-slate-500">Date</p>
+              <p class="text-sm text-slate-900 mt-1">{{ formatDate(booking.date) }}</p>
             </div>
             <div>
-              <p class="text-xs text-gray-500">Start</p>
-              <p class="text-sm text-gray-200 mt-1">{{ time(booking.start_time) }}</p>
+              <p class="text-xs text-slate-500">Start</p>
+              <p class="text-sm text-slate-900 mt-1">{{ time(booking.start_time) }}</p>
             </div>
             <div>
-              <p class="text-xs text-gray-500">End</p>
-              <p class="text-sm text-gray-200 mt-1">{{ time(booking.end_time) }}</p>
+              <p class="text-xs text-slate-500">End</p>
+              <p class="text-sm text-slate-900 mt-1">{{ time(booking.end_time) }}</p>
             </div>
             <div>
-              <p class="text-xs text-gray-500">Court ID</p>
-              <p class="text-sm text-gray-200 mt-1">#{{ booking.court_id }}</p>
+              <p class="text-xs text-slate-500">Court ID</p>
+              <p class="text-sm text-slate-900 mt-1">#{{ booking.court_id }}</p>
             </div>
           </div>
         </div>
-        <div class="glass p-5">
-          <p class="text-xs uppercase tracking-wider text-gray-500">Member</p>
-          <h2 class="text-lg font-semibold text-white mt-2">{{ booking.user_name }}</h2>
-          <p class="text-sm text-gray-500 mt-1 break-all">{{ booking.user_email }}</p>
+        <div class="panel p-5">
+          <p class="text-xs uppercase tracking-wider text-slate-500">Member</p>
+          <h2 class="text-lg font-semibold text-slate-900 mt-2">{{ booking.user_name }}</h2>
+          <p class="text-sm text-slate-500 mt-1 break-all">{{ booking.user_email }}</p>
           <router-link
             :to="{
               name: 'staff-member-detail',
               params: { userId: booking.user_id },
               query: { club_id: clubId },
             }"
-            class="inline-block mt-5 text-xs text-primary-400"
+            class="inline-block mt-5 text-xs text-indigo-600"
             >View member →</router-link
           >
         </div>
@@ -78,7 +78,6 @@ const booking = ref(null)
 const loading = ref(false)
 const error = ref('')
 const bookingId = computed(() => Number(route.params.bookingId || (window.location.pathname.match(/bookings\/(\d+)/) || [])[1]))
-
 async function load() {
   if (!bookingId.value) return
   

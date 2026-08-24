@@ -127,7 +127,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, nextTick } from 'vue';
+import { ref, computed, nextTick } from 'vue';
 import { useAuthStore } from '@/stores/auth';
 import api from '@/api/axios';
 import { VMarkdownView } from 'vue3-markdown';
@@ -141,12 +141,15 @@ const isLoading = ref(false);
 const messagesContainer = ref(null);
 
 const isVisible = computed(() => {
-  return authStore.isAuthenticated && (authStore.user?.role === 'player' || authStore.user?.role === 'front-desk');
+  return authStore.isAuthenticated();
 });
 
 const welcomeMessage = computed(() => {
   if (authStore.user?.role === 'player') {
     return "Hi! I'm your ClubDash assistant. I can help you find & recommend facilities (by sport, amenities, distance), check bookings, and see court availability.";
+  }
+  if (authStore.user?.role === 'owner') {
+    return "Hello! I can assist with your club analytics, facility bookings, court schedules, attendance, and member reservations.";
   }
   return "Hello! I can assist with today's operational dashboard, staff bookings, attendance, court status, and facility discovery.";
 });
@@ -160,11 +163,19 @@ const suggestedPrompts = computed(() => {
       "What are my upcoming bookings?"
     ];
   }
+  if (authStore.user?.role === 'owner') {
+    return [
+      "Show today's court status and bookings",
+      "Find facilities with parking and cafe",
+      "Check today's attendance summary",
+      "Which courts are available today?"
+    ];
+  }
   return [
     "Book a court for a walk-in member",
     "Find facilities with parking and cafe",
-    "Show me today's dashboard",
-    "What is the court status?"
+    "Show today's attendance summary",
+    "Which courts are available today?"
   ];
 });
 
@@ -205,16 +216,16 @@ const scrollToBottom = async () => {
   }
 };
 
-const getUserLocation = async () => {
-  return new Promise((resolve) => {
-    if (!navigator.geolocation) return resolve(null);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
-      () => resolve({ lat: 12.9716, lon: 77.5946 }), // fallback to default center
-      { timeout: 3000 }
-    );
-  });
-};
+let cachedLocation = { lat: 12.9716, lon: 77.5946 };
+if (typeof navigator !== 'undefined' && navigator.geolocation) {
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      cachedLocation = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+    },
+    () => {},
+    { timeout: 3000 }
+  );
+}
 
 const sendMessage = async (text) => {
   if (!text.trim()) return;
@@ -226,11 +237,10 @@ const sendMessage = async (text) => {
   await scrollToBottom();
 
   try {
-    const loc = await getUserLocation();
     const payload = { 
       message: userText,
-      user_lat: loc ? loc.lat : 12.9716,
-      user_lon: loc ? loc.lon : 77.5946
+      user_lat: cachedLocation.lat,
+      user_lon: cachedLocation.lon
     };
     
     const response = await api.post('/assistant/chat', payload);

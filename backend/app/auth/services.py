@@ -45,6 +45,17 @@ class AuthService:
             )
             new_user.set_password(password)
             db.session.add(new_user)
+            db.session.flush()
+
+            if role == 'owner':
+                from app.clubs.models import Club
+                club = Club(
+                    name=f"{name}'s Club",
+                    address="Main Campus, Bengaluru",
+                    owner_id=new_user.id
+                )
+                db.session.add(club)
+
             db.session.commit()
             return new_user, None
 

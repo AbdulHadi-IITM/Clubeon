@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from app.extensions import db
 from app.auth.models import User
 from app.clubs.models import Club, Court
@@ -147,7 +147,7 @@ class StaffService:
         result = []
         for booking in bookings:
             record = by_booking.get(booking.id)
-            status = 'checked-in' if record and not record.check_out_at else 'checked-out' if record else 'expected'
+            status = 'checked_in' if record and not record.check_out_at else 'checked_out' if record else 'expected'
             result.append({
                 'id': booking.id,
                 'user_id': booking.user_id,
@@ -192,7 +192,7 @@ class StaffService:
         existing = AttendanceRecord.query.filter_by(booking_id=booking.id, check_out_at=None).first()
         if existing:
             return None, {'code': 'CONFLICT', 'message': 'Member is already checked in for this booking.'}
-        record = AttendanceRecord(user_id=booking.user_id, booking_id=booking.id, check_in_at=datetime.utcnow())
+        record = AttendanceRecord(user_id=booking.user_id, booking_id=booking.id, check_in_at=datetime.now(timezone.utc).replace(tzinfo=None))
         db.session.add(record)
         db.session.commit()
         return record, None
@@ -206,7 +206,7 @@ class StaffService:
             return None, {'code': 'FORBIDDEN', 'message': 'Attendance record does not belong to this club.'}
         if record.check_out_at:
             return None, {'code': 'VALIDATION_ERROR', 'message': 'Member is already checked out.'}
-        record.check_out_at = datetime.utcnow()
+        record.check_out_at = datetime.now(timezone.utc).replace(tzinfo=None)
         db.session.commit()
         return record, None
 

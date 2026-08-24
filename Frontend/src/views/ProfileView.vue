@@ -1,5 +1,10 @@
 <template>
   <div class="player-profile-view">
+    <p v-if="loadError" class="profile-alert" role="alert">
+      {{ loadError }}
+      <button type="button" class="profile-alert-retry" @click="reload">Retry</button>
+    </p>
+
     <!-- 1. Hero Profile Banner -->
     <section class="profile-hero-card">
       <div class="hero-cover-pattern"></div>
@@ -32,10 +37,10 @@
         <div class="hero-info-col">
           <div class="name-row">
             <h1 class="user-display-name">{{ userState.name || 'Member' }}</h1>
-            <span class="role-pill">
-              {{ userState.role === 'front-desk' ? 'Staff Member' : 'Player' }}
+            <span class="role-pill">{{ roleLabel }}</span>
+            <span v-if="activeMembership" class="status-pill live">
+              {{ activeMembership.plan_name || 'Member' }}
             </span>
-            <span class="status-pill live">Active Member</span>
           </div>
           <p class="user-email-text">{{ userState.email }}</p>
 
@@ -62,7 +67,7 @@
                 </svg>
               </div>
               <div>
-                <span class="metric-num">ClubDash</span>
+                <span class="metric-num">{{ homeFacility || 'Not set' }}</span>
                 <span class="metric-lbl">Home Facility</span>
               </div>
             </div>
@@ -76,7 +81,7 @@
                 </svg>
               </div>
               <div>
-                <span class="metric-num">{{ userState.memberSince || 'Recent' }}</span>
+                <span class="metric-num">{{ userState.memberSince || '—' }}</span>
                 <span class="metric-lbl">Member Since</span>
               </div>
             </div>
@@ -135,18 +140,86 @@
             </div>
 
             <div class="info-row">
-              <span class="info-label">Club Facility</span>
-              <span class="info-value badge-facility">ClubDash</span>
+              <span class="info-label">Date of Birth</span>
+              <span class="info-value" :class="{ 'text-muted': !userState.dob }">
+                {{ formatDate(userState.dob) || 'Not provided' }}
+              </span>
+            </div>
+
+            <div class="info-row">
+              <span class="info-label">Gender</span>
+              <span class="info-value" :class="{ 'text-muted': !userState.gender }">
+                {{ userState.gender || 'Not provided' }}
+              </span>
+            </div>
+
+            <div class="info-row">
+              <span class="info-label">Address</span>
+              <span class="info-value" :class="{ 'text-muted': !userState.address }">
+                {{ userState.address || 'Not provided' }}
+              </span>
+            </div>
+
+            <div class="info-row">
+              <span class="info-label">Home Facility</span>
+              <span v-if="homeFacility" class="info-value badge-facility">{{ homeFacility }}</span>
+              <span v-else class="info-value text-muted">No bookings yet</span>
             </div>
 
             <div class="info-row">
               <span class="info-label">Member Since</span>
-              <span class="info-value">{{ userState.memberSince || 'Recent' }}</span>
+              <span class="info-value">{{ userState.memberSince || '—' }}</span>
             </div>
 
             <div class="info-row">
               <span class="info-label">Account Role</span>
-              <span class="info-value capitalize">{{ userState.role || 'Player' }}</span>
+              <span class="info-value capitalize">{{ roleLabel }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Account settings -->
+        <div class="card-panel">
+          <div class="panel-header">
+            <div class="panel-title-wrap">
+              <div class="panel-icon-box slate">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="18" height="18">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </div>
+              <div>
+                <h3 class="panel-title">Account & Notifications</h3>
+                <p class="panel-sub">Security and what we contact you about</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-list">
+            <div class="settings-row">
+              <div class="settings-copy">
+                <span class="settings-title">Password</span>
+                <span class="settings-hint">Change the password you sign in with.</span>
+              </div>
+              <button type="button" class="panel-action-btn" @click="openPasswordModal">
+                Change
+              </button>
+            </div>
+
+            <div v-for="row in PREFERENCE_ROWS" :key="row.key" class="settings-row">
+              <div class="settings-copy">
+                <span class="settings-title">{{ row.label }}</span>
+                <span class="settings-hint">{{ row.hint }}</span>
+              </div>
+              <label class="switch">
+                <input
+                  type="checkbox"
+                  :checked="preferences[row.key]"
+                  :aria-label="row.label"
+                  @change="updatePreference(row.key, $event.target.checked)"
+                />
+                <span class="switch-track"><span class="switch-thumb"></span></span>
+              </label>
             </div>
           </div>
         </div>
@@ -165,35 +238,49 @@
               </div>
               <div>
                 <h3 class="panel-title">Membership Status</h3>
-                <p class="panel-sub">Active privileges at ClubDash</p>
+                <p class="panel-sub">
+                  {{ activeMembership ? 'Your current plan' : 'No active plan' }}
+                </p>
               </div>
             </div>
-            <span class="badge-plan-active">Active</span>
+            <span v-if="activeMembership" class="badge-plan-active">Active</span>
           </div>
 
           <div class="membership-box-inner">
-            <div class="plan-hero">
-              <div class="plan-type">Club Member</div>
-              <p class="plan-desc">Access to full court bookings, event entries, and live notifications.</p>
-            </div>
-            <div class="plan-perks-list">
-              <div class="perk-item">
-                <span class="perk-check">✓</span>
-                <span>Unlimited court availability booking</span>
+            <template v-if="activeMembership">
+              <div class="plan-hero">
+                <div class="plan-type">{{ activeMembership.plan_name || 'Membership' }}</div>
+                <p class="plan-desc">
+                  {{ activeMembership.plan_benefits || 'Member privileges on court bookings.' }}
+                </p>
               </div>
-              <div class="perk-item">
-                <span class="perk-check">✓</span>
-                <span>Instant match notifications & event alerts</span>
+              <div class="plan-perks-list">
+                <div v-if="activeMembership.plan_discount_percentage" class="perk-item">
+                  <span class="perk-check">✓</span>
+                  <span>{{ activeMembership.plan_discount_percentage }}% off every court booking</span>
+                </div>
+                <div class="perk-item">
+                  <span class="perk-check">✓</span>
+                  <span>Started {{ formatDate(activeMembership.start_date) }}</span>
+                </div>
+                <div class="perk-item">
+                  <span class="perk-check">✓</span>
+                  <span>Renews or expires {{ formatDate(activeMembership.end_date) }}</span>
+                </div>
               </div>
-              <div class="perk-item">
-                <span class="perk-check">✓</span>
-                <span>Real-time booking management & ticket receipts</span>
-              </div>
+            </template>
+
+            <div v-else class="plan-hero">
+              <div class="plan-type">Pay as you go</div>
+              <p class="plan-desc">
+                You book courts at the standard rate. A membership adds a booking
+                discount and guaranteed slots.
+              </p>
             </div>
 
             <div class="plan-footer-actions">
               <router-link to="/member/membership" class="btn-plan-action">
-                View Membership Plans
+                {{ activeMembership ? 'Manage membership' : 'View membership plans' }}
               </router-link>
             </div>
           </div>
@@ -235,10 +322,10 @@
             >
               <div class="booking-card-left">
                 <span class="court-title">{{ b.courtName }}</span>
-                <span class="time-title">{{ b.date }} • {{ b.timeSlot }}</span>
+                <span class="time-title">{{ b.dateLabel }} • {{ b.timeSlot }}</span>
               </div>
               <span class="badge-booking-status" :class="(b.status || 'confirmed').toLowerCase()">
-                {{ b.status || 'Confirmed' }}
+                {{ b.status }}
               </span>
             </div>
           </div>
@@ -293,12 +380,26 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label">Club Facility</label>
+            <label class="form-label" for="pf-dob">Date of Birth</label>
+            <input id="pf-dob" v-model="editForm.dob" type="date" class="form-input" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="pf-gender">Gender</label>
+            <select id="pf-gender" v-model="editForm.gender" class="form-input">
+              <option value="">Prefer not to say</option>
+              <option v-for="g in GENDERS" :key="g" :value="g">{{ g }}</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="pf-address">Address</label>
             <input
+              id="pf-address"
+              v-model="editForm.address"
               type="text"
-              value="ClubDash"
-              disabled
-              class="form-input disabled-input"
+              placeholder="e.g. 12 Lake View Rd, Indiranagar"
+              class="form-input"
             />
           </div>
 
@@ -309,6 +410,70 @@
             <button type="submit" class="btn-save" :disabled="isSaving">
               <span v-if="isSaving">Saving...</span>
               <span v-else>Save Changes</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- 4. Change Password Modal -->
+    <div v-if="isPasswordOpen" class="modal-backdrop" @click.self="closePasswordModal">
+      <div class="modal-card">
+        <div class="modal-card-header">
+          <div>
+            <h3 class="modal-title">Change Password</h3>
+            <p class="modal-sub">You will stay signed in on this device</p>
+          </div>
+          <button @click="closePasswordModal" class="modal-close-btn" aria-label="Close">✕</button>
+        </div>
+
+        <form @submit.prevent="submitPasswordChange" class="modal-form">
+          <div class="form-group">
+            <label class="form-label" for="pw-current">
+              Current Password <span class="req">*</span>
+            </label>
+            <input
+              id="pw-current"
+              v-model="passwordForm.current"
+              type="password"
+              required
+              autocomplete="current-password"
+              class="form-input"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="pw-next">New Password <span class="req">*</span></label>
+            <input
+              id="pw-next"
+              v-model="passwordForm.next"
+              type="password"
+              required
+              minlength="8"
+              autocomplete="new-password"
+              class="form-input"
+            />
+            <p class="form-hint">At least 8 characters, and different from the current one.</p>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="pw-confirm">
+              Confirm New Password <span class="req">*</span>
+            </label>
+            <input
+              id="pw-confirm"
+              v-model="passwordForm.confirm"
+              type="password"
+              required
+              autocomplete="new-password"
+              class="form-input"
+            />
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" @click="closePasswordModal" class="btn-cancel">Cancel</button>
+            <button type="submit" class="btn-save" :disabled="isSavingPassword">
+              {{ isSavingPassword ? 'Saving…' : 'Update Password' }}
             </button>
           </div>
         </form>
@@ -327,203 +492,346 @@
 </template>
 
 <script setup>
-import { ref, reactive, watch, onMounted, inject, computed } from 'vue'
-import { useRouter } from 'vue-router'
+/**
+ * Member / front-desk profile.
+ *
+ * Everything on this screen is server state. It previously kept the phone
+ * number and the avatar in localStorage, so both silently vanished on another
+ * browser, and it read booking fields (`booking_date`, `court.name`) that
+ * GET /bookings does not return, so every reservation rendered with today's
+ * date. Profile details, preferences and the password now go through the
+ * /auth/profile* endpoints.
+ */
+import { computed, inject, onMounted, reactive, ref, watch } from 'vue'
+import api from '@/api/axios'
 import { useAuthStore } from '@/stores/auth'
-import { useBookingStore } from '@/stores/bookings'
 
-const router = useRouter()
 const auth = useAuthStore()
-const bookingStore = useBookingStore()
 const toast = inject('toast', null)
+
 const fileInput = ref(null)
 const isSaving = ref(false)
+const isSavingPassword = ref(false)
+const loadError = ref('')
 
-function getInitials(name) {
-  if (!name) return 'MB'
-  const parts = name.trim().split(' ').filter(Boolean)
-  if (parts.length >= 2) {
-    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
-  } else if (parts.length === 1 && parts[0].length > 0) {
-    return parts[0].slice(0, 2).toUpperCase()
-  }
-  return 'MB'
-}
+const GENDERS = ['Male', 'Female', 'Other', 'Prefer not to say']
 
-function formatMemberSince(createdAt) {
-  if (!createdAt) return 'Recent'
-  try {
-    const d = new Date(createdAt)
-    if (isNaN(d.getTime())) return 'Recent'
-    return d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
-  } catch {
-    return 'Recent'
-  }
-}
+// Avatars are stored as a data: URL on the user row, so the source image is
+// downscaled to keep that row small (see MAX_AVATAR_CHARS on the server).
+const AVATAR_MAX_PX = 320
+const AVATAR_QUALITY = 0.82
 
-// 1. Dynamic User State
 const userState = ref({
   name: '',
   email: '',
   phone: '',
   role: 'player',
-  memberSince: 'Recent',
-  avatarUrl: ''
+  memberSince: '',
+  avatarUrl: '',
+  dob: '',
+  gender: '',
+  address: '',
 })
 
-function syncUser() {
-  const u = auth.user
-  if (!u) return
-  userState.value.name = u.name || 'Member'
-  userState.value.email = u.email || 'member@clubdash.com'
-  userState.value.role = u.role || 'player'
-  userState.value.memberSince = formatMemberSince(u.created_at)
+const preferences = reactive({
+  notify_email: true,
+  notify_sms: false,
+  notify_push: true,
+  profile_public: false,
+})
 
-  // Load clean phone
-  const cleanPhone = (u.phone && u.phone !== '+91 98765 43210') ? u.phone : ''
-
-  // Load extra preferences from localStorage if exists
-  const userKey = `player_profile_${u.id || u.email}`
-  const saved = localStorage.getItem(userKey)
-  if (saved) {
-    try {
-      const parsed = JSON.parse(saved)
-      userState.value.phone = cleanPhone || (parsed.phone && parsed.phone !== '+91 98765 43210' ? parsed.phone : '')
-      userState.value.avatarUrl = parsed.avatarUrl || ''
-    } catch (e) {
-      userState.value.phone = cleanPhone
-    }
-  } else {
-    userState.value.phone = cleanPhone
-    userState.value.avatarUrl = ''
-  }
-}
-
-watch(() => auth.user, () => syncUser(), { immediate: true, deep: true })
-
-// 2. Real-time Bookings State
 const bookingsState = ref([])
-const bookingsCount = computed(() => bookingsState.value.length)
+const memberships = ref([])
 
-async function fetchUserBookings() {
+// ---------------------------------------------------------------- helpers
+
+function getInitials(name) {
+  if (!name) return '—'
+  const parts = name.trim().split(/\s+/).filter(Boolean)
+  if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
+  return '—'
+}
+
+function formatMemberSince(createdAt) {
+  if (!createdAt) return ''
+  const d = new Date(createdAt)
+  if (Number.isNaN(d.getTime())) return ''
+  return d.toLocaleDateString('en-IN', { month: 'short', year: 'numeric' })
+}
+
+function formatDate(value) {
+  if (!value) return ''
+  const d = new Date(value)
+  if (Number.isNaN(d.getTime())) return String(value)
+  return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+}
+
+function apiMessage(err, fallback) {
+  return err?.response?.data?.message || err?.message || fallback
+}
+
+const bookingsCount = computed(() => bookingsState.value.length)
+const roleLabel = computed(() =>
+  userState.value.role === 'front-desk' ? 'Staff Member' : 'Player',
+)
+
+/** The club this member actually plays at, taken from their bookings. */
+const homeFacility = computed(() => {
+  const names = bookingsState.value.map((b) => b.clubName).filter(Boolean)
+  if (!names.length) return ''
+  const tally = names.reduce((acc, n) => ({ ...acc, [n]: (acc[n] || 0) + 1 }), {})
+  return Object.entries(tally).sort((a, b) => b[1] - a[1])[0][0]
+})
+
+const activeMembership = computed(
+  () => memberships.value.find((m) => m.status === 'active') || null,
+)
+
+// ---------------------------------------------------------------- loading
+
+function applyProfile(u) {
+  if (!u) return
+  userState.value = {
+    name: u.name || '',
+    email: u.email || '',
+    phone: u.phone || '',
+    role: u.role || 'player',
+    memberSince: formatMemberSince(u.created_at),
+    avatarUrl: u.avatar_url || '',
+    dob: u.dob || '',
+    gender: u.gender || '',
+    address: u.address || '',
+  }
+  if (u.preferences) Object.assign(preferences, u.preferences)
+}
+
+async function loadProfile() {
   try {
-    await bookingStore.loadBookings()
-    bookingsState.value = (bookingStore.bookings || []).map(b => ({
-      id: b.id,
-      courtName: b.court?.name || `Court #${b.court_id}`,
-      date: b.booking_date || new Date().toISOString().split('T')[0],
-      timeSlot: `${b.start_time || '08:00'} - ${b.end_time || '09:00'}`,
-      status: b.status ? b.status.charAt(0).toUpperCase() + b.status.slice(1) : 'Confirmed'
-    }))
-  } catch (e) {
-    console.warn('Could not fetch bookings:', e)
+    const { data } = await api.get('/auth/profile')
+    applyProfile(data.user)
+  } catch (err) {
+    // Fall back to whatever the session already holds rather than blanking
+    // the screen; the banner explains that details may be stale.
+    applyProfile(auth.user)
+    loadError.value = apiMessage(err, 'Could not load your profile.')
   }
 }
 
-// 3. Edit Form State
-const isEditProfileOpen = ref(false)
-const editForm = reactive({
-  name: '',
-  email: '',
-  phone: ''
-})
+async function loadBookings() {
+  try {
+    const { data } = await api.get('/bookings')
+    bookingsState.value = (Array.isArray(data) ? data : []).map((b) => ({
+      id: b.id,
+      courtName: b.court_name || `Court #${b.court_id}`,
+      clubName: b.club_name || '',
+      date: b.date,
+      dateLabel: formatDate(b.date),
+      timeSlot: `${String(b.start_time || '').slice(0, 5)} - ${String(b.end_time || '').slice(0, 5)}`,
+      status: b.status === 'active' ? 'Confirmed' : b.status,
+    }))
+  } catch {
+    bookingsState.value = []
+  }
+}
+
+async function loadMemberships() {
+  try {
+    const { data } = await api.get('/memberships/my-memberships')
+    memberships.value = Array.isArray(data) ? data : []
+  } catch {
+    memberships.value = []
+  }
+}
+
+async function reload() {
+  loadError.value = ''
+  await Promise.all([loadProfile(), loadBookings(), loadMemberships()])
+}
 
 onMounted(async () => {
   if (!auth.initialized || !auth.user) {
     try {
       await auth.restoreUser()
-    } catch (e) {}
+    } catch {
+      /* the route guard handles an expired session */
+    }
   }
-  syncUser()
-  await fetchUserBookings()
+  await reload()
 })
 
-const triggerAvatarUpload = () => {
-  if (fileInput.value) fileInput.value.click()
+watch(() => auth.user?.id, (id, previous) => {
+  if (id && id !== previous) reload()
+})
+
+// ---------------------------------------------------------------- avatar
+
+/** Draw the chosen file to a canvas at most AVATAR_MAX_PX on its long edge. */
+function downscale(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onerror = () => reject(new Error('Could not read that file.'))
+    reader.onload = () => {
+      const img = new Image()
+      img.onerror = () => reject(new Error('That file is not a readable image.'))
+      img.onload = () => {
+        const scale = Math.min(1, AVATAR_MAX_PX / Math.max(img.width, img.height))
+        const canvas = document.createElement('canvas')
+        canvas.width = Math.round(img.width * scale)
+        canvas.height = Math.round(img.height * scale)
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height)
+        resolve(canvas.toDataURL('image/jpeg', AVATAR_QUALITY))
+      }
+      img.src = reader.result
+    }
+    reader.readAsDataURL(file)
+  })
 }
 
-const onAvatarSelected = (event) => {
-  const file = event.target.files[0]
+function triggerAvatarUpload() {
+  fileInput.value?.click()
+}
+
+async function onAvatarSelected(event) {
+  const file = event.target.files?.[0]
+  event.target.value = ''
   if (!file) return
-  const reader = new FileReader()
-  reader.onload = (e) => {
-    userState.value.avatarUrl = e.target.result
-    const userKey = `player_profile_${auth.user?.id || auth.user?.email || 'default'}`
-    const saved = JSON.parse(localStorage.getItem(userKey) || '{}')
-    localStorage.setItem(userKey, JSON.stringify({ ...saved, avatarUrl: userState.value.avatarUrl }))
-    if (toast) toast.success('Avatar updated!')
+  if (!file.type.startsWith('image/')) {
+    toast?.error('Please choose an image file.')
+    return
   }
-  reader.readAsDataURL(file)
+  try {
+    const dataUrl = await downscale(file)
+    const { data } = await api.put('/auth/profile/details', { avatar_url: dataUrl })
+    applyProfile(data.user)
+    auth.user = { ...auth.user, avatar_url: data.user.avatar_url }
+    toast?.success('Profile photo updated.')
+  } catch (err) {
+    toast?.error(apiMessage(err, 'Could not update your photo.'))
+  }
 }
 
-const openEditProfileModal = () => {
-  editForm.name = userState.value.name
-  editForm.email = userState.value.email
-  editForm.phone = userState.value.phone || ''
+// ------------------------------------------------------------ edit profile
+
+const isEditProfileOpen = ref(false)
+const editForm = reactive({ name: '', email: '', phone: '', dob: '', gender: '', address: '' })
+
+function openEditProfileModal() {
+  Object.assign(editForm, {
+    name: userState.value.name,
+    email: userState.value.email,
+    phone: userState.value.phone,
+    dob: userState.value.dob,
+    gender: userState.value.gender,
+    address: userState.value.address,
+  })
   isEditProfileOpen.value = true
 }
 
-const closeEditProfileModal = () => {
+function closeEditProfileModal() {
   isEditProfileOpen.value = false
 }
 
-const saveProfile = async () => {
-  if (!editForm.name || !editForm.name.trim()) {
-    if (toast) toast.error('Please enter your full name.')
+async function saveProfile() {
+  const name = editForm.name.trim()
+  const email = editForm.email.trim()
+  if (!name) {
+    toast?.error('Please enter your full name.')
     return
   }
-  if (!editForm.email || !editForm.email.trim()) {
-    if (toast) toast.error('Please enter a valid email address.')
+  if (!email) {
+    toast?.error('Please enter your email address.')
     return
   }
 
   isSaving.value = true
-  const newName = editForm.name.trim()
-  const newEmail = editForm.email.trim()
-  const newPhone = editForm.phone.trim()
-
   try {
-    if (auth.isAuthenticated()) {
-      await auth.updateProfile({
-        name: newName,
-        email: newEmail,
-        phone: newPhone,
-        facility: 'ClubDash'
-      })
-    } else if (auth.user) {
-      auth.user.name = newName
-      auth.user.email = newEmail
-      auth.user.phone = newPhone
+    // Email is the login identity and is not editable through the details
+    // endpoint, so it goes through the profile endpoint instead.
+    if (email !== userState.value.email) {
+      await auth.updateProfile({ name, email })
     }
+
+    const { data } = await api.put('/auth/profile/details', {
+      name,
+      phone: editForm.phone.trim(),
+      dob: editForm.dob || '',
+      gender: editForm.gender || '',
+      address: editForm.address.trim(),
+    })
+    applyProfile(data.user)
+    auth.user = { ...auth.user, ...data.user }
+    isEditProfileOpen.value = false
+    toast?.success('Profile updated.')
   } catch (err) {
-    console.warn('Backend profile update note:', err)
-    if (toast && err?.response?.data?.message) {
-      toast.error(err.response.data.message)
-      isSaving.value = false
-      return
-    }
+    toast?.error(apiMessage(err, 'Could not save your profile.'))
   } finally {
     isSaving.value = false
   }
+}
 
-  userState.value.name = newName
-  userState.value.email = newEmail
-  userState.value.phone = newPhone
+// --------------------------------------------------------- change password
 
+const isPasswordOpen = ref(false)
+const passwordForm = reactive({ current: '', next: '', confirm: '' })
+
+function openPasswordModal() {
+  passwordForm.current = ''
+  passwordForm.next = ''
+  passwordForm.confirm = ''
+  isPasswordOpen.value = true
+}
+
+function closePasswordModal() {
+  isPasswordOpen.value = false
+}
+
+async function submitPasswordChange() {
+  if (passwordForm.next !== passwordForm.confirm) {
+    toast?.error('The new passwords do not match.')
+    return
+  }
+  isSavingPassword.value = true
   try {
-    const userKey = `player_profile_${auth.user?.id || auth.user?.email || 'default'}`
-    localStorage.setItem(userKey, JSON.stringify({
-      phone: userState.value.phone,
-      avatarUrl: userState.value.avatarUrl
-    }))
-  } catch (e) {}
+    await api.post('/auth/change-password', {
+      current_password: passwordForm.current,
+      new_password: passwordForm.next,
+    })
+    isPasswordOpen.value = false
+    toast?.success('Password changed.')
+  } catch (err) {
+    toast?.error(apiMessage(err, 'Could not change your password.'))
+  } finally {
+    isSavingPassword.value = false
+  }
+}
 
-  isEditProfileOpen.value = false
-  if (toast) {
-    toast.success('Profile details updated successfully! ✨')
+// ------------------------------------------------------------- preferences
+
+const PREFERENCE_ROWS = [
+  { key: 'notify_email', label: 'Email notifications',
+    hint: 'Booking confirmations, receipts and club announcements.' },
+  { key: 'notify_sms', label: 'SMS notifications',
+    hint: 'Text reminders shortly before a slot starts.' },
+  { key: 'notify_push', label: 'In-app alerts',
+    hint: 'Live updates in the notification bell.' },
+  { key: 'profile_public', label: 'Public profile',
+    hint: 'Let other members see your name when you join an event.' },
+]
+
+async function updatePreference(key, value) {
+  const previous = preferences[key]
+  preferences[key] = value
+  try {
+    const { data } = await api.put('/auth/preferences', { [key]: value })
+    if (data.user?.preferences) Object.assign(preferences, data.user.preferences)
+  } catch (err) {
+    preferences[key] = previous
+    toast?.error(apiMessage(err, 'Could not save that preference.'))
   }
 }
 </script>
+
 
 <style scoped>
 .player-profile-view {
@@ -1279,5 +1587,116 @@ const saveProfile = async () => {
   .modal-form {
     padding: 1.25rem;
   }
+}
+
+/* --- Load error banner --- */
+.profile-alert {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 1.25rem;
+  padding: 0.85rem 1.1rem;
+  border-radius: 0.85rem;
+  background: #fff0f1;
+  border: 1px solid #f3c9cd;
+  color: #a3323f;
+  font-size: 0.85rem;
+}
+.profile-alert-retry {
+  border: 1px solid #e3aeb4;
+  background: #fff;
+  color: #a3323f;
+  border-radius: 0.5rem;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+/* --- Account settings rows --- */
+.panel-icon-box.slate {
+  background: #eef2f7;
+  color: #4b5a70;
+}
+.settings-list {
+  display: flex;
+  flex-direction: column;
+}
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.95rem 0;
+  border-bottom: 1px solid #eef1f6;
+}
+.settings-row:last-child {
+  border-bottom: none;
+}
+.settings-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+.settings-title {
+  font-size: 0.875rem;
+  font-weight: 650;
+  color: #1e293b;
+}
+.settings-hint {
+  font-size: 0.75rem;
+  color: #78849a;
+  line-height: 1.45;
+}
+
+/* --- Toggle switch --- */
+.switch {
+  position: relative;
+  flex-shrink: 0;
+  display: inline-flex;
+  cursor: pointer;
+}
+.switch input {
+  position: absolute;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  cursor: pointer;
+}
+.switch-track {
+  display: block;
+  width: 42px;
+  height: 24px;
+  border-radius: 999px;
+  background: #d5dce7;
+  transition: background 0.2s ease;
+}
+.switch-thumb {
+  display: block;
+  width: 18px;
+  height: 18px;
+  margin: 3px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.25);
+  transition: transform 0.2s ease;
+}
+.switch input:checked + .switch-track {
+  background: #4f46e5;
+}
+.switch input:checked + .switch-track .switch-thumb {
+  transform: translateX(18px);
+}
+.switch input:focus-visible + .switch-track {
+  outline: 2px solid #718fff;
+  outline-offset: 2px;
+}
+
+.form-hint {
+  margin: 0.35rem 0 0;
+  font-size: 0.72rem;
+  color: #78849a;
 }
 </style>

@@ -49,7 +49,7 @@
       <div class="cta-card">
         <div class="cta-glow"></div>
         <h2 class="cta-title">Ready to transform your sports club?</h2>
-        <p class="cta-desc">Join thousands of clubs already using SportsClub to streamline operations and grow their community.</p>
+        <p class="cta-desc">Join thousands of clubs already using ClubDash to streamline operations and grow their community.</p>
         <div class="cta-actions">
           <router-link to="/register" class="hero-btn-primary">
             Get Started Free

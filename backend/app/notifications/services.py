@@ -5,24 +5,11 @@ from sqlalchemy import or_
 class NotificationService:
     @staticmethod
     def get_my_notifications(user_id):
-        # Fetch notifications specific to this user, plus all global announcements
-        # Deduplicate announcements by title if needed
-        notifications = Notification.query.filter(
-            or_(
-                Notification.user_id == user_id,
-                Notification.type.in_(['announcement', 'General', 'Broadcast', 'Tournament', 'Policy', 'Maintenance'])
-            )
+        # Fetch notifications specific to this user
+        notifications = Notification.query.filter_by(
+            user_id=user_id
         ).order_by(Notification.created_at.desc()).all()
-
-        # Deduplicate announcements by title and created date to avoid repeats
-        seen_keys = set()
-        deduped = []
-        for n in notifications:
-            key = (n.title, str(n.created_at)[:10])
-            if key not in seen_keys:
-                seen_keys.add(key)
-                deduped.append(n)
-        return deduped
+        return notifications
 
     @staticmethod
     def mark_read(user_id, notification_id):

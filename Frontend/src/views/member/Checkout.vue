@@ -84,26 +84,13 @@
           <div>
             <p class="kicker">Payment method</p>
             <h2 class="mt-2 text-xl font-extrabold text-slate-900">
-              {{ mockMode ? 'Mock Payment (Development)' : 'Card & supported methods' }}
+              Card &amp; supported methods
             </h2>
           </div>
-          <div class="stripe-badge" v-if="!mockMode">stripe</div>
-          <div class="mock-badge" v-else>MOCK</div>
+          <div class="stripe-badge">stripe</div>
         </div>
 
-        <!-- Mock Payment UI -->
-        <div v-if="mockMode" class="mt-6 rounded-2xl border border-amber-200 bg-amber-50 p-5">
-          <p class="text-sm font-semibold text-amber-800">
-            ⚡ Stripe is not configured. You're in development mode.
-          </p>
-          <p class="mt-2 text-xs text-amber-700">
-            Clicking "Pay Now" will simulate a successful payment and activate your
-            {{ summary.title }}.
-          </p>
-        </div>
-
-        <!-- Real Stripe Payment Element -->
-        <div v-else class="mt-6 rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
+        <div class="mt-6 rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
           <div id="payment-element"></div>
         </div>
 
@@ -113,19 +100,14 @@
 
         <button
           class="btn btn-primary mt-5 w-full"
-          :disabled="processing || (!mockMode && !paymentElementReady)"
-          @click="mockMode ? mockPay() : pay()"
+          :disabled="processing || !paymentElementReady"
+          @click="pay"
         >
           {{ processing ? 'Processing...' : `Pay ${currency(amount)}` }}
         </button>
 
         <p class="mt-4 text-center text-xs leading-5 text-slate-400">
-          <template v-if="mockMode">
-            This is a development payment simulation. No actual charge will occur.
-          </template>
-          <template v-else>
-            Your card details are collected by Stripe and are never sent to ClubDash.
-          </template>
+          Your card details are collected by Stripe and are never sent to ClubDash.
         </p>
       </section>
     </div>
@@ -150,7 +132,6 @@ const successMessage = ref('')
 const amount = ref(0)
 const currencyCode = ref('inr')
 const autoRenew = ref(false)
-const mockMode = ref(false)
 const summary = ref({ title: 'Payment', description: 'Secure payment for your ClubDash service.' })
 
 let stripe = null
@@ -244,10 +225,16 @@ async function loadReference() {
     (item) => String(item.id) === referenceId.value,
   )
   if (!booking) throw new Error('Booking not found.')
-  amount.value = Number(booking.amount ?? booking.price ?? booking.total_amount ?? 0)
+  amount.value = Number(booking.amount ?? booking.price ?? booking.total_amount ?? 500)
+  const courtTitle = booking.courtName || booking.court_name || `Court #${booking.court_id || booking.id}`
+  const dateStr = booking.bookingDate || booking.date || ''
+  const timeStr =
+    booking.startTime || booking.start_time
+      ? `${booking.startTime || booking.start_time} – ${booking.endTime || booking.end_time}`
+      : ''
   summary.value = {
-    title: booking.courtName || booking.court_name || `Booking #${booking.id}`,
-    description: 'Court booking payment',
+    title: courtTitle,
+    description: dateStr && timeStr ? `${dateStr} (${timeStr})` : 'Court reservation payment',
   }
 }
 
@@ -256,7 +243,6 @@ async function prepare() {
   error.value = ''
   stripeError.value = ''
   paymentElementReady.value = false
-  mockMode.value = false
   try {
     await loadReference()
 
@@ -273,17 +259,18 @@ async function prepare() {
       currencyCode.value = String(data.currency || 'inr').toLowerCase()
 
       if (!data.client_secret || !data.publishable_key) {
-        // Free checkout or Stripe key missing
+        // Free checkout or instant completion
         if (data.status === 'completed' || amount.value <= 0) {
           successMessage.value = 'Your purchase was completed successfully.'
           success.value = true
+          loading.value = false
           return
         }
-        mockMode.value = true
-        return
       }
 
       const Stripe = await loadStripeJs()
+      if (!data.publishable_key) throw new Error('Stripe publishable key was not returned.')
+
       stripe = Stripe(data.publishable_key)
       elements = stripe.elements({
         clientSecret: data.client_secret,
@@ -298,7 +285,10 @@ async function prepare() {
         },
       })
 
+      // Turn off loading and wait for Vue to render the payment container into DOM
+      loading.value = false
       await nextTick()
+
       const mountPoint = document.getElementById('payment-element')
       if (!mountPoint) throw new Error('Payment form could not be mounted.')
       paymentElement?.destroy()
@@ -308,9 +298,15 @@ async function prepare() {
         paymentElementReady.value = true
       })
     } catch (stripeErr) {
-      // In development or when Stripe is unconfigured/unavailable, switch to Mock Payment mode
-      console.warn('Stripe initialization skipped or failed; using development Mock Mode:', stripeErr)
-      mockMode.value = true
+      const status = stripeErr?.response?.status
+      const message = stripeErr?.response?.data?.message || ''
+      if (status === 503 || message.includes('STRIPE_SECRET_KEY')) {
+        throw new Error(
+          'Payments are temporarily unavailable. Please try again later.',
+          { cause: stripeErr },
+        )
+      }
+      throw stripeErr
     }
   } catch (err) {
     error.value = err?.response?.data?.message || err?.message || 'Unable to prepare payment.'
@@ -330,21 +326,36 @@ async function completePurchase() {
     await api.post(`/events/${referenceId.value}/register`)
     successMessage.value = 'Your event registration has been completed.'
   } else {
+    if (paymentId) {
+      await api.get(`/payments/stripe/status/${paymentId}`).catch(() => {})
+    }
     successMessage.value = 'Your booking has been confirmed successfully.'
   }
   success.value = true
 }
 
-async function mockPay() {
-  processing.value = true
-  stripeError.value = ''
-  try {
-    await completePurchase()
-  } catch (err) {
-    stripeError.value = err?.response?.data?.message || 'Unable to complete purchase.'
-  } finally {
-    processing.value = false
+/**
+ * Wait for the server to see the payment as completed.
+ *
+ * Stripe confirms the card in the browser, but the Payment row only flips to
+ * `completed` once the webhook lands (or the server reconciles the intent).
+ * Fulfilment is gated on that, so poll briefly rather than assuming.
+ */
+async function waitForSettlement(attempts = 6, delayMs = 800) {
+  if (!paymentId) return true
+  for (let i = 0; i < attempts; i += 1) {
+    try {
+      const { data } = await api.get(`/payments/stripe/status/${paymentId}`)
+      if (data.status === 'completed') return true
+      if (data.status === 'failed') return false
+    } catch {
+      // Transient read failure; the next attempt may succeed.
+    }
+    await new Promise((resolve) => setTimeout(resolve, delayMs))
   }
+  // Not settled yet. completePurchase() still runs: the server reconciles the
+  // intent with Stripe itself and returns 402 if it genuinely was not paid.
+  return true
 }
 
 async function pay() {
@@ -359,6 +370,12 @@ async function pay() {
 
     if (result.error) {
       stripeError.value = result.error.message || 'Payment could not be completed.'
+      return
+    }
+
+    const settled = await waitForSettlement()
+    if (!settled) {
+      stripeError.value = 'The payment was declined. Please try another card.'
       return
     }
 
@@ -381,55 +398,9 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-.member-page {
-  max-width: 1180px;
-  margin: 0 auto;
-}
-.page-head {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 24px;
-}
-.kicker {
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: #64748b;
-}
-.title {
-  font-size: 30px;
-  line-height: 1.15;
-  font-weight: 800;
-  letter-spacing: -0.04em;
-  color: #172033;
-  margin-top: 4px;
-}
-.muted {
-  color: #64748b;
-  margin-top: 8px;
-  font-size: 14px;
-}
-.panel {
-  background: rgba(255, 255, 255, 0.94);
-  border: 1px solid #dfe7f1;
-  border-radius: 20px;
-  box-shadow: 0 12px 35px rgba(51, 65, 85, 0.06);
-}
 .stripe-badge {
   border-radius: 999px;
   background: #635bff;
-  color: #fff;
-  padding: 6px 10px;
-  font-size: 11px;
-  font-weight: 900;
-  letter-spacing: 0.03em;
-}
-.mock-badge {
-  border-radius: 999px;
-  background: #f59e0b;
   color: #fff;
   padding: 6px 10px;
   font-size: 11px;
@@ -455,25 +426,9 @@ onBeforeUnmount(() => {
   font-weight: 900;
   box-shadow: 0 0 0 10px #f0fdf4;
 }
-.btn {
-  border-radius: 11px;
-  padding: 10px 14px;
-  font-size: 12px;
-  font-weight: 800;
-  transition: 0.2s;
-}
 .btn-primary {
   background: #4f46e5;
   color: #fff;
   box-shadow: 0 8px 18px rgba(79, 70, 229, 0.18);
-}
-.btn-soft {
-  background: #f8fafc;
-  color: #475569;
-  border: 1px solid #dfe7f1;
-}
-.btn:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
 }
 </style>

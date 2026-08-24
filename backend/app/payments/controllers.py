@@ -26,23 +26,6 @@ def get_my_payments():
         })
     return jsonify(result), 200
 
-@payments_bp.route('/webhook', methods=['POST'])
-def webhook():
-    # Mock webhook from a payment provider
-    data = request.get_json()
-    if not data:
-        return jsonify({"code": "VALIDATION_ERROR", "message": "Invalid payload"}), 400
-        
-    transaction_id = data.get('transaction_id', 'mock_txn_123')
-    status = data.get('status', 'completed')
-    reference_id = data.get('reference_id')
-    payment_type = data.get('payment_type', 'unknown')
-    
-    PaymentService.handle_webhook(transaction_id, status, reference_id, payment_type)
-
-    return jsonify({"message": "Webhook processed successfully"}), 200
-
-
 # ============================================================
 # Stripe Payment API
 # ============================================================

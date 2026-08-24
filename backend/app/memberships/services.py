@@ -4,6 +4,14 @@ from app.extensions import db
 from app.memberships.models import MembershipPlan, Membership
 from app.clubs.models import Club
 
+def _plan_benefits(plan_data):
+    """Human-readable summary shown on the pricing and checkout screens."""
+    months = plan_data['duration_months']
+    term = 'month' if months == 1 else 'year' if months == 12 else f'{months} months'
+    return (f"{plan_data['discount_percentage']}% off court bookings, "
+            f"billed every {term}")
+
+
 class MembershipService:
     @staticmethod
     def get_plans(club_id=None):
@@ -45,6 +53,13 @@ class MembershipService:
             existing = Membership.query.filter_by(user_id=user_id, status='active').first()
             if existing:
                 return None, {"code": "CONFLICT", "message": "User already has an active membership"}
+
+            # A priced plan is only granted once it has actually been paid for.
+            if (plan.price or 0) > 0:
+                from app.payments.services import PaymentService
+                if not PaymentService.settle(user_id, 'membership', plan.id):
+                    return None, {"code": "PAYMENT_REQUIRED",
+                                  "message": "Payment for this plan has not been completed."}
 
             start_date = date.today()
             duration = getattr(plan, 'duration_months', 1) or 1
@@ -116,23 +131,36 @@ class MembershipService:
         ]
 
         try:
-            for plan_data in plans_data:
-                existing = MembershipPlan.query.filter_by(
-                    club_id=None,
-                    name=plan_data["name"],
-                    duration_months=plan_data["duration_months"],
-                ).first()
-                if not existing:
-                    db.session.add(MembershipPlan(
-                        club_id=None,
-                        name=plan_data["name"],
-                        price=plan_data["price"],
-                        duration_months=plan_data["duration_months"],
-                        discount_percentage=plan_data["discount_percentage"],
-                        benefits=f"{plan_data['name']} membership for {plan_data['duration_months']} months",
-                        is_active=True,
-                    ))
-            db.session.commit()
+            MembershipService._seed_plans(plans_data)
         except Exception:
+            # Schema is behind the models (e.g. a pending migration). Seeding is
+            # best-effort: swallowing this keeps the app importable so that
+            # `flask db upgrade` can actually be run.
             db.session.rollback()
 
+    @staticmethod
+    def _seed_plans(plans_data):
+        for plan_data in plans_data:
+            existing = MembershipPlan.query.filter_by(
+                club_id=None,
+                name=plan_data["name"],
+                duration_months=plan_data["duration_months"],
+            ).first()
+            if existing is None:
+                db.session.add(MembershipPlan(
+                    club_id=None,
+                    name=plan_data["name"],
+                    price=plan_data["price"],
+                    duration_months=plan_data["duration_months"],
+                    discount_percentage=plan_data["discount_percentage"],
+                    benefits=_plan_benefits(plan_data),
+                    is_active=True,
+                ))
+            else:
+                # Keep price, discount and copy in step with this table on every
+                # boot; a database seeded by an older build otherwise keeps
+                # advertising stale terms on the public pricing page.
+                existing.price = plan_data["price"]
+                existing.discount_percentage = plan_data["discount_percentage"]
+                existing.benefits = _plan_benefits(plan_data)
+        db.session.commit()

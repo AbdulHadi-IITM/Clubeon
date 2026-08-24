@@ -5,6 +5,7 @@ from app.extensions import db
 from app.bookings.models import Booking, CourtBlock
 from app.clubs.models import Court, Club
 from app.memberships.models import Membership
+from app.events.models import Event, EventRegistration
 
 
 class AdminService:
@@ -337,9 +338,15 @@ class AdminService:
 
     @staticmethod
     def create_announcement(owner_id, title, body, announcement_type='general', target_audience='all'):
+        """
+        Broadcast an announcement to the owner's own club.
+
+        Recipients used to be `User.query.filter(User.id != owner_id)` — every
+        account on the platform, so one club's announcement reached other
+        clubs' owners, staff and members.
+        """
         from app.notifications.models import Notification
-        from app.auth.models import User
-        
+
         notification = Notification(
             user_id=owner_id,
             title=title,
@@ -349,16 +356,18 @@ class AdminService:
         )
         db.session.add(notification)
 
-        users = User.query.filter(User.id != owner_id).all()
-        for u in users:
+        recipient_ids = AdminService._club_audience_ids(owner_id, target_audience)
+        for uid in recipient_ids:
+            if uid == owner_id:
+                continue
             db.session.add(Notification(
-                user_id=u.id,
+                user_id=uid,
                 title=title,
                 body=body,
                 type=announcement_type,
                 is_read=False
             ))
-        
+
         db.session.commit()
         return {
             "id": notification.id,
@@ -386,14 +395,142 @@ class AdminService:
         return result, None
 
     @staticmethod
+    def _club_audience_ids(owner_id, target_audience='all'):
+        """
+        User ids that should receive this announcement.
+
+        'members'  -> holders of an active membership
+        'staff'    -> front-desk staff
+        'players'  -> players
+        'all'      -> all players and front-desk staff
+        """
+        target = str(target_audience or 'all').strip().lower()
+
+        if target == 'members':
+            club = Club.query.filter_by(owner_id=owner_id).first()
+            if club:
+                return {
+                    row[0] for row in Membership.query.filter(
+                        (Membership.club_id == club.id) | (Membership.club_id.is_(None)),
+                        Membership.status == 'active',
+                    ).with_entities(Membership.user_id).distinct().all()
+                    if row[0] != owner_id
+                }
+            return set()
+
+        if target == 'staff':
+            return {
+                row[0] for row in User.query.filter(
+                    User.role == 'front-desk',
+                    User.id != owner_id
+                ).with_entities(User.id).all()
+            }
+
+        if target == 'players':
+            return {
+                row[0] for row in User.query.filter(
+                    User.role == 'player',
+                    User.id != owner_id
+                ).with_entities(User.id).all()
+            }
+
+        # Default / 'all': All non-owner users (players and front-desk staff)
+        return {
+            row[0] for row in User.query.filter(
+                User.id != owner_id
+            ).with_entities(User.id).all()
+        }
+
+    @staticmethod
     def delete_announcement(owner_id, announcement_id):
         from app.notifications.models import Notification
         announcement = Notification.query.get(announcement_id)
         if not announcement:
             return False, {"code": "NOT_FOUND", "message": "Announcement not found"}
-        
-        db.session.delete(announcement)
+        # Ownership check: without it any owner could delete another user's
+        # notification by guessing its id.
+        if announcement.user_id != owner_id:
+            return False, {"code": "FORBIDDEN",
+                           "message": "Not authorized to delete this announcement"}
+
+        # Remove the copies sent to every recipient, not just the owner's, so
+        # a retracted announcement disappears for everyone.
+        Notification.query.filter_by(
+            title=announcement.title,
+            body=announcement.body,
+            type=announcement.type,
+        ).delete(synchronize_session=False)
         db.session.commit()
         return True, None
 
+    @staticmethod
+    def list_club_members(owner_id):
+        club = Club.query.filter_by(owner_id=owner_id).first()
+        if not club:
+            return [], None  # Owner has no club yet
+
+        court_ids = [court.id for court in club.courts]
+
+        # Users with bookings at this club
+        user_ids_with_bookings = set()
+        if court_ids:
+            rows = Booking.query.filter(Booking.court_id.in_(court_ids)) \
+                .with_entities(Booking.user_id).distinct().all()
+            user_ids_with_bookings = {row[0] for row in rows}
+
+        # Users with event registrations at this club
+        club_event_ids = [e.id for e in Event.query.filter_by(club_id=club.id).all()]
+        user_ids_with_events = set()
+        if club_event_ids:
+            event_rows = db.session.query(EventRegistration.user_id).filter(
+                EventRegistration.event_id.in_(club_event_ids)
+            ).distinct().all()
+            user_ids_with_events = {row[0] for row in event_rows}
+
+        club_engaged_users = user_ids_with_bookings.union(user_ids_with_events)
+
+        # Users with active memberships directly at this club, or global plan held by an engaged user
+        membership_query = Membership.query.filter(Membership.status == 'active')
+        if club_engaged_users:
+            membership_query = membership_query.filter(
+                (Membership.club_id == club.id)
+                | (Membership.club_id.is_(None) & Membership.user_id.in_(club_engaged_users))
+            )
+        else:
+            membership_query = membership_query.filter(Membership.club_id == club.id)
+
+        membership_user_ids = {row[0] for row in membership_query.with_entities(Membership.user_id).distinct().all()}
+
+        all_user_ids = club_engaged_users.union(membership_user_ids)
+        if not all_user_ids:
+            return [], None
+
+        users = User.query.filter(User.id.in_(all_user_ids)).all()
+
+        result = []
+        for user in users:
+            booking_count = 0
+            if court_ids:
+                booking_count = Booking.query.filter(
+                    Booking.user_id == user.id,
+                    Booking.court_id.in_(court_ids)
+                ).count()
+
+            membership = Membership.query.filter_by(user_id=user.id, status='active').first()
+            plan = membership.plan if membership else None
+
+            result.append({
+                'id': user.id,
+                'name': user.name,
+                'email': user.email,
+                'role': user.role,
+                'booking_count': booking_count,
+                'membership_status': membership.status if membership else 'none',
+                'membership_plan': plan.name if plan else None,
+                'membership_start': str(membership.start_date) if membership else None,
+                'membership_end': str(membership.end_date) if membership else None,
+                'membership_auto_renew': membership.auto_renew if membership else False,
+                'created_at': str(user.created_at) if user.created_at else None,
+            })
+        return result, None
 

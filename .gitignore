@@ -14,10 +14,8 @@ Thumbs.db
 *.swo
 
 # Environment & Secrets
-.env
-.env.*
-!.env.example
-*.env
+.env.local
+.env.*.local
 
 # Python & Node
 __pycache__/

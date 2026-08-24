@@ -6,7 +6,7 @@ hard-coded numbers the dashboards previously displayed.
 """
 from datetime import date, timedelta
 
-from sqlalchemy import func
+from sqlalchemy import func, or_
 
 from app.extensions import db
 from app.auth.models import User
@@ -50,19 +50,79 @@ class AnalyticsService:
         recent_bookings = base.filter(Booking.booking_date >= since).count()
 
         # --- members ---
-        total_members = Membership.query.filter_by(club_id=club.id).count()
-        active_members = Membership.query.filter_by(club_id=club.id,
-                                                    status="active").count()
+        booking_user_ids = {
+            row[0] for row in db.session.query(Booking.user_id).filter(
+                Booking.court_id.in_(court_ids) if court_ids else db.false()
+            ).distinct().all()
+        }
+        club_event_ids = [e.id for e in Event.query.filter_by(club_id=club.id).all()]
+        event_user_ids = {
+            row[0] for row in db.session.query(EventRegistration.user_id).filter(
+                EventRegistration.event_id.in_(club_event_ids) if club_event_ids else db.false()
+            ).distinct().all()
+        }
+        club_engaged_users = booking_user_ids | event_user_ids
+
+        # Membership rows scoped to this club or engaged users with global plans
+        if club_engaged_users:
+            club_memberships = Membership.query.filter(
+                (Membership.club_id == club.id)
+                | (Membership.club_id.is_(None) & Membership.user_id.in_(club_engaged_users))
+            )
+        else:
+            club_memberships = Membership.query.filter(Membership.club_id == club.id)
+
+        total_members = club_memberships.count()
+        active_members = club_memberships.filter(
+            Membership.status == "active").count()
+
+        member_user_ids = {
+            row[0] for row in club_memberships.filter(
+                Membership.status == "active"
+            ).with_entities(Membership.user_id).distinct().all()
+        }
+        # People who book here but hold no active membership ("public players").
+        public_players = len(booking_user_ids - member_user_ids)
 
         # --- revenue (completed payments only) ---
+        # Scoped strictly to this club's bookings, events, and engaged member payments.
+        club_audience = member_user_ids | booking_user_ids | event_user_ids
+        club_booking_ids = [
+            row[0] for row in base.with_entities(Booking.id).all()
+        ]
+
+        revenue_filters = []
+        if club_booking_ids:
+            revenue_filters.append(
+                (Payment.payment_type == "booking")
+                & Payment.reference_id.in_(club_booking_ids))
+        if club_event_ids:
+            revenue_filters.append(
+                (Payment.payment_type == "event")
+                & Payment.reference_id.in_(club_event_ids))
+        if club_audience:
+            # Memberships reference a plan, not a club, so attribute them by
+            # the paying user belonging to this club.
+            revenue_filters.append(
+                (Payment.payment_type == "membership")
+                & Payment.user_id.in_(club_audience))
+
+        if revenue_filters:
+            club_payments = Payment.query.filter(or_(*revenue_filters))
+        else:
+            club_payments = Payment.query.filter(db.false())
+
         revenue_rows = db.session.query(
             Payment.payment_type, func.coalesce(func.sum(Payment.amount), 0.0)
-        ).filter(Payment.status == "completed").group_by(Payment.payment_type).all()
+        ).filter(
+            Payment.status == "completed",
+            Payment.id.in_([p.id for p in club_payments.all()] or [-1]),
+        ).group_by(Payment.payment_type).all()
         revenue_by_type = {t: float(a or 0) for t, a in revenue_rows}
         total_revenue = round(sum(revenue_by_type.values()), 2)
 
-        pending_payments = Payment.query.filter_by(status="pending").count()
-        failed_payments = Payment.query.filter_by(status="failed").count()
+        pending_payments = club_payments.filter(Payment.status == "pending").count()
+        failed_payments = club_payments.filter(Payment.status == "failed").count()
 
         # --- utilisation: booked slots vs bookable slots over the window ---
         slot_minutes = club.slot_duration_minutes or 60
@@ -104,9 +164,55 @@ class AnalyticsService:
             EventRegistration.event_id.in_(event_ids),
             EventRegistration.status == "registered").count() if event_ids else 0
 
+        # --- hourly occupancy: how many bookings start in each hour block ---
+        hourly_counts = {}
+        for b in base.filter(Booking.booking_date >= since).all():
+            hour = b.start_time.hour
+            hourly_counts[hour] = hourly_counts.get(hour, 0) + 1
+        busiest = max(hourly_counts.values()) if hourly_counts else 0
+        hourly_occupancy = [
+            {
+                "hour": f"{h:02d}:00",
+                "bookings": hourly_counts.get(h, 0),
+                # rate is relative to the busiest hour, so the bar chart scales
+                "rate": round((hourly_counts.get(h, 0) / busiest) * 100) if busiest else 0,
+            }
+            for h in range(open_h, max(close_h, open_h + 1))
+        ]
+
+        # --- monthly revenue & bookings, last 8 months (growth chart) ---
+        monthly = []
+        month_cursor = date(today.year, today.month, 1)
+        months_back = []
+        for _ in range(8):
+            months_back.append(month_cursor)
+            month_cursor = (month_cursor - timedelta(days=1)).replace(day=1)
+        for month_start in reversed(months_back):
+            next_month = (month_start + timedelta(days=32)).replace(day=1)
+            revenue = db.session.query(
+                func.coalesce(func.sum(Payment.amount), 0.0)
+            ).filter(
+                Payment.status == "completed",
+                Payment.created_at >= month_start,
+                Payment.created_at < next_month,
+                Payment.id.in_([p.id for p in club_payments.all()] or [-1]),
+            ).scalar() or 0.0
+            bookings_in_month = base.filter(
+                Booking.booking_date >= month_start,
+                Booking.booking_date < next_month,
+            ).count()
+            monthly.append({
+                "month": month_start.strftime("%b"),
+                "year": month_start.year,
+                "revenue": round(float(revenue), 2),
+                "bookings": bookings_in_month,
+            })
+
         return {
             "club": {"id": club.id, "name": club.name},
             "window_days": days,
+            "hourly_occupancy": hourly_occupancy,
+            "monthly": monthly,
             "bookings": {
                 "total": total_bookings,
                 "active": active_bookings,
@@ -115,7 +221,9 @@ class AnalyticsService:
                 "upcoming": upcoming_bookings,
                 "in_window": recent_bookings,
             },
-            "members": {"total": total_members, "active": active_members},
+            "members": {"total": total_members, "active": active_members,
+                        "public_players": public_players,
+                        "registered": len(booking_user_ids | member_user_ids)},
             "revenue": {
                 "total": total_revenue,
                 "by_type": revenue_by_type,

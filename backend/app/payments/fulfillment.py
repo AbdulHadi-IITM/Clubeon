@@ -109,7 +109,7 @@ class FulfillmentService:
             club_id=plan.club_id,
             status="active",
             start_date=start_date,
-            end_date=start_date + relativedelta(months=1),
+            end_date=start_date + relativedelta(months=plan.duration_months or 1),
             auto_renew=False,
         )
         db.session.add(membership)
@@ -192,6 +192,11 @@ class PaymentStatusService:
         if payment.user_id != user_id:
             return None, {"code": "FORBIDDEN",
                           "message": "Not authorized to view this payment."}
+
+        if payment.status == "pending" and payment.gateway_transaction_id:
+            from app.payments.services import PaymentService
+            PaymentService._reconcile_with_stripe(payment)
+            db.session.refresh(payment)
 
         data = {
             "payment_id": payment.id,

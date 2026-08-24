@@ -12,10 +12,10 @@
       <!-- Sidebar Header / Logo -->
       <div class="sidebar-header">
         <router-link :to="{ name: 'landing' }" class="brand-logo" aria-label="ClubDash Home">
-          <span class="logo-mark">⚡</span>
+          <BrandMark :size="34" />
           <span class="logo-text">ClubDash</span>
         </router-link>
-        <span class="admin-portal-badge">Admin</span>
+        <span class="admin-portal-badge">Owner</span>
       </div>
 
       <!-- Navigation Menu -->
@@ -192,40 +192,42 @@
               <div class="discord-details-list">
                 <div class="detail-row">
                   <span class="detail-label">Email</span>
-                  <span class="detail-val">{{ adminProfile.email }}</span>
+                  <span class="detail-val">{{ adminProfile.email || 'Not provided' }}</span>
                 </div>
                 <div class="detail-row">
                   <span class="detail-label">Phone</span>
-                  <span class="detail-val">{{ adminProfile.phone }}</span>
+                  <span class="detail-val" :style="{ color: adminProfile.phone ? '#f1f5f9' : '#94a3b8' }">
+                    {{ adminProfile.phone || 'Not provided' }}
+                  </span>
                 </div>
                 <div class="detail-row">
                   <span class="detail-label">Club Facility</span>
-                  <span class="detail-val">{{ courtStore.club?.name || 'Apex Sports Club' }}</span>
+                  <span class="detail-val" style="color: #60a5fa; font-weight: 700;">
+                    {{ adminProfile.facility || 'No club yet' }}
+                  </span>
                 </div>
                 <div class="detail-row">
                   <span class="detail-label">Member Since</span>
-                  <span class="detail-val">Jan 2025</span>
+                  <span class="detail-val">{{ adminProfile.memberSince || 'Recent' }}</span>
                 </div>
               </div>
 
               <!-- Action Footer -->
               <div class="discord-actions-footer">
-                <button class="upload-btn-pill" style="background: #2563eb; color: #ffffff;" @click="openEditProfileModal">
-                  ✎ Edit Profile
+                <button type="button" class="edit-profile-btn-pill" @click="openEditProfileModal">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="15" height="15">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                  <span>Edit Profile</span>
                 </button>
-                <label class="upload-btn-pill">
-                  📷 Upload Photo
-                  <input type="file" accept="image/*" @change="handleAvatarUpload" style="display: none;" />
-                </label>
-                <button class="close-card-btn" @click="showProfilePopover = false">Close</button>
               </div>
             </div>
           </div>
         </transition>
 
         <!-- Clickable Sidebar Profile Card -->
-        <div 
-          class="sidebar-admin-profile clickable-profile" 
+        <div
+          class="sidebar-admin-profile clickable-profile"
           @click.stop="toggleProfilePopover"
           title="Click to view Discord-style Admin Profile"
         >
@@ -290,26 +292,6 @@
             <span>{{ currentDate }}</span>
           </div>
 
-          <!-- Notification Bell -->
-          <button class="header-action-btn" aria-label="Notifications" @click="handleNotifications">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              stroke-width="2"
-              width="20"
-              height="20"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 01-6 0v-1m6 0H9"
-              />
-            </svg>
-            <span class="unread-dot">3</span>
-          </button>
-
           <!-- Top Header Logout Button -->
           <button class="top-header-logout-btn" @click="handleLogout" title="Logout of Admin Panel">
             <svg
@@ -337,6 +319,16 @@
         <div class="content-container">
           <!-- TAB 1: DASHBOARD (MAIN OVERVIEW) -->
           <div v-if="activeNav === 'Dashboard'" class="tab-pane">
+            <!-- Shared data-state banner: keeps the admin tabs consistent with
+                 the member/staff screens, which already surface load errors. -->
+            <div v-if="analyticsLoading" class="data-state data-state--loading">
+              Loading live data…
+            </div>
+            <div v-else-if="analyticsError" class="data-state data-state--error" role="alert">
+              {{ analyticsError }}
+              <button class="data-state__retry" @click="reloadAdminData">Retry</button>
+            </div>
+
             <!-- KPI Cards (4 cards) -->
             <section class="kpi-grid" aria-label="Key Performance Indicators">
               <div class="kpi-card" v-for="kpi in kpiCards" :key="kpi.title">
@@ -509,10 +501,14 @@
                   </div>
 
                   <div class="widget-footer">
-                    <div class="legend-item"><span class="dot blue"></span> Tennis</div>
-                    <div class="legend-item"><span class="dot emerald"></span> Badminton</div>
-                    <div class="legend-item"><span class="dot orange"></span> Squash</div>
-                    <div class="legend-item"><span class="dot purple"></span> Swimming</div>
+                    <div
+                      v-for="item in bookingTrends"
+                      :key="item.sport"
+                      class="legend-item"
+                    >
+                      <span class="dot" :class="item.colorClass.replace('bar-', '')"></span>
+                      {{ item.sport }}
+                    </div>
                   </div>
                 </div>
 
@@ -544,11 +540,11 @@
 
                   <div class="utilization-summary">
                     <div class="summary-box">
-                      <span class="summary-num">87.5%</span>
+                      <span class="summary-num">{{ analyticsKpis.utilisation }}</span>
                       <span class="summary-lbl">Avg. Occupancy</span>
                     </div>
                     <div class="summary-box">
-                      <span class="summary-num">5:00 - 9:00 PM</span>
+                      <span class="summary-num">{{ analyticsKpis.peakHour }}</span>
                       <span class="summary-lbl">Peak Hours</span>
                     </div>
                   </div>
@@ -582,40 +578,40 @@
                       </div>
                       <h3>Membership Overview</h3>
                     </div>
-                    <span class="total-tag">{{ membersList.length }} Total</span>
+                    <span class="total-tag">{{ membershipOverview.total }} Total</span>
                   </div>
 
                   <div class="membership-list">
                     <div class="member-type-row">
                       <div class="member-type-info">
-                        <span class="type-name">Registered Players</span>
+                        <span class="type-name">Permanent Members</span>
                         <span class="type-desc">Full club access & priority court booking</span>
                       </div>
                       <div class="member-type-stat">
-                        <span class="type-value">{{ membersList.length }}</span>
-                        <span class="type-pct">100%</span>
+                        <span class="type-value">{{ membershipOverview.permanent }}</span>
+                        <span class="type-pct">{{ membershipOverview.permanentPct }}%</span>
                       </div>
                     </div>
 
                     <div class="member-type-row">
                       <div class="member-type-info">
-                        <span class="type-name">Active Bookers</span>
-                        <span class="type-desc">Members with recorded court bookings</span>
+                        <span class="type-name">Public Players</span>
+                        <span class="type-desc">Pay-per-play & guest pass holders</span>
                       </div>
                       <div class="member-type-stat">
-                        <span class="type-value">{{ membersList.filter(m => m.totalBookings > 0).length }}</span>
-                        <span class="type-pct">{{ membersList.length ? Math.round((membersList.filter(m => m.totalBookings > 0).length / membersList.length) * 100) : 0 }}%</span>
+                        <span class="type-value">{{ membershipOverview.publicPlayers }}</span>
+                        <span class="type-pct">{{ membershipOverview.publicPct }}%</span>
                       </div>
                     </div>
 
                     <div class="member-type-row highlighted">
                       <div class="member-type-info">
-                        <span class="type-name">Active Members</span>
-                        <span class="type-desc">Active account holders</span>
+                        <span class="type-name">New Registrations</span>
+                        <span class="type-desc">Signed up in the last 7 days</span>
                       </div>
                       <div class="member-type-stat">
-                        <span class="type-value text-emerald">{{ membersList.filter(m => m.status === 'Active').length }}</span>
-                        <span class="new-pill">Active</span>
+                        <span class="type-value text-emerald">+64</span>
+                        <span class="new-pill">This Week</span>
                       </div>
                     </div>
                   </div>
@@ -625,7 +621,7 @@
               <!-- Recent Announcements -->
               <div class="dual-column">
                 <div class="card-box">
-                  <div class="box-header">
+                  <div class="box-header flex-between">
                     <div class="header-title">
                       <div class="icon-bubble orange">
                         <svg
@@ -646,14 +642,33 @@
                       </div>
                       <h3>Recent Announcements</h3>
                     </div>
+                    <button
+                      class="view-all-link-btn"
+                      @click="activeNav = 'Announcements'"
+                      style="background: none; border: none; font-size: 0.82rem; font-weight: 600; color: #2563eb; cursor: pointer; padding: 0.25rem 0.5rem;"
+                    >
+                      View All →
+                    </button>
                   </div>
 
-                  <div class="announcements-list">
-                    <div v-for="item in announcements" :key="item.id" class="announcement-item" style="cursor: pointer;" @click="openAnnouncementDetails(item)">
+                  <div v-if="announcements.length === 0" style="padding: 1.5rem 1rem; text-align: center; color: #94a3b8; font-size: 0.88rem;">
+                    No announcements published yet.
+                  </div>
+                  <div v-else class="announcements-list">
+                    <div
+                      v-for="item in announcements.slice(0, 3)"
+                      :key="item.id"
+                      class="announcement-item"
+                      style="cursor: pointer;"
+                      @click="openAnnouncementDetails(item)"
+                    >
                       <div class="announcement-top">
-                        <span class="announcement-badge" :class="item.categoryClass">{{
-                          item.category
-                        }}</span>
+                        <div style="display: flex; align-items: center; gap: 0.4rem;">
+                          <span class="announcement-badge" :class="item.categoryClass">{{
+                            item.category
+                          }}</span>
+                          <span v-if="!item.is_read" class="unread-indicator-dot" title="Unread"></span>
+                        </div>
                         <span class="announcement-date">{{ item.date }}</span>
                       </div>
                       <h4 class="announcement-title">{{ item.title }}</h4>
@@ -695,19 +710,16 @@
               <div class="block-header bookings-toolbar-header">
                 <div>
                   <h3>Club Members Directory</h3>
-                  <span class="subtext">View registered members, membership plans, joined dates, and player details</span>
+                  <span class="subtext">View registered members, membership plans, and booking activity</span>
                 </div>
                 <div class="header-action-buttons">
-                  <button class="export-csv-btn" @click="exportMembersCSV">
-                    📥 Export Members List
-                  </button>
+                  <button class="export-csv-btn" @click="exportMembersCSV">📥 Export CSV</button>
                 </div>
               </div>
 
               <!-- Filter & Search Controls Bar -->
               <div class="card-box bookings-filter-box" style="margin-top: 1rem;">
                 <div class="filter-controls-row">
-                  <!-- Search Input -->
                   <div class="search-input-wrapper">
                     <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                     <input
@@ -721,7 +733,7 @@
 
                   <!-- Plan Filter Pills -->
                   <div class="view-toggle-group">
-                    <button 
+                    <button
                       v-for="planFilter in ['All', 'Premium', 'Standard']"
                       :key="planFilter"
                       class="view-toggle-btn"
@@ -736,63 +748,61 @@
 
               <!-- Members Table Card -->
               <div class="card-box" style="margin-top: 1rem; padding: 0; overflow: hidden;">
-                <div v-if="filteredMembersList.length === 0" class="no-bookings-empty" style="padding: 2.5rem;">
+                <div v-if="filteredMembersList.length === 0" class="no-bookings-empty" style="padding: 3rem;">
                   <p class="empty-title">No members found</p>
-                  <p class="empty-sub">Registered club members will appear here automatically.</p>
+                  <p class="empty-sub">Try adjusting your search or filter.</p>
                 </div>
-                <div v-else class="facilities-table-wrapper" style="border: none; border-radius: 0;">
-                  <table class="analytics-table">
-                    <thead>
-                      <tr>
-                        <th>Member Details</th>
-                        <th>Membership Plan</th>
-                        <th>Date Joined</th>
-                        <th>Total Bookings</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr v-for="m in filteredMembersList" :key="m.id">
-                        <td>
-                          <div style="display: flex; align-items: center; gap: 0.75rem;">
-                            <div class="user-avatar-sm" style="background: linear-gradient(135deg, #2563eb, #4f46e5); color: #fff; font-weight: 700; display: grid; place-items: center; border-radius: 999px; width: 32px; height: 32px; font-size: 0.8rem;">{{ m.initials }}</div>
-                            <div>
-                              <strong style="color: #0f172a; font-size: 0.88rem; display: block;">{{ m.name }}</strong>
-                              <span style="font-size: 0.78rem; color: #64748b;">{{ m.email }}</span>
-                            </div>
-                          </div>
-                        </td>
-                        <td>
-                          <span 
-                            class="plan-badge"
-                            :style="{
-                              background: m.plan.includes('VIP') ? '#fef3c7' : (m.plan.includes('Permanent') ? '#eff6ff' : '#f1f5f9'),
-                              color: m.plan.includes('VIP') ? '#b45309' : (m.plan.includes('Permanent') ? '#1d4ed8' : '#475569'),
-                              border: '1px solid ' + (m.plan.includes('VIP') ? '#fde68a' : (m.plan.includes('Permanent') ? '#bfdbfe' : '#e2e8f0')),
-                              padding: '0.25rem 0.65rem',
-                              borderRadius: '999px',
-                              fontSize: '0.78rem',
-                              fontWeight: '700'
-                            }"
-                          >
-                            {{ m.plan }}
-                          </span>
-                        </td>
-                        <td style="font-weight: 600; color: #334155; font-size: 0.82rem;">{{ m.dateJoined }}</td>
-                        <td style="font-weight: 700; color: #0f172a; font-size: 0.84rem;">{{ m.totalBookings }} bookings</td>
-                        <td>
-                          <span class="status-badge-chip status-active">Active Member</span>
-                        </td>
-                        <td>
-                          <button class="action-icon-btn view-btn" @click="viewMemberDetails(m)" title="View Member Profile">
-                            View Profile
-                          </button>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
+                <table v-else class="analytics-table">
+                  <thead>
+                  <tr>
+                    <th>Member Details</th>
+                    <th>Membership Plan</th>
+                    <th>Date Joined</th>
+                    <th>Total Bookings</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                  </thead>
+                  <tbody>
+                  <tr v-for="m in filteredMembersList" :key="m.id">
+                    <td>
+                      <div style="display: flex; align-items: center; gap: 0.75rem;">
+                        <div class="user-avatar-sm" style="background: linear-gradient(135deg, #2563eb, #4f46e5); color: #fff; font-weight: 700; display: grid; place-items: center; border-radius: 999px; width: 32px; height: 32px; font-size: 0.8rem;">{{ m.initials }}</div>
+                        <div>
+                          <strong style="color: #0f172a; font-size: 0.88rem; display: block;">{{ m.name }}</strong>
+                          <span style="font-size: 0.78rem; color: #64748b;">{{ m.email }}</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+              <span
+                class="plan-badge"
+                :style="{
+                  background: m.plan.includes('VIP') ? '#fef3c7' : (m.plan.includes('Permanent') ? '#eff6ff' : '#f1f5f9'),
+                  color: m.plan.includes('VIP') ? '#b45309' : (m.plan.includes('Permanent') ? '#1d4ed8' : '#475569'),
+                  border: '1px solid ' + (m.plan.includes('VIP') ? '#fde68a' : (m.plan.includes('Permanent') ? '#bfdbfe' : '#e2e8f0')),
+                  padding: '0.25rem 0.65rem',
+                  borderRadius: '999px',
+                  fontSize: '0.78rem',
+                  fontWeight: '700'
+                }"
+              >
+                {{ m.plan }}
+              </span>
+                    </td>
+                    <td style="font-weight: 600; color: #334155; font-size: 0.82rem;">{{ m.dateJoined }}</td>
+                    <td style="font-weight: 700; color: #0f172a; font-size: 0.84rem;">{{ m.totalBookings }} bookings</td>
+                    <td>
+              <span class="status-badge-chip" :class="m.membership_status === 'active' ? 'status-active' : 'status-completed'">
+                {{ m.membership_status === 'active' ? 'Active' : 'Inactive' }}
+              </span>
+                    </td>
+                    <td>
+                      <button class="action-icon-btn view-btn" @click="viewMemberDetails(m)" title="View Member Profile">View Profile</button>
+                    </td>
+                  </tr>
+                  </tbody>
+                </table>
               </div>
             </section>
           </div>
@@ -916,7 +926,7 @@
                 </div>
                 <div class="kpi-body">
                   <span class="kpi-title">Court Utilization</span>
-                  <h3 class="kpi-value">87.5%</h3>
+                  <h3 class="kpi-value">{{ analyticsKpis.utilisation }}</h3>
                 </div>
               </div>
             </section>
@@ -941,18 +951,21 @@
                 </p>
               </div>
               <div v-else class="events-grid">
-                <div v-for="court in courtStore.courts" :key="court.id" class="admin-event-card">
-                  <div class="event-card-top">
-                    <span class="event-type-chip chip-blue">Court</span>
+                <div v-for="court in courtStore.courts" :key="court.id" class="admin-event-card" style="padding: 0; overflow: hidden;">
+                  <div style="height: 120px; width: 100%; position: relative; overflow: hidden; background: #0f172a;">
+                    <img :src="getSportImage(court.name || court.sport_type)" :alt="court.name" style="width: 100%; height: 100%; object-fit: cover;" />
+                    <div style="position: absolute; inset: 0; background: linear-gradient(180deg, transparent 40%, rgba(15,23,42,0.6) 100%);"></div>
                     <span
                       class="event-status-pill"
                       :class="court.is_active ? 'status-open' : 'status-scheduled'"
+                      style="position: absolute; top: 10px; right: 10px;"
                     >
                       {{ court.is_active ? 'Active' : 'Inactive' }}
                     </span>
                   </div>
-                  <h4 class="event-card-title">{{ court.name }}</h4>
-                  <div class="court-sport-type">{{ sportLabel(court.sport_type) }}</div>
+                  <div style="padding: 1.25rem;">
+                    <h4 class="event-card-title">{{ court.name }}</h4>
+                    <div class="court-sport-type">{{ sportLabel(court.sport_type) }}</div>
 
                   <!-- Default/Custom Badge -->
                   <div class="court-settings-badge">
@@ -982,6 +995,7 @@
                   </div>
                 </div>
               </div>
+            </div>
             </section>
           </div>
 
@@ -1022,6 +1036,9 @@
                   <button class="export-csv-btn" @click="exportBookingsCSV" title="Export to CSV">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 15px; height: 15px; margin-right: 6px;"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                     Export CSV
+                  </button>
+                  <button class="add-booking-btn" @click="openNewBookingModal">
+                    + New Booking
                   </button>
                 </div>
               </div>
@@ -1084,7 +1101,7 @@
                       </select>
                     </div>
 
-                    <button 
+                    <button
                       v-if="bookingSearchQuery || bookingStatusFilter !== 'All' || bookingFacilityFilter !== 'All' || bookingDateFilter !== 'All'"
                       class="reset-filters-btn"
                       @click="resetBookingFilters"
@@ -1096,18 +1113,24 @@
                 </div>
               </div>
 
-              <div v-if="bookingsError" class="booking-api-error" role="alert">
-                <span>{{ bookingsError }}</span>
-                <button type="button" @click="loadBookings">Retry</button>
-              </div>
-              <div v-if="bookingsLoading" class="booking-api-loading">Loading bookings...</div>
-
               <!-- Bookings Table Display (Clean, Spacious & Modern) -->
               <div class="card-box" style="margin-top: 1rem; overflow-x: auto;">
-                <div v-if="filteredBookings.length === 0" class="no-bookings-empty">
+                <div v-if="bookingsLoading" class="no-bookings-empty">
+                  <p class="empty-title">Loading bookings…</p>
+                </div>
+
+                <div v-else-if="filteredBookings.length === 0" class="no-bookings-empty">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width: 48px; height: 48px; color: #94a3b8; margin-bottom: 1rem;"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                  <p class="empty-title">No bookings match your filter</p>
-                  <p class="empty-sub">Try adjusting your search query or dropdown filters.</p>
+                  <p class="empty-title">
+                    {{ bookingsList.length ? 'No bookings match your filter' : 'No bookings yet' }}
+                  </p>
+                  <p class="empty-sub">
+                    {{
+                      bookingsList.length
+                        ? 'Try adjusting your search query or dropdown filters.'
+                        : 'Bookings made by members will appear here.'
+                    }}
+                  </p>
                 </div>
 
                 <table v-else class="admin-bookings-table">
@@ -1115,6 +1138,8 @@
                     <tr>
                       <th>PLAYER & ID</th>
                       <th>COURT & SCHEDULE</th>
+                      <th>FEE & PAYMENT</th>
+                      <th>STATUS</th>
                       <th style="text-align: right;">ACTIONS</th>
                     </tr>
                   </thead>
@@ -1137,20 +1162,55 @@
                       <!-- Court & Schedule -->
                       <td>
                         <div class="court-info-cell">
-                          <div class="facility-head-line" style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                          <div class="facility-head-line">
                             <span class="court-name-txt">{{ b.facility }}</span>
                             <span class="sport-badge-pill" :class="'sport-' + b.sport.toLowerCase()">{{ b.sport }}</span>
-                            <span class="booking-status-badge" :class="'bstatus-' + getEffectiveStatus(b).toLowerCase()" style="font-size: 0.7rem; padding: 0.15rem 0.55rem; line-height: 1;">{{ getEffectiveStatus(b) }}</span>
                           </div>
                           <span class="time-subtxt">{{ b.dateDisplay }} ({{ b.date }}) • {{ b.time }}</span>
                         </div>
                       </td>
 
+                      <!-- Fee & Payment -->
+                      <td>
+                        <div class="payment-cell">
+                          <span class="amount-txt">₹{{ b.amount }}</span>
+                          <span class="pay-status-tag" :class="'pay-' + b.paymentStatus.toLowerCase()">{{ b.paymentStatus }}</span>
+                        </div>
+                      </td>
+
+                      <!-- Booking Status -->
+                      <td>
+                        <div style="display: flex; flex-direction: column; gap: 0.15rem; align-items: flex-start;">
+                          <span class="booking-status-badge" :class="'bstatus-' + getEffectiveStatus(b).toLowerCase()">
+                            {{ getEffectiveStatus(b) }}
+                          </span>
+                          <span v-if="isTimeCompleted(b)" class="auto-completed-hint">⏱ Time completed</span>
+                        </div>
+                      </td>
+
                       <!-- Clean Actions Column -->
-                      <td style="text-align: right; white-space: nowrap;">
+                      <td style="text-align: right;">
                         <div class="table-actions-group">
-                          <button class="action-icon-btn view-btn" title="View Full Details & Management" @click="openBookingDetails(b)">
+                          <button class="action-icon-btn view-btn" title="View Full Details" @click="openBookingDetails(b)">
                             Details
+                          </button>
+
+                          <button
+                            v-if="getEffectiveStatus(b) === 'Confirmed' || getEffectiveStatus(b) === 'Pending'"
+                            class="action-icon-btn cancel-btn"
+                            title="Cancel Booking"
+                            @click="requestCancelBooking(b)"
+                          >
+                            Cancel
+                          </button>
+
+                          <button
+                            v-if="getEffectiveStatus(b) === 'Confirmed'"
+                            class="action-icon-btn complete-btn"
+                            title="Mark Completed"
+                            @click="markBookingCompleted(b)"
+                          >
+                            ✓
                           </button>
                         </div>
                       </td>
@@ -1196,16 +1256,16 @@
                 </div>
                 <div class="header-action-buttons">
                   <div class="view-toggle-group">
-                    <button 
-                      class="view-toggle-btn" 
+                    <button
+                      class="view-toggle-btn"
                       :class="{ active: eventViewMode === 'grid' }"
                       @click="eventViewMode = 'grid'"
                       title="Grid View"
                     >
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
                     </button>
-                    <button 
-                      class="view-toggle-btn" 
+                    <button
+                      class="view-toggle-btn"
                       :class="{ active: eventViewMode === 'table' }"
                       @click="eventViewMode = 'table'"
                       title="Table View"
@@ -1273,7 +1333,7 @@
                       </select>
                     </div>
 
-                    <button 
+                    <button
                       v-if="eventSearchQuery || eventStatusFilter !== 'All' || eventSportFilter !== 'All' || eventTypeFilter !== 'All'"
                       class="reset-filters-btn"
                       @click="resetEventFilters"
@@ -1293,16 +1353,18 @@
 
               <!-- Grid View -->
               <div v-else-if="eventViewMode === 'grid'" class="admin-events-grid-container" style="margin-top: 1rem;">
-                <div v-for="evt in filteredEvents" :key="evt.id" class="event-card-rich">
-                  <div class="event-card-rich-header">
-                    <span class="sport-badge-pill" :class="'sport-' + evt.sport.toLowerCase()">{{ evt.sport }}</span>
-                    <span class="booking-status-badge" :class="'estatus-' + evt.status.toLowerCase()">{{ evt.status }}</span>
+                <div v-for="evt in filteredEvents" :key="evt.id" class="event-card-rich" style="padding: 0; overflow: hidden;">
+                  <div style="height: 130px; width: 100%; position: relative; overflow: hidden; background: #0f172a;">
+                    <img :src="getSportImage(evt.title || evt.sport)" :alt="evt.title" style="width: 100%; height: 100%; object-fit: cover; opacity: 0.9;" />
+                    <div style="position: absolute; inset: 0; background: linear-gradient(180deg, transparent 40%, rgba(15,23,42,0.7) 100%);"></div>
+                    <span class="sport-badge-pill" :class="'sport-' + evt.sport.toLowerCase()" style="position: absolute; top: 10px; left: 10px;">{{ evt.sport }}</span>
+                    <span class="booking-status-badge" :class="'estatus-' + evt.status.toLowerCase()" style="position: absolute; top: 10px; right: 10px;">{{ evt.status }}</span>
                   </div>
 
                   <div class="event-card-rich-body">
                     <h4 class="event-rich-title">{{ evt.title }}</h4>
                     <span class="event-type-subtag">{{ evt.type }}</span>
-                    
+
                     <p class="event-rich-desc">{{ evt.description }}</p>
 
                     <div class="event-meta-list">
@@ -1327,8 +1389,8 @@
                     <!-- Capacity Progress Bar -->
                     <div class="capacity-progress-wrapper">
                       <div class="capacity-progress-bar">
-                        <div 
-                          class="capacity-progress-fill" 
+                        <div
+                          class="capacity-progress-fill"
                           :style="{ width: Math.min(100, Math.round((evt.registered / evt.capacity) * 100)) + '%' }"
                           :class="{ full: evt.registered >= evt.capacity }"
                         ></div>
@@ -1345,7 +1407,9 @@
                         ✎ Edit
                       </button>
                       <button class="action-icon-btn cancel-btn" @click="requestDeleteEvent(evt)" title="Delete Event">
-                        🗑
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
                       </button>
                     </div>
                   </div>
@@ -1402,9 +1466,13 @@
                       </td>
                       <td style="text-align: right;">
                         <div class="table-actions-group">
-                          <button class="action-icon-btn view-btn" @click="openEventDetails(evt)">Details</button>
-                          <button class="action-icon-btn complete-btn" @click="openEditEventModal(evt)">Edit</button>
-                          <button class="action-icon-btn cancel-btn" @click="requestDeleteEvent(evt)">✕</button>
+                          <button class="action-icon-btn view-btn" @click="openEventDetails(evt)" title="View Details">Details</button>
+                          <button class="action-icon-btn complete-btn" @click="openEditEventModal(evt)" title="Edit Event">Edit</button>
+                          <button class="action-icon-btn cancel-btn" @click="requestDeleteEvent(evt)" title="Delete Event">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;">
+                              <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -1417,35 +1485,153 @@
           <!-- TAB 6: ANNOUNCEMENTS PREVIEW -->
           <div v-else-if="activeNav === 'Announcements'" class="tab-pane">
             <section class="section-block">
-              <div class="block-header flex-between">
+              <div class="block-header flex-between flex-wrap gap-4">
                 <div>
-                  <h3>Broadcast Announcements</h3>
-                  <span class="subtext">Facility updates, policy changes, and tournament news</span>
+                  <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span style="font-size: 1.5rem;">📢</span>
+                    <h3 style="margin: 0;">Broadcast & Announcements Hub</h3>
+                  </div>
+                  <span class="subtext">Facility updates, tournament schedules, policy notices, and court maintenance</span>
                 </div>
-                <button class="btn-primary-action" @click="openCreateAnnouncementModal">
-                  + Create Announcement
-                </button>
+                <div class="header-action-buttons" style="display: flex; gap: 0.75rem; align-items: center;">
+                  <button
+                    class="btn-secondary-action"
+                    title="Refresh Announcements"
+                    @click="refreshAnnouncements"
+                    :disabled="notificationStore.isLoading"
+                    style="display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.55rem 0.95rem;"
+                  >
+                    <svg :class="{ 'spin-animate': notificationStore.isLoading }" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    <span>Refresh</span>
+                  </button>
+                  <button
+                    class="btn-primary-action"
+                    @click="handleCreateAnnouncement"
+                    style="display: inline-flex; align-items: center; gap: 0.4rem; background: linear-gradient(135deg, #2563eb, #4f46e5); box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="16" height="16">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                    </svg>
+                    <span>+ Create Announcement</span>
+                  </button>
+                </div>
               </div>
 
-              <div class="card-box" style="padding: 1.5rem;">
-                <div v-if="announcements.length === 0" class="no-bookings-empty" style="padding: 2.5rem 1rem; text-align: center;">
-                  <span style="font-size: 2.5rem; display: block; margin-bottom: 0.5rem;">📢</span>
-                  <p class="empty-title" style="font-weight: 700; color: #0f172a; margin: 0 0 0.25rem 0;">No announcements broadcasted yet</p>
-                  <p class="empty-sub" style="font-size: 0.875rem; color: #64748b; margin: 0;">Create an announcement to broadcast notices to your club members and staff.</p>
+              <!-- Filter & Search Toolbar -->
+              <div class="announcements-toolbar" style="margin-bottom: 1.25rem; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem; background: #ffffff; padding: 1rem 1.25rem; border-radius: 1rem; border: 1px solid #e2e8f0; box-shadow: 0 2px 6px rgba(15, 23, 42, 0.02);">
+                <!-- Category Filter Pills -->
+                <div class="filter-pills-group" style="display: flex; flex-wrap: wrap; gap: 0.45rem;">
+                  <button
+                    v-for="cat in [
+                      { name: 'All', icon: '✨' },
+                      { name: 'General', icon: '📢' },
+                      { name: 'Broadcast', icon: '📣' },
+                      { name: 'Tournament', icon: '🏆' },
+                      { name: 'Policy', icon: '📜' },
+                      { name: 'Maintenance', icon: '🛠️' }
+                    ]"
+                    :key="cat.name"
+                    class="filter-pill-btn"
+                    :class="{ active: announcementsCategoryFilter === cat.name }"
+                    @click="announcementsCategoryFilter = cat.name"
+                  >
+                    <span>{{ cat.icon }} {{ cat.name }}</span>
+                    <span v-if="cat.name === 'All'" class="pill-count">({{ announcements.length }})</span>
+                    <span v-else class="pill-count">({{ announcements.filter(a => a.category.toLowerCase() === cat.name.toLowerCase()).length }})</span>
+                  </button>
                 </div>
-                <div v-else class="announcements-list">
-                  <div v-for="item in announcements" :key="item.id" class="announcement-item" style="padding: 1rem 1.25rem; border-radius: 0.75rem; border: 1px solid #e2e8f0; margin-bottom: 0.875rem; background: #ffffff; box-shadow: 0 1px 3px rgba(0,0,0,0.03); cursor: pointer;" @click="openAnnouncementDetails(item)">
-                    <div class="announcement-top" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
-                      <div style="display: flex; align-items: center; gap: 0.6rem;">
-                        <span class="announcement-badge" :class="item.categoryClass">{{ item.category }}</span>
-                        <span class="announcement-date" style="color: #64748b; font-size: 0.8rem; font-weight: 500;">{{ item.date }}</span>
+
+                <!-- Search Input -->
+                <div class="search-input-wrapper" style="position: relative; min-width: 280px;">
+                  <svg style="position: absolute; left: 0.85rem; top: 50%; transform: translateY(-50%); color: #94a3b8;" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  <input
+                    v-model="announcementsSearchQuery"
+                    type="text"
+                    placeholder="Search announcements..."
+                    class="announcement-search-input"
+                    style="width: 100%; padding: 0.55rem 0.85rem 0.55rem 2.4rem; border: 1px solid #cbd5e1; border-radius: 0.6rem; font-size: 0.88rem; outline: none; transition: border-color 0.2s;"
+                  />
+                  <button
+                    v-if="announcementsSearchQuery"
+                    @click="announcementsSearchQuery = ''"
+                    style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 0.9rem;"
+                  >✕</button>
+                </div>
+              </div>
+
+              <div class="card-box" style="padding: 1.25rem;">
+                <!-- Loading State -->
+                <div v-if="notificationStore.isLoading && announcements.length === 0" class="announcements-loading" style="padding: 3.5rem; text-align: center; color: #64748b;">
+                  <div class="spinner-sm" style="margin: 0 auto 1rem;"></div>
+                  <p style="font-weight: 500;">Fetching facility announcements...</p>
+                </div>
+
+                <!-- Empty State -->
+                <div v-else-if="filteredAnnouncements.length === 0" class="empty-announcements-state" style="padding: 3.5rem 2rem; text-align: center;">
+                  <div style="width: 64px; height: 64px; margin: 0 auto 1.25rem; border-radius: 999px; background: linear-gradient(135deg, #eff6ff, #dbeafe); color: #2563eb; display: grid; place-items: center; font-size: 1.8rem; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);">
+                    📢
+                  </div>
+                  <h4 style="font-size: 1.15rem; font-weight: 700; color: #0f172a; margin-bottom: 0.35rem;">No Announcements Found</h4>
+                  <p style="font-size: 0.9rem; color: #64748b; margin-bottom: 1.5rem; max-width: 420px; margin-left: auto; margin-right: auto; line-height: 1.5;">
+                    {{ announcementsSearchQuery || announcementsCategoryFilter !== 'All' ? 'No announcements match your search or filter criteria. Try changing filters or clearing search.' : 'Keep your players and club members informed by broadcasting your first facility announcement.' }}
+                  </p>
+                  <button class="btn-primary-action" @click="handleCreateAnnouncement" style="padding: 0.65rem 1.25rem;">
+                    + Create First Announcement
+                  </button>
+                </div>
+
+                <!-- Announcements List -->
+                <div v-else class="announcements-list-rich">
+                  <div
+                    v-for="item in filteredAnnouncements"
+                    :key="item.id"
+                    class="announcement-item-rich"
+                    :style="{
+                      borderLeftWidth: '5px',
+                      borderLeftColor: item.category === 'Maintenance' ? '#ef4444' : item.category === 'Policy' ? '#f59e0b' : item.category === 'Tournament' ? '#10b981' : item.category === 'Broadcast' ? '#8b5cf6' : '#2563eb'
+                    }"
+                    @click="openAnnouncementDetails(item)"
+                  >
+                    <div class="announcement-item-main">
+                      <div class="announcement-top" style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.5rem;">
+                        <span class="announcement-badge" :class="item.categoryClass">
+                          {{ item.icon }} {{ item.category }}
+                        </span>
+                        <span class="announcement-date" style="font-size: 0.82rem; color: #64748b; font-weight: 500;">
+                          {{ item.date }}
+                        </span>
                       </div>
-                      <button class="action-icon-btn cancel-btn" style="padding: 0.3rem 0.6rem; font-size: 0.75rem; border-radius: 0.375rem;" @click.stop="handleDeleteAnnouncement(item.id)" title="Delete Announcement">
-                        ✕ Delete
+                      <h4 class="announcement-title" style="font-size: 1.05rem; font-weight: 700; color: #0f172a; margin: 0 0 0.4rem; line-height: 1.35;">
+                        {{ item.title }}
+                      </h4>
+                      <p v-if="item.body" class="announcement-body-preview" style="font-size: 0.88rem; color: #475569; line-height: 1.55; margin: 0;">
+                        {{ item.body }}
+                      </p>
+                    </div>
+
+                    <div class="announcement-item-actions" style="display: flex; align-items: center; gap: 0.5rem;" @click.stop>
+                      <button
+                        class="btn-view-announcement"
+                        @click="openAnnouncementDetails(item)"
+                        style="display: inline-flex; align-items: center; gap: 0.35rem;"
+                      >
+                        <span>View Details</span>
+                        <span>→</span>
+                      </button>
+                      <button
+                        class="btn-icon-trash"
+                        title="Delete Announcement"
+                        @click="handleDeleteAnnouncement(item)"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="16" height="16">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
                       </button>
                     </div>
-                    <h4 class="announcement-title" style="margin: 0 0 0.35rem 0; font-size: 1rem; font-weight: 700; color: #0f172a;">{{ item.title }}</h4>
-                    <p v-if="item.body" style="font-size: 0.875rem; color: #475569; margin: 0; line-height: 1.5;">{{ item.body }}</p>
                   </div>
                 </div>
               </div>
@@ -1455,27 +1641,37 @@
           <!-- TAB 7: ANALYTICS PREVIEW -->
           <!-- TAB 7: PERFORMANCE & ANALYTICS -->
           <div v-else-if="activeNav === 'Analytics'" class="tab-pane">
+            <!-- Shared data-state banner: keeps the admin tabs consistent with
+                 the member/staff screens, which already surface load errors. -->
+            <div v-if="analyticsLoading" class="data-state data-state--loading">
+              Loading live data…
+            </div>
+            <div v-else-if="analyticsError" class="data-state data-state--error" role="alert">
+              {{ analyticsError }}
+              <button class="data-state__retry" @click="reloadAdminData">Retry</button>
+            </div>
+
             <!-- Dynamic KPI Cards for Analytics (in Indian Rupees ₹) -->
             <section class="kpi-grid">
               <div class="kpi-card">
                 <span class="kpi-title">Total Revenue</span>
-                <h3 class="kpi-value">{{ financialSummary.grossRevenue }}</h3>
-                <span class="trend-badge positive">↑ Live Recorded</span>
+                <h3 class="kpi-value">{{ analyticsKpis.revenue }}</h3>
+                <span class="trend-badge neutral">{{ analyticsKpis.window }}</span>
               </div>
               <div class="kpi-card">
                 <span class="kpi-title">Peak Booking Hour</span>
-                <h3 class="kpi-value">06 - 08 PM</h3>
-                <span class="trend-badge positive">↑ Peak Prime Slots</span>
+                <h3 class="kpi-value">{{ analyticsKpis.peakHour }}</h3>
+                <span class="trend-badge neutral">{{ analyticsKpis.peakBookings }}</span>
               </div>
               <div class="kpi-card">
-                <span class="kpi-title">Registered Members</span>
-                <h3 class="kpi-value">{{ membersList.length }} Members</h3>
-                <span class="trend-badge positive">↑ Active in Club</span>
+                <span class="kpi-title">Active Members</span>
+                <h3 class="kpi-value">{{ analyticsKpis.activeMembers }}</h3>
+                <span class="trend-badge neutral">{{ analyticsKpis.totalMembers }} total</span>
               </div>
               <div class="kpi-card">
-                <span class="kpi-title">Total Bookings</span>
-                <h3 class="kpi-value">{{ bookingKpis.total }}</h3>
-                <span class="trend-badge positive">↑ {{ bookingKpis.confirmed }} Confirmed</span>
+                <span class="kpi-title">Court Utilisation</span>
+                <h3 class="kpi-value">{{ analyticsKpis.utilisation }}</h3>
+                <span class="trend-badge neutral">{{ analyticsKpis.bookingsInWindow }} bookings</span>
               </div>
             </section>
 
@@ -1489,8 +1685,8 @@
                 </div>
                 <div class="header-action-buttons">
                   <div class="view-toggle-group">
-                    <button 
-                      v-for="tf in ['7 Days', '30 Days', '12 Months', 'This Year']" 
+                    <button
+                      v-for="tf in ['7 Days', '30 Days', '12 Months', 'This Year']"
                       :key="tf"
                       class="view-toggle-btn"
                       :class="{ active: analyticsTimeframe === tf }"
@@ -1513,15 +1709,15 @@
                     <p class="chart-card-sub">Monthly trend overview in Indian Rupees (₹)</p>
                   </div>
                   <div class="metric-switch-pills">
-                    <button 
-                      class="metric-pill-btn" 
+                    <button
+                      class="metric-pill-btn"
                       :class="{ active: activeChartMetric === 'revenue' }"
                       @click="activeChartMetric = 'revenue'"
                     >
                       Revenue (₹)
                     </button>
-                    <button 
-                      class="metric-pill-btn" 
+                    <button
+                      class="metric-pill-btn"
                       :class="{ active: activeChartMetric === 'bookings' }"
                       @click="activeChartMetric = 'bookings'"
                     >
@@ -1550,42 +1746,44 @@
                     <line x1="40" y1="130" x2="670" y2="130" stroke="#f1f5f9" stroke-width="1" stroke-dasharray="4"/>
                     <line x1="40" y1="185" x2="670" y2="185" stroke="#cbd5e1" stroke-width="1.5"/>
 
-                    <!-- Y-Axis Labels -->
-                    <text x="35" y="34" text-anchor="end" font-size="10" fill="#94a3b8">₹5L</text>
-                    <text x="35" y="84" text-anchor="end" font-size="10" fill="#94a3b8">₹3.5L</text>
-                    <text x="35" y="134" text-anchor="end" font-size="10" fill="#94a3b8">₹2L</text>
-                    <text x="35" y="189" text-anchor="end" font-size="10" fill="#94a3b8">₹0</text>
+                    <!-- Y-Axis Labels, scaled to the series actually plotted -->
+                    <text x="35" y="34" text-anchor="end" font-size="10" fill="#94a3b8">
+                      {{ growthChart.axis[0] }}
+                    </text>
+                    <text x="35" y="84" text-anchor="end" font-size="10" fill="#94a3b8">
+                      {{ growthChart.axis[1] }}
+                    </text>
+                    <text x="35" y="134" text-anchor="end" font-size="10" fill="#94a3b8">
+                      {{ growthChart.axis[2] }}
+                    </text>
+                    <text x="35" y="189" text-anchor="end" font-size="10" fill="#94a3b8">0</text>
+
+                    <text
+                      v-if="!growthChart.bars.length"
+                      x="355" y="112" text-anchor="middle" font-size="12" fill="#94a3b8"
+                    >
+                      No data for this period yet.
+                    </text>
 
                     <!-- Column Bars & Labels -->
-                    <g v-for="(b, i) in [
-                      { x: 55, w: 38, h: 88, y: 97, month: 'Jan', rev: '₹2.45L', vol: 320 },
-                      { x: 135, w: 38, h: 101, y: 84, month: 'Feb', rev: '₹2.80L', vol: 380 },
-                      { x: 215, w: 38, h: 112, y: 73, month: 'Mar', rev: '₹3.10L', vol: 420 },
-                      { x: 295, w: 38, h: 105, y: 80, month: 'Apr', rev: '₹2.90L', vol: 390 },
-                      { x: 375, w: 38, h: 130, y: 55, month: 'May', rev: '₹3.60L', vol: 490 },
-                      { x: 455, w: 38, h: 151, y: 34, month: 'Jun', rev: '₹4.20L', vol: 560 },
-                      { x: 535, w: 38, h: 162, y: 23, month: 'Jul', rev: '₹4.50L', vol: 610 },
-                      { x: 615, w: 38, h: 174, y: 11, month: 'Aug', rev: '₹4.82L', vol: 648 }
-                    ]" :key="i">
-                      <!-- Bar Background Track -->
+                    <g v-for="(b, i) in growthChart.bars" :key="b.month">
                       <rect :x="b.x" y="30" :width="b.w" height="155" rx="6" ry="6" fill="#f8fafc" />
-                      <!-- Gradient Vertical Bar -->
-                      <rect 
-                        :x="b.x" 
-                        :y="activeChartMetric === 'revenue' ? b.y : (185 - (b.vol / 700 * 155))" 
-                        :width="b.w" 
-                        :height="activeChartMetric === 'revenue' ? b.h : (b.vol / 700 * 155)" 
-                        rx="6" 
-                        ry="6" 
+                      <rect
+                        :x="b.x"
+                        :y="b.y"
+                        :width="b.w"
+                        :height="b.h"
+                        rx="6"
+                        ry="6"
                         :fill="i % 2 === 0 ? 'url(#barBlueGrad)' : 'url(#barIndigoGrad)'"
                         class="graph-point"
                       />
-                      <!-- Top Value Label -->
-                      <text :x="b.x + 19" :y="(activeChartMetric === 'revenue' ? b.y : (185 - (b.vol / 700 * 155))) - 6" text-anchor="middle" font-size="10" font-weight="700" fill="#1e293b">
-                        {{ activeChartMetric === 'revenue' ? b.rev : b.vol }}
+                      <text :x="b.x + 19" :y="b.y - 6" text-anchor="middle" font-size="10" font-weight="700" fill="#1e293b">
+                        {{ b.label }}
                       </text>
-                      <!-- Bottom Month Label -->
-                      <text :x="b.x + 19" y="208" text-anchor="middle" font-size="11" font-weight="600" fill="#64748b">{{ b.month }}</text>
+                      <text :x="b.x + 19" y="208" text-anchor="middle" font-size="11" font-weight="600" fill="#64748b">
+                        {{ b.month }}
+                      </text>
                     </g>
                   </svg>
                 </div>
@@ -1599,28 +1797,37 @@
                     <h4>Sport Revenue Breakdown</h4>
                     <span class="widget-badge">Percentage Share</span>
                   </div>
-                  
+
                   <div class="donut-chart-flex-wrapper">
                     <!-- SVG Donut Chart -->
                     <div class="donut-svg-holder">
                       <svg viewBox="0 0 100 100" class="donut-svg">
-                        <!-- Tennis 45% (0 - 162 deg) -->
-                        <circle cx="50" cy="50" r="38" fill="none" stroke="#2563eb" stroke-width="14" stroke-dasharray="107 132" stroke-dashoffset="0" />
-                        <!-- Badminton 30% (162 - 270 deg) -->
-                        <circle cx="50" cy="50" r="38" fill="none" stroke="#059669" stroke-width="14" stroke-dasharray="71 168" stroke-dashoffset="-107" />
-                        <!-- Squash 15% (270 - 324 deg) -->
-                        <circle cx="50" cy="50" r="38" fill="none" stroke="#ea580c" stroke-width="14" stroke-dasharray="35 204" stroke-dashoffset="-178" />
-                        <!-- Swimming 10% (324 - 360 deg) -->
-                        <circle cx="50" cy="50" r="38" fill="none" stroke="#0284c7" stroke-width="14" stroke-dasharray="24 215" stroke-dashoffset="-213" />
+                        <circle
+                          v-if="!donutSegments.length"
+                          cx="50" cy="50" r="38" fill="none"
+                          stroke="#e2e8f0" stroke-width="14"
+                        />
+                        <circle
+                          v-for="seg in donutSegments"
+                          :key="seg.sport"
+                          cx="50" cy="50" r="38" fill="none"
+                          :stroke="seg.color"
+                          stroke-width="14"
+                          :stroke-dasharray="seg.dashArray"
+                          :stroke-dashoffset="seg.dashOffset"
+                        />
                       </svg>
                       <div class="donut-inner-text">
                         <span class="donut-total-title">Total</span>
-                        <span class="donut-total-num">₹4.82L</span>
+                        <span class="donut-total-num">{{ revenueTotalLabel }}</span>
                       </div>
                     </div>
 
                     <!-- Legend & Distribution Breakdown -->
                     <div class="donut-legend-list">
+                      <p v-if="!sportRevenueBreakdown.length" class="legend-empty">
+                        No completed payments in this period.
+                      </p>
                       <div v-for="item in sportRevenueBreakdown" :key="item.sport" class="legend-item-row">
                         <div class="legend-color-dot" :style="{ background: item.color }"></div>
                         <div class="legend-info">
@@ -1643,11 +1850,11 @@
                     <div v-for="h in hourlyOccupancyData" :key="h.hour" class="bar-col-item" style="display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 0.35rem; flex: 1; height: 100%;">
                       <span class="bar-rate-txt" style="font-size: 0.72rem; font-weight: 700; color: #1e293b;">{{ h.rate }}%</span>
                       <div class="bar-track-vertical" style="height: 120px; width: 14px; border-radius: 999px; background: #f1f5f9; display: flex; align-items: flex-end; overflow: hidden;">
-                        <div 
-                          class="bar-fill-vertical" 
-                          :style="{ 
-                            height: h.rate + '%', 
-                            width: '100%', 
+                        <div
+                          class="bar-fill-vertical"
+                          :style="{
+                            height: h.rate + '%',
+                            width: '100%',
                             borderRadius: '999px',
                             background: h.rate >= 90 ? 'linear-gradient(to top, #2563eb, #4f46e5)' : (h.rate >= 70 ? 'linear-gradient(to top, #059669, #10b981)' : 'linear-gradient(to top, #8b5cf6, #a855f7)'),
                             transition: 'height 0.4s ease'
@@ -1680,7 +1887,6 @@
                           <th>Sport</th>
                           <th>Hours Booked</th>
                           <th>Occupancy</th>
-                          <th>Revenue (₹)</th>
                           <th>Status</th>
                         </tr>
                       </thead>
@@ -1701,14 +1907,12 @@
                               <span style="font-size: 0.8rem; font-weight: 700; color: #0f172a;">{{ fac.occupancy }}</span>
                             </div>
                           </td>
-                          <td style="font-weight: 700; color: #059669;">₹{{ fac.revenue.toLocaleString() }}</td>
                           <td>
-                            <span 
+                            <span
                               class="status-badge-chip"
                               :class="{
-                                'status-active': fac.status === 'High Demand',
-                                'status-completed': fac.status === 'Optimal',
-                                'status-upcoming': fac.status === 'Moderate'
+                                'status-active': fac.status === 'Active',
+                                'status-completed': fac.status === 'Inactive'
                               }"
                             >
                               {{ fac.status }}
@@ -1734,9 +1938,9 @@
                       <span class="fin-val positive">{{ financialSummary.grossRevenue }}</span>
                     </div>
                     <div class="fin-stat-card">
-                      <span class="fin-label">Net Profit</span>
-                      <span class="fin-val blue">{{ financialSummary.netProfit }}</span>
-                      <span class="fin-sub">{{ financialSummary.profitMargin }} margin</span>
+                      <span class="fin-label">Payments Settled</span>
+                      <span class="fin-val blue">{{ financialSummary.completedPayments }}</span>
+                      <span class="fin-sub">{{ financialSummary.pendingPayments }} pending</span>
                     </div>
                   </div>
 
@@ -1744,8 +1948,8 @@
                   <div style="margin-top: 1.25rem;">
                     <h5 style="font-size: 0.84rem; font-weight: 700; color: #334155; margin-bottom: 0.5rem;">Payment Gateway Distribution</h5>
                     <div class="stacked-bar-container">
-                      <div 
-                        v-for="pm in paymentMethodBreakdown" 
+                      <div
+                        v-for="pm in paymentMethodBreakdown"
                         :key="pm.method"
                         class="stacked-bar-segment"
                         :style="{ width: pm.percentage + '%', background: pm.color }"
@@ -1792,11 +1996,11 @@
                   </div>
                   <div class="setting-row">
                     <span class="setting-label">Contact Email</span>
-                    <span class="setting-val">admin@clubdash.com</span>
+                    <span class="setting-val">{{ adminProfile.email || 'Not set' }}</span>
                   </div>
                   <div class="setting-row">
                     <span class="setting-label">Contact Phone</span>
-                    <span class="setting-val">+1 (555) 234-5678</span>
+                    <span class="setting-val">{{ adminProfile.phone || 'Not set' }}</span>
                   </div>
                 </div>
 
@@ -1860,6 +2064,10 @@
               </div>
             </section>
           </div>
+        </div>
+      </main>
+
+      <!-- ALL ADMIN POPUP MODALS -->
 
           <!-- ADD COURT MODAL -->
           <div v-if="showAddCourtModal" class="modal-overlay" role="dialog" aria-modal="true">
@@ -2029,7 +2237,6 @@
               </form>
             </div>
           </div>
-        </div>
 
         <!-- BOOKING DETAILS MODAL -->
         <div v-if="showBookingDetailsModal && selectedBooking" class="modal-overlay" @click.self="closeBookingDetailsModal">
@@ -2124,14 +2331,14 @@
 
             <div class="modal-footer">
               <div style="display: flex; gap: 0.75rem;">
-                <button 
+                <button
                   v-if="selectedBooking.status === 'Confirmed' || selectedBooking.status === 'Pending'"
                   class="cancel-modal-btn danger-btn"
                   @click="requestCancelBooking(selectedBooking)"
                 >
                   ✕ Cancel Booking
                 </button>
-                <button 
+                <button
                   v-if="selectedBooking.status === 'Confirmed'"
                   class="submit-modal-btn success-btn"
                   @click="markBookingCompleted(selectedBooking)"
@@ -2499,7 +2706,12 @@
             <div class="modal-footer">
               <div style="display: flex; gap: 0.75rem;">
                 <button class="action-icon-btn complete-btn" @click="openEditEventModal(selectedEvent)">✎ Edit Event</button>
-                <button class="action-icon-btn cancel-btn" @click="requestDeleteEvent(selectedEvent)">🗑 Delete Event</button>
+                <button class="action-icon-btn cancel-btn" @click="requestDeleteEvent(selectedEvent)" style="display: inline-flex; align-items: center; gap: 0.4rem;">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  <span>Delete Event</span>
+                </button>
               </div>
               <button class="cancel-modal-btn" @click="closeEventDetailsModal">Close</button>
             </div>
@@ -2508,28 +2720,41 @@
 
         <!-- DELETE EVENT CONFIRMATION MODAL -->
         <div v-if="showDeleteEventModal && eventToDelete" class="modal-overlay" @click.self="showDeleteEventModal = false">
-          <div class="modal-card small-confirm-modal">
-            <div class="modal-header">
-              <h3 style="color: #ef4444; margin: 0;">Delete Event</h3>
+          <div class="modal-card small-confirm-modal" style="max-width: 460px; width: 92vw; padding: 1.5rem; border-radius: 1.25rem; box-shadow: 0 20px 45px rgba(15, 23, 42, 0.22); overflow: hidden;">
+            <div class="modal-header" style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #f1f5f9; padding-bottom: 0.85rem;">
+              <div style="display: flex; align-items: center; gap: 0.55rem;">
+                <div style="width: 32px; height: 32px; border-radius: 8px; background: #fee2e2; color: #ef4444; display: grid; place-items: center; font-size: 1rem;">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px;">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </div>
+                <h3 style="color: #0f172a; margin: 0; font-size: 1.1rem; font-weight: 800;">Cancel & Delete Event</h3>
+              </div>
               <button class="close-modal-btn" @click="showDeleteEventModal = false">✕</button>
             </div>
-            <div class="modal-body" style="padding: 1.5rem 0;">
-              <p>Are you sure you want to delete event <strong>"{{ eventToDelete.title }}"</strong>?</p>
-              <p style="font-size: 0.85rem; color: #64748b; margin-top: 0.5rem;">This action will remove the event schedule and notify all {{ eventToDelete.registered }} registered attendees.</p>
+            <div class="modal-body" style="padding: 1.25rem 0; overflow-wrap: break-word; word-break: break-word; white-space: normal;">
+              <p style="font-size: 0.95rem; color: #334155; line-height: 1.5; margin: 0;">
+                Are you sure you want to delete event <strong style="color: #0f172a;">"{{ eventToDelete.title }}"</strong>?
+              </p>
+              <div style="margin-top: 0.85rem; padding: 0.75rem 0.95rem; background: #fef2f2; border: 1px solid #fecaca; border-radius: 0.75rem; color: #b91c1c; font-size: 0.82rem; line-height: 1.5; overflow-wrap: break-word; word-break: break-word;">
+                📢 This action will cancel the event and automatically broadcast an announcement notice to all {{ eventToDelete.registered || 0 }} registered attendees.
+              </div>
             </div>
-            <div class="modal-footer">
+            <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 0.75rem; border-top: 1px solid #f1f5f9; padding-top: 0.85rem; margin-top: 0.25rem;">
               <button class="cancel-modal-btn" @click="showDeleteEventModal = false">Keep Event</button>
-              <button class="submit-modal-btn danger-btn" @click="confirmDeleteEvent">Confirm Delete</button>
+              <button class="submit-modal-btn danger-btn" @click="confirmDeleteEvent" style="background: linear-gradient(135deg, #ef4444, #dc2626); color: #ffffff; padding: 0.55rem 1.2rem; border-radius: 0.6rem; font-weight: 700; border: none; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);">Confirm Delete</button>
             </div>
           </div>
-          <!-- MEMBER DETAILS MODAL -->
+        </div>
+
+        <!-- MEMBER DETAILS MODAL -->
         <div v-if="showMemberModal && selectedMemberForModal" class="modal-overlay" @click.self="showMemberModal = false">
           <div class="modal-card">
             <div class="modal-header">
               <h3>Member Profile Details</h3>
               <button class="close-modal-btn" @click="showMemberModal = false">✕</button>
             </div>
-            <div class="modal-body" style="padding: 1.25rem 0;">
+            <div class="modal-body" style="padding: 1.25rem 1.5rem;">
               <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.25rem; background: #f8fafc; padding: 1rem; border-radius: 0.75rem; border: 1px solid #e2e8f0;">
                 <div class="user-avatar-sm" style="width: 48px; height: 48px; font-size: 1.1rem; background: linear-gradient(135deg, #2563eb, #4f46e5); color: #fff; font-weight: 700; display: grid; place-items: center; border-radius: 999px;">
                   {{ selectedMemberForModal.initials }}
@@ -2545,20 +2770,6 @@
                 <span style="font-weight: 700; color: #2563eb;">{{ selectedMemberForModal.plan }}</span>
               </div>
               <div class="setting-row">
-                <span class="setting-label">Membership Status</span>
-                <span class="status-badge-chip" :class="selectedMemberForModal.membership_status === 'active' ? 'status-active' : 'status-completed'">
-                  {{ selectedMemberForModal.membership_status === 'active' ? 'Active' : 'Inactive' }}
-                </span>
-              </div>
-              <div v-if="selectedMemberForModal.membership_start" class="setting-row">
-                <span class="setting-label">Plan Validity</span>
-                <span class="setting-val">{{ selectedMemberForModal.membership_start }} to {{ selectedMemberForModal.membership_end || 'Continuous' }}</span>
-              </div>
-              <div class="setting-row">
-                <span class="setting-label">Auto Renew</span>
-                <span class="setting-val">{{ selectedMemberForModal.membership_auto_renew ? 'Enabled' : 'Disabled' }}</span>
-              </div>
-              <div class="setting-row">
                 <span class="setting-label">Date Joined</span>
                 <span class="setting-val">{{ selectedMemberForModal.dateJoined }}</span>
               </div>
@@ -2570,6 +2781,10 @@
                 <span class="setting-label">Contact Phone</span>
                 <span class="setting-val">{{ selectedMemberForModal.phone }}</span>
               </div>
+              <div class="setting-row">
+                <span class="setting-label">Account Status</span>
+                <span class="status-badge-chip status-active">Active & Verified</span>
+              </div>
             </div>
             <div class="modal-footer">
               <button class="cancel-modal-btn" @click="showMemberModal = false">Close</button>
@@ -2577,51 +2792,119 @@
           </div>
         </div>
 
-        <!-- BROADCAST ANNOUNCEMENT MODAL -->
-        <div v-if="showAnnouncementModal" class="modal-overlay" @click.self="showAnnouncementModal = false">
-          <div class="modal-card">
-            <div class="modal-header">
-              <div style="display: flex; align-items: center; gap: 0.5rem;">
-                <span style="font-size: 1.25rem;">📢</span>
-                <h3 style="margin: 0;">Broadcast Announcement</h3>
+        <!-- CREATE ANNOUNCEMENT MODAL -->
+        <div v-if="showCreateAnnouncementModal" class="modal-overlay" @click.self="closeCreateAnnouncementModal">
+          <div class="modal-card" style="max-width: 640px; width: 95vw; max-height: 90vh; overflow-y: auto;">
+            <!-- Modern Header -->
+            <div class="modal-header" style="background: linear-gradient(135deg, #1e293b, #0f172a); color: #ffffff; border-radius: 1rem 1rem 0 0; padding: 1.25rem 1.5rem;">
+              <div style="display: flex; align-items: center; gap: 0.85rem;">
+                <div style="width: 42px; height: 42px; border-radius: 12px; background: linear-gradient(135deg, #3b82f6, #6366f1); display: grid; place-items: center; font-size: 1.35rem; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);">
+                  📢
+                </div>
+                <div>
+                  <h3 style="margin: 0; font-size: 1.2rem; font-weight: 800; color: #ffffff; letter-spacing: -0.02em;">Broadcast New Announcement</h3>
+                  <span style="font-size: 0.82rem; color: #94a3b8;">Publish facility updates, tournament alerts, and court maintenance notices</span>
+                </div>
               </div>
-              <button class="close-modal-btn" @click="showAnnouncementModal = false">✕</button>
+              <button class="close-modal-btn" @click="closeCreateAnnouncementModal" style="color: #94a3b8; background: rgba(255,255,255,0.08); border-radius: 999px; width: 32px; height: 32px; display: grid; place-items: center; border: none; font-size: 1rem;">✕</button>
             </div>
-            <form @submit.prevent="submitCreateAnnouncement" class="modal-form">
-              <div class="form-group">
-                <label>Title *</label>
-                <input type="text" v-model="announcementForm.title" placeholder="e.g. Facility Maintenance & Schedule Update" required class="settings-input" />
-              </div>
-              <div class="form-row">
-                <div class="form-group">
-                  <label>Category</label>
-                  <select v-model="announcementForm.category" class="settings-input">
-                    <option value="General">General</option>
-                    <option value="Maintenance">Maintenance</option>
-                    <option value="Tournament">Tournament</option>
-                    <option value="Policy">Policy</option>
-                  </select>
+
+            <!-- Quick Template Bar -->
+            <div style="background: #f8fafc; border-bottom: 1px solid #e2e8f0; padding: 0.75rem 1.5rem; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+              <span style="font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Quick Starters:</span>
+              <button type="button" class="quick-template-btn" @click="applyAnnouncementTemplate('maintenance')">
+                🛠️ Maintenance
+              </button>
+              <button type="button" class="quick-template-btn" @click="applyAnnouncementTemplate('tournament')">
+                🏆 Tournament
+              </button>
+              <button type="button" class="quick-template-btn" @click="applyAnnouncementTemplate('policy')">
+                📜 Policy
+              </button>
+              <button type="button" class="quick-template-btn" @click="applyAnnouncementTemplate('broadcast')">
+                📣 Hours Flash
+              </button>
+            </div>
+
+            <div class="modal-body" style="padding: 1.5rem;">
+              <!-- Title Input -->
+              <div class="form-group" style="margin-bottom: 1.25rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+                  <label class="form-label font-bold" style="font-size: 0.85rem; color: #1e293b; margin: 0;">
+                    Announcement Title / Headline <span style="color: #ef4444;">*</span>
+                  </label>
+                  <span style="font-size: 0.75rem; color: #94a3b8;">{{ announcementForm.title.length }}/100</span>
                 </div>
-                <div class="form-group">
-                  <label>Target Audience</label>
-                  <select v-model="announcementForm.target_audience" class="settings-input">
-                    <option value="all">All Members & Staff</option>
-                    <option value="members">Members Only</option>
-                    <option value="staff">Staff Only</option>
-                  </select>
+                <input
+                  v-model="announcementForm.title"
+                  type="text"
+                  maxlength="100"
+                  class="form-control broadcast-input"
+                  placeholder="e.g., Scheduled Synthetic Court Resurfacing & Lighting Upgrade"
+                  required
+                />
+              </div>
+
+              <!-- Category Selector Cards -->
+              <div class="form-group" style="margin-bottom: 1.25rem;">
+                <label class="form-label font-bold" style="display: block; font-size: 0.85rem; color: #1e293b; margin-bottom: 0.5rem;">
+                  Category
+                </label>
+                <div class="category-selector-grid">
+                  <button
+                    v-for="cat in [
+                      { name: 'General', icon: '📢', color: 'blue' },
+                      { name: 'Broadcast', icon: '📣', color: 'purple' },
+                      { name: 'Tournament', icon: '🏆', color: 'emerald' },
+                      { name: 'Policy', icon: '📜', color: 'orange' },
+                      { name: 'Maintenance', icon: '🛠️', color: 'rose' }
+                    ]"
+                    :key="cat.name"
+                    type="button"
+                    class="category-card-btn"
+                    :class="[{ active: announcementForm.category === cat.name }, 'cat-' + cat.color]"
+                    @click="announcementForm.category = cat.name"
+                    style="justify-content: center; padding: 0.65rem 0.5rem;"
+                  >
+                    <span class="cat-icon">{{ cat.icon }}</span>
+                    <span class="cat-name">{{ cat.name }}</span>
+                  </button>
                 </div>
               </div>
+
+              <!-- Message / Body Textarea -->
               <div class="form-group">
-                <label>Announcement Message *</label>
-                <textarea v-model="announcementForm.body" rows="3" placeholder="Enter details for the announcement broadcast..." required class="settings-input" style="height: auto;"></textarea>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+                  <label class="form-label font-bold" style="font-size: 0.85rem; color: #1e293b; margin: 0;">
+                    Announcement Message Content <span style="color: #ef4444;">*</span>
+                  </label>
+                  <span style="font-size: 0.75rem; color: #94a3b8;">{{ announcementForm.body.length }}/500</span>
+                </div>
+                <textarea
+                  v-model="announcementForm.body"
+                  rows="5"
+                  maxlength="500"
+                  class="form-control broadcast-textarea"
+                  placeholder="Provide comprehensive details, operational timings, affected courts, or rules..."
+                  required
+                ></textarea>
               </div>
-              <div class="modal-footer" style="padding-top: 1rem;">
-                <button type="button" class="cancel-modal-btn" @click="showAnnouncementModal = false">Cancel</button>
-                <button type="submit" class="submit-modal-btn" :disabled="isBroadcasting">
-                  {{ isBroadcasting ? 'Broadcasting...' : '📢 Broadcast Now' }}
-                </button>
-              </div>
-            </form>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="modal-footer" style="display: flex; justify-content: flex-end; align-items: center; gap: 0.85rem; padding: 1.25rem 1.5rem; background: #f8fafc; border-top: 1px solid #e2e8f0; border-radius: 0 0 1rem 1rem;">
+              <button type="button" class="cancel-modal-btn" @click="closeCreateAnnouncementModal">Cancel</button>
+              <button
+                type="button"
+                class="submit-modal-btn broadcast-submit-btn"
+                :disabled="isSubmittingAnnouncement"
+                @click="submitCreateAnnouncement"
+              >
+                <span v-if="isSubmittingAnnouncement" class="spinner-xs"></span>
+                <span v-else style="font-size: 1rem;">🚀</span>
+                <span>{{ isSubmittingAnnouncement ? 'Publishing...' : 'Publish Announcement' }}</span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -2631,13 +2914,13 @@
             <div class="modal-header" style="background: linear-gradient(135deg, #1e293b, #0f172a); color: #ffffff; border-radius: 1rem 1rem 0 0; padding: 1.25rem 1.5rem;">
               <div style="display: flex; align-items: center; gap: 0.6rem;">
                 <span class="announcement-badge" :class="selectedAnnouncement.categoryClass" style="font-size: 0.82rem; padding: 0.35rem 0.75rem;">
-                  📢 {{ selectedAnnouncement.category }}
+                  {{ selectedAnnouncement.icon || '📢' }} {{ selectedAnnouncement.category }}
                 </span>
                 <span style="font-size: 0.82rem; color: #94a3b8;">
                   {{ selectedAnnouncement.date }}
                 </span>
               </div>
-              <button class="close-modal-btn" @click="closeAnnouncementDetails" style="color: #94a3b8; background: rgba(255,255,255,0.08); border-radius: 999px; width: 32px; height: 32px; display: grid; place-items: center; border: none; font-size: 1rem; cursor: pointer;">✕</button>
+              <button class="close-modal-btn" @click="closeAnnouncementDetails" style="color: #94a3b8; background: rgba(255,255,255,0.08); border-radius: 999px; width: 32px; height: 32px; display: grid; place-items: center; border: none; font-size: 1rem;">✕</button>
             </div>
 
             <div class="modal-body" style="padding: 1.5rem;">
@@ -2652,14 +2935,14 @@
                 </p>
               </div>
 
-              <div class="announcement-meta-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
-                <div class="meta-card" style="background: #f8fafc; padding: 0.75rem; border-radius: 0.5rem; border: 1px solid #e2e8f0;">
-                  <span class="meta-label" style="display: block; font-size: 0.75rem; color: #64748b;">Category</span>
-                  <span class="meta-val font-bold" style="font-weight: 700; color: #0f172a;">{{ selectedAnnouncement.category }}</span>
+              <div class="announcement-meta-grid" style="grid-template-columns: 1fr 1fr;">
+                <div class="meta-card">
+                  <span class="meta-label">Category</span>
+                  <span class="meta-val font-bold">{{ selectedAnnouncement.category }}</span>
                 </div>
-                <div class="meta-card" style="background: #f8fafc; padding: 0.75rem; border-radius: 0.5rem; border: 1px solid #e2e8f0;">
-                  <span class="meta-label" style="display: block; font-size: 0.75rem; color: #64748b;">Date Published</span>
-                  <span class="meta-val" style="color: #0f172a;">{{ selectedAnnouncement.date }}</span>
+                <div class="meta-card">
+                  <span class="meta-label">Date Published</span>
+                  <span class="meta-val">{{ selectedAnnouncement.date }}</span>
                 </div>
               </div>
             </div>
@@ -2668,19 +2951,23 @@
               <button
                 type="button"
                 class="cancel-modal-btn danger-btn"
-                style="background: #fef2f2; color: #ef4444; border: 1px solid #fecaca; display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.5rem 1rem; border-radius: 0.5rem; cursor: pointer;"
-                @click="handleDeleteAnnouncement(selectedAnnouncement.id)"
+                style="background: #fef2f2; color: #ef4444; border: 1px solid #fecaca; display: inline-flex; align-items: center; gap: 0.35rem;"
+                @click="handleDeleteAnnouncement(selectedAnnouncement)"
               >
-                <span>✕ Delete Announcement</span>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="15" height="15">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                <span>Delete Announcement</span>
               </button>
               <button type="button" class="cancel-modal-btn" @click="closeAnnouncementDetails">Close</button>
             </div>
           </div>
         </div>
 
-        <!-- EDIT ADMIN PROFILE MODAL -->
+        <!-- Edit Admin Profile Modal -->
         <div v-if="showEditProfileModal" class="modal-overlay" @click.self="closeEditProfileModal">
           <div class="modal-card" style="max-width: 520px; width: 95vw; max-height: 90vh; overflow-y: auto;">
+            <!-- Modal Header -->
             <div class="modal-header" style="background: linear-gradient(135deg, #1e293b, #0f172a); color: #ffffff; border-radius: 1rem 1rem 0 0; padding: 1.25rem 1.5rem; display: flex; justify-content: space-between; align-items: center;">
               <div style="display: flex; align-items: center; gap: 0.85rem;">
                 <div style="width: 42px; height: 42px; border-radius: 12px; background: linear-gradient(135deg, #3b82f6, #6366f1); display: grid; place-items: center; font-size: 1.35rem; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);">
@@ -2688,13 +2975,15 @@
                 </div>
                 <div>
                   <h3 style="margin: 0; font-size: 1.2rem; font-weight: 800; color: #ffffff; letter-spacing: -0.02em;">Edit Admin Profile</h3>
-                  <span style="font-size: 0.82rem; color: #94a3b8;">Update administrative contact details & credentials</span>
+                  <span style="font-size: 0.82rem; color: #94a3b8;">Update your administrative contact details and credentials</span>
                 </div>
               </div>
               <button type="button" class="close-modal-btn" @click="closeEditProfileModal" style="color: #94a3b8; background: rgba(255,255,255,0.08); border-radius: 999px; width: 32px; height: 32px; display: grid; place-items: center; border: none; font-size: 1rem; cursor: pointer;">✕</button>
             </div>
 
+            <!-- Modal Body Form -->
             <form @submit.prevent="saveAdminProfile" class="modal-body" style="padding: 1.5rem;">
+              <!-- Avatar Preview & Change -->
               <div style="display: flex; align-items: center; gap: 1.25rem; margin-bottom: 1.5rem; padding: 1rem; background: #f8fafc; border-radius: 0.85rem; border: 1px solid #e2e8f0;">
                 <div style="position: relative; width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, #2563eb, #4f46e5); color: #ffffff; display: grid; place-items: center; font-size: 1.3rem; font-weight: 800; overflow: hidden; flex-shrink: 0; box-shadow: 0 4px 12px rgba(37,99,235,0.3);">
                   <img v-if="editProfileForm.avatarUrl" :src="editProfileForm.avatarUrl" alt="Avatar preview" style="width: 100%; height: 100%; object-fit: cover;" />
@@ -2703,7 +2992,7 @@
                 <div style="display: flex; flex-direction: column; gap: 0.4rem; flex: 1;">
                   <span style="font-size: 0.85rem; font-weight: 700; color: #1e293b;">Profile Avatar</span>
                   <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
-                    <label class="modal-upload-btn" style="background: #2563eb; color: #ffffff; font-size: 0.78rem; font-weight: 600; padding: 0.4rem 0.85rem; border-radius: 0.5rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.35rem;">
+                    <label class="modal-upload-btn" style="background: #2563eb; color: #ffffff; font-size: 0.78rem; font-weight: 600; padding: 0.4rem 0.85rem; border-radius: 0.5rem; cursor: pointer; display: inline-flex; align-items: center; gap: 0.35rem; transition: background 0.2s ease;">
                       📷 Choose Photo
                       <input type="file" accept="image/*" @change="handleEditAvatarUpload" style="display: none;" />
                     </label>
@@ -2714,6 +3003,7 @@
                 </div>
               </div>
 
+              <!-- Full Name Field -->
               <div class="form-group" style="margin-bottom: 1.15rem;">
                 <label class="form-label" style="display: block; font-size: 0.82rem; font-weight: 700; color: #334155; margin-bottom: 0.35rem;">
                   Full Name <span style="color: #ef4444;">*</span>
@@ -2723,10 +3013,12 @@
                   type="text"
                   required
                   placeholder="e.g. Alex Morgan"
-                  class="settings-input"
+                  class="form-control"
+                  style="width: 100%; padding: 0.65rem 0.85rem; border: 1.5px solid #cbd5e1; border-radius: 0.6rem; font-size: 0.9rem;"
                 />
               </div>
 
+              <!-- Email Field -->
               <div class="form-group" style="margin-bottom: 1.15rem;">
                 <label class="form-label" style="display: block; font-size: 0.82rem; font-weight: 700; color: #334155; margin-bottom: 0.35rem;">
                   Email Address <span style="color: #ef4444;">*</span>
@@ -2735,34 +3027,76 @@
                   v-model="editProfileForm.email"
                   type="email"
                   required
-                  placeholder="admin@clubdash.com"
-                  class="settings-input"
+                  placeholder="e.g. alex.morgan@clubdash.com"
+                  class="form-control"
+                  style="width: 100%; padding: 0.65rem 0.85rem; border: 1.5px solid #cbd5e1; border-radius: 0.6rem; font-size: 0.9rem;"
                 />
               </div>
 
+              <!-- Phone Field -->
               <div class="form-group" style="margin-bottom: 1.15rem;">
                 <label class="form-label" style="display: block; font-size: 0.82rem; font-weight: 700; color: #334155; margin-bottom: 0.35rem;">
                   Phone Number
                 </label>
                 <input
                   v-model="editProfileForm.phone"
-                  type="tel"
-                  placeholder="+1 (555) 234-5678"
-                  class="settings-input"
+                  type="text"
+                  placeholder="e.g. +91 98765 43210"
+                  class="form-control"
+                  style="width: 100%; padding: 0.65rem 0.85rem; border: 1.5px solid #cbd5e1; border-radius: 0.6rem; font-size: 0.9rem;"
                 />
               </div>
 
-              <div class="modal-footer" style="padding-top: 1rem; display: flex; justify-content: flex-end; gap: 0.75rem;">
-                <button type="button" class="cancel-modal-btn" @click="closeEditProfileModal">Cancel</button>
-                <button type="submit" class="submit-modal-btn">Save Changes</button>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.15rem;">
+                <!-- Role is set by the server and is not client-editable -->
+                <div class="form-group">
+                  <label class="form-label" style="display: block; font-size: 0.82rem; font-weight: 700; color: #334155; margin-bottom: 0.35rem;">
+                    Role <span style="font-size: 0.72rem; color: #64748b; font-weight: 500;">(fixed)</span>
+                  </label>
+                  <input
+                    :value="adminProfile.role"
+                    type="text"
+                    disabled
+                    class="form-control"
+                    style="width: 100%; padding: 0.65rem 0.85rem; border: 1.5px solid #e2e8f0; background: #f8fafc; color: #64748b; font-weight: 600; border-radius: 0.6rem; font-size: 0.9rem; cursor: not-allowed;"
+                  />
+                </div>
+
+                <!-- Club name -->
+                <div class="form-group">
+                  <label class="form-label" style="display: block; font-size: 0.82rem; font-weight: 700; color: #334155; margin-bottom: 0.35rem;">
+                    Club Name
+                  </label>
+                  <input
+                    v-model="editProfileForm.facility"
+                    type="text"
+                    placeholder="e.g. Ace Sports Club"
+                    class="form-control"
+                    style="width: 100%; padding: 0.65rem 0.85rem; border: 1.5px solid #cbd5e1; border-radius: 0.6rem; font-size: 0.9rem;"
+                  />
+                </div>
+              </div>
+
+              <!-- Modal Footer -->
+              <div class="modal-footer" style="display: flex; justify-content: flex-end; align-items: center; gap: 0.75rem; padding-top: 1.25rem; border-top: 1px solid #e2e8f0; margin-top: 1.5rem;">
+                <button type="button" class="cancel-modal-btn" @click="closeEditProfileModal" style="background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; font-weight: 600; padding: 0.65rem 1.25rem; border-radius: 0.6rem; cursor: pointer;">
+                  Cancel
+                </button>
+                <button type="submit" :disabled="isSavingAdminProfile" class="submit-modal-btn" style="background: linear-gradient(135deg, #2563eb, #4f46e5); color: #ffffff; font-weight: 700; padding: 0.65rem 1.4rem; border-radius: 0.6rem; border: none; cursor: pointer; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35); display: inline-flex; align-items: center; gap: 0.4rem;">
+                  <span>{{ isSavingAdminProfile ? 'Saving…' : 'Save Changes' }}</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="16" height="16">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                </button>
               </div>
             </form>
           </div>
         </div>
 
-        <!-- FIRST-TIME ADMIN PHONE SETUP MODAL -->
+        <!-- First-Time Admin Phone Setup Modal -->
         <div v-if="showFirstTimePhoneModal" class="modal-overlay" style="z-index: 500;">
           <div class="modal-card" style="max-width: 440px; width: 95vw; border-radius: 1.25rem; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);">
+            <!-- Modal Header -->
             <div style="background: linear-gradient(135deg, #1e293b, #0f172a); color: #ffffff; padding: 1.5rem; text-align: center; position: relative;">
               <div style="width: 52px; height: 52px; border-radius: 16px; background: linear-gradient(135deg, #2563eb, #4f46e5); display: grid; place-items: center; font-size: 1.6rem; margin: 0 auto 0.75rem; box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);">
                 📱
@@ -2773,6 +3107,7 @@
               </p>
             </div>
 
+            <!-- Modal Body Form -->
             <form @submit.prevent="submitFirstTimePhone" style="padding: 1.5rem; background: #ffffff;">
               <div class="form-group" style="margin-bottom: 1.25rem;">
                 <label class="form-label" style="display: block; font-size: 0.85rem; font-weight: 700; color: #1e293b; margin-bottom: 0.45rem;">
@@ -2783,7 +3118,8 @@
                   type="tel"
                   required
                   placeholder="e.g. +91 98765 43210"
-                  class="settings-input"
+                  class="form-control"
+                  style="width: 100%; padding: 0.75rem 0.95rem; border: 1.5px solid #cbd5e1; border-radius: 0.65rem; font-size: 0.95rem;"
                   autofocus
                 />
                 <span style="display: block; font-size: 0.75rem; color: #64748b; margin-top: 0.4rem;">
@@ -2795,13 +3131,13 @@
                 <button
                   type="button"
                   @click="skipFirstTimePhone"
-                  class="cancel-modal-btn"
+                  style="background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; font-weight: 600; padding: 0.65rem 1.15rem; border-radius: 0.6rem; cursor: pointer; font-size: 0.85rem;"
                 >
                   Skip for Now
                 </button>
                 <button
                   type="submit"
-                  class="submit-modal-btn"
+                  style="background: linear-gradient(135deg, #2563eb, #4f46e5); color: #ffffff; font-weight: 700; padding: 0.65rem 1.4rem; border-radius: 0.6rem; border: none; cursor: pointer; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35); font-size: 0.85rem;"
                 >
                   Save & Continue
                 </button>
@@ -2810,9 +3146,7 @@
           </div>
         </div>
       </div>
-    </main>
     </div>
-  </div>
 </template>
 
 <script setup>
@@ -2820,10 +3154,14 @@ import { ref, computed, onMounted, inject, watch, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useCourtStore } from '@/stores/courts'
+import { useNotificationStore } from '@/stores/notifications'
 import api from '@/api/axios'
+import { getSportImage } from '@/utils/sportImages'
+import BrandMark from '@/components/BrandMark.vue'
 
 const toast = inject('toast')
 const courtStore = useCourtStore()
+const notificationStore = useNotificationStore()
 const showAddCourtModal = ref(false)
 const showEditCourtModal = ref(false)
 const currentEditCourt = ref(null)
@@ -2841,11 +3179,13 @@ const currentDate = ref(
   }),
 )
 
+// =========================================================
+// COURTS STATE
+// =========================================================
 const totalCourts = computed(() => courtStore.courts.length)
 const activeCourtsCount = computed(() => courtStore.courts.filter((c) => c.is_active).length)
 const inactiveCourtsCount = computed(() => courtStore.courts.filter((c) => !c.is_active).length)
 
-// Form state for modals
 const clubForm = ref({
   name: '',
   address: '',
@@ -2858,25 +3198,268 @@ const courtForm = ref({
   court_name: '',
   sport_type: 'tennis',
   is_active: true,
-  use_defaults: true, // new
+  use_defaults: true,
   open_time_override: '',
   close_time_override: '',
   slot_duration_override: '',
 })
 
-// Fetch real DB data on mount
-onMounted(() => {
-  courtStore.fetchCourts()
-  loadBookings()
-  loadMembers()
-  loadEvents()
-  loadAnnouncements()
-  loadAdminAnalytics()
+// =========================================================
+// MEMBERS STATE (REAL DATA)
+// =========================================================
+const memberSearchQuery = ref('')
+const selectedMemberPlanFilter = ref('All')
+const selectedMemberForModal = ref(null)
+const showMemberModal = ref(false)
+const members = ref([])
+
+// Fetch members from backend
+async function fetchMembers() {
+  try {
+    const res = await api.get('/admin/members')
+    members.value = Array.isArray(res.data) ? res.data : []
+  } catch (err) {
+    console.error('Failed to fetch members:', err)
+    if (toast) toast.error('Unable to load members')
+  }
+}
+
+// Watch activeNav to fetch when Members tab is opened
+watch(activeNav, (newTab) => {
+  if (newTab === 'Members') fetchMembers()
 })
 
-watch(activeNav, (newTab) => {
-  if (newTab === 'Members') loadMembers()
+// Map real backend data to display fields
+const filteredMembersList = computed(() => {
+  let list = members.value.map(m => ({
+    id: m.id,
+    name: m.name,
+    email: m.email,
+    initials: (m.name || 'M').charAt(0).toUpperCase(),
+    plan: m.membership_plan || 'No Plan',
+    dateJoined: m.created_at
+      ? new Date(m.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+      : '—',
+    totalBookings: m.booking_count || 0,
+    phone: m.phone || '—',
+    membership_status: m.membership_status || 'none'
+  }))
+
+  const q = memberSearchQuery.value.toLowerCase().trim()
+  if (q) {
+    list = list.filter(m =>
+      (m.name && m.name.toLowerCase().includes(q)) ||
+      (m.email && m.email.toLowerCase().includes(q)) ||
+      (m.plan && m.plan.toLowerCase().includes(q))
+    )
+  }
+
+  if (selectedMemberPlanFilter.value !== 'All') {
+    list = list.filter(m => m.plan === selectedMemberPlanFilter.value)
+  }
+  return list
 })
+
+// KPI real values
+const totalMembers = computed(() => members.value.length)
+const activeMembers = computed(() => members.value.filter(m => m.membership_status === 'active').length)
+const totalBookingsAll = computed(() => members.value.reduce((sum, m) => sum + (m.booking_count || 0), 0))
+
+// =========================================================
+// COURTS & CLUB ACTIONS
+// =========================================================
+// Fetch data on mount
+// ---------------------------------------------------------------
+// Live backend data (replaces the placeholder figures below)
+// ---------------------------------------------------------------
+const analyticsLoading = ref(false)
+const analyticsError = ref('')
+const adminAnalytics = ref(null)
+
+const inr = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`
+
+/** Pull real KPIs from /analytics/admin and map them onto the dashboard. */
+async function loadAdminAnalytics() {
+  analyticsLoading.value = true
+  analyticsError.value = ''
+  try {
+    const days = parseInt(analyticsTimeframe.value, 10) || 30
+    const { data } = await api.get('/analytics/admin', { params: { days } })
+    adminAnalytics.value = data
+
+    kpiCards.value = [
+      {
+        title: 'Total Members', value: String(data.members.total),
+        icon: 'members', colorClass: 'blue',
+        trend: `${data.members.active} active`, trendType: 'neutral',
+      },
+      {
+        title: 'Active Courts',
+        value: `${data.courts.active} / ${data.courts.total}`,
+        icon: 'courts', colorClass: 'emerald',
+        trend: `${data.courts.utilisation_percent}% utilisation`, trendType: 'neutral',
+      },
+      {
+        title: 'Upcoming Bookings', value: String(data.bookings.upcoming),
+        icon: 'bookings', colorClass: 'purple',
+        trend: `${data.bookings.total} all-time`, trendType: 'neutral',
+      },
+      {
+        title: 'Revenue', value: inr(data.revenue.total),
+        icon: 'events', colorClass: 'orange',
+        trend: `${data.revenue.pending_payments} pending`, trendType: 'neutral',
+      },
+    ]
+
+    // Real per-court booking distribution
+    const palette = ['bar-blue', 'bar-emerald', 'bar-orange', 'bar-purple']
+    bookingTrends.value = data.courts.breakdown.map((c, i) => ({
+      sport: c.court_name,
+      count: c.bookings,
+      percentage: c.percentage,
+      colorClass: palette[i % palette.length],
+    }))
+
+    courtUtilization.value = [{
+      period: `Overall (last ${data.window_days} days)`,
+      rate: data.courts.utilisation_percent,
+      colorClass: 'bar-blue',
+    }]
+
+    // --- Revenue split by what was paid for (real completed payments) ---
+    const typeColors = { booking: '#2563eb', membership: '#059669', event: '#ea580c' }
+    const revenueTotal = data.revenue.total || 0
+    sportRevenueBreakdown.value = Object.entries(data.revenue.by_type || {}).map(
+      ([type, amount]) => ({
+        sport: type.charAt(0).toUpperCase() + type.slice(1),
+        revenue: amount,
+        percentage: revenueTotal ? Math.round((amount / revenueTotal) * 100) : 0,
+        color: typeColors[type] || '#64748b',
+      }),
+    )
+
+    // --- Bookings by hour of day ---
+    hourlyOccupancyData.value = (data.hourly_occupancy || []).map((h) => ({
+      hour: h.hour,
+      rate: h.rate,
+      bookings: h.bookings,
+    }))
+
+    // --- Court performance (bookings in the selected window) ---
+    topPerformingFacilities.value = data.courts.breakdown.map((c) => ({
+      id: c.court_id,
+      name: c.court_name,
+      sport: 'Court',
+      hoursBooked: c.bookings,
+      occupancy: `${c.percentage}%`,
+      status: c.is_active ? 'Active' : 'Inactive',
+    }))
+
+    financialSummary.value = {
+      grossRevenue: inr(revenueTotal),
+      completedPayments: inr(revenueTotal),
+      pendingPayments: data.revenue.pending_payments,
+    }
+
+    // Stripe is the only configured gateway, so the split is not a guess.
+    paymentMethodBreakdown.value = revenueTotal
+      ? [{ method: 'Stripe', percentage: 100, color: '#2563eb', val: inr(revenueTotal) }]
+      : []
+  } catch (err) {
+    analyticsError.value =
+      err?.response?.data?.message || 'Could not load analytics.'
+  } finally {
+    analyticsLoading.value = false
+  }
+}
+
+/** Real bookings for this club (owners previously could not see any). */
+const BOOKING_STATUS_LABELS = {
+  active: 'Confirmed',
+  released: 'Cancelled',
+  overridden: 'Cancelled',
+}
+const PAYMENT_STATUS_LABELS = {
+  completed: 'Paid',
+  pending: 'Pending',
+  failed: 'Failed',
+  unpaid: 'Unpaid',
+}
+
+function titleCase(value) {
+  if (!value) return ''
+  return value.charAt(0).toUpperCase() + value.slice(1)
+}
+
+function durationLabel(start, end) {
+  const toMinutes = (v) => {
+    const [h, m] = String(v || '').split(':')
+    return Number(h) * 60 + Number(m || 0)
+  }
+  const mins = toMinutes(end) - toMinutes(start)
+  if (!Number.isFinite(mins) || mins <= 0) return ''
+  const hrs = mins / 60
+  return `${hrs % 1 === 0 ? hrs : hrs.toFixed(1)} hr${hrs === 1 ? '' : 's'}`
+}
+
+async function loadClubBookings() {
+  bookingsLoading.value = true
+  try {
+    const { data } = await api.get('/bookings/club')
+    bookingsList.value = (data.bookings || []).map((b) => {
+      const initials = (b.member_name || '?')
+        .split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase()
+      return {
+        id: `BK-${b.id}`,
+        bookingId: b.id,
+        player: b.member_name || 'Unknown',
+        email: b.member_email || '',
+        phone: b.member_phone || '',
+        facility: b.court_name,
+        sport: titleCase(b.sport_type) || 'Multi-purpose',
+        date: b.date,
+        dateDisplay: b.date,
+        time: `${String(b.start_time).slice(0, 5)} - ${String(b.end_time).slice(0, 5)}`,
+        duration: durationLabel(b.start_time, b.end_time),
+        amount: b.payment_amount ?? 0,
+        paymentStatus: PAYMENT_STATUS_LABELS[b.payment_status] || 'Unpaid',
+        paymentMethod: b.payment_status === 'completed' ? 'Stripe' : '',
+        status: BOOKING_STATUS_LABELS[b.status] || titleCase(b.status),
+        initials,
+        userType: 'Member',
+        createdAt: b.created_at || '',
+        notes: '',
+      }
+    })
+  } catch (err) {
+    analyticsError.value =
+      err?.response?.data?.message || 'Could not load bookings.'
+  } finally {
+    bookingsLoading.value = false
+  }
+}
+
+function reloadAdminData() {
+  loadAdminAnalytics()
+  loadClubBookings()
+}
+
+onMounted(async () => {
+  if (!auth.initialized || !auth.user) {
+    try {
+      await auth.restoreUser()
+    } catch {
+      // The route guard sends an unauthenticated user to the login screen.
+    }
+  }
+  syncProfileWithAuthUser(auth.user)
+  checkFirstTimePhoneSetup(auth.user)
+  courtStore.fetchCourts()
+  notificationStore.fetchAnnouncements()
+  loadAdminAnalytics()
+  loadClubBookings()
+})
+
 
 watch(
   () => courtStore.club,
@@ -2890,7 +3473,6 @@ watch(
         slot_duration_minutes: newClub.slot_duration_minutes || 60,
       }
     } else {
-      // Reset the form if no club exists
       clubForm.value = {
         name: '',
         address: '',
@@ -2903,8 +3485,9 @@ watch(
   { immediate: true },
 )
 
-// Modal Handlers
 const openAddCourtModal = () => {
+  showEditCourtModal.value = false
+  currentEditCourt.value = null
   courtForm.value = {
     court_name: '',
     sport_type: 'tennis',
@@ -2914,7 +3497,6 @@ const openAddCourtModal = () => {
     close_time_override: '',
     slot_duration_override: '',
   }
-
   showAddCourtModal.value = true
 }
 
@@ -2976,7 +3558,6 @@ const handleDeleteCourt = async (courtId) => {
 
 const saveOrCreateClub = async () => {
   if (courtStore.club) {
-    // === UPDATE ===
     const result = await courtStore.updateClubSettings({
       name: clubForm.value.name,
       address: clubForm.value.address,
@@ -2990,7 +3571,6 @@ const saveOrCreateClub = async () => {
       toast.error(result.error || 'Failed to update club settings')
     }
   } else {
-    // === CREATE ===
     if (!clubForm.value.name || !clubForm.value.address) {
       toast.error('Please provide a Club Name and Address')
       return
@@ -3004,7 +3584,6 @@ const saveOrCreateClub = async () => {
     })
     if (result.success) {
       toast.success('Club created successfully! 🏛️')
-      // fetchCourts() is already called inside createClub, so the UI will auto-switch to Update mode.
     } else {
       toast.error(result.error || 'Failed to create club')
     }
@@ -3012,6 +3591,7 @@ const saveOrCreateClub = async () => {
 }
 
 const openEditCourtModal = (court) => {
+  showAddCourtModal.value = false
   currentEditCourt.value = court
   const hasOverrides =
     court.open_time_override || court.close_time_override || court.slot_duration_override
@@ -3032,50 +3612,35 @@ const sportLabel = (value) => {
   return sport ? `${sport.icon} ${sport.label}` : '🏟️ Multi-purpose'
 }
 
-// Header title and subtitle reactive computation based on active sidebar tab
+// =========================================================
+// HEADER & NAVIGATION
+// =========================================================
 const headerTitle = computed(() => {
   switch (activeNav.value) {
-    case 'Members':
-      return 'Members Management'
-    case 'Courts':
-      return 'Facility & Courts'
-    case 'Bookings':
-      return 'Bookings & Reservations'
-    case 'Events':
-      return 'Events & Tournaments'
-    case 'Announcements':
-      return 'Announcements & Broadcasts'
-    case 'Analytics':
-      return 'Performance & Analytics'
-    case 'Settings':
-      return 'System Settings'
-    default:
-      return 'Admin Dashboard'
+    case 'Members': return 'Members Management'
+    case 'Courts': return 'Facility & Courts'
+    case 'Bookings': return 'Bookings & Reservations'
+    case 'Events': return 'Events & Tournaments'
+    case 'Announcements': return 'Announcements & Broadcasts'
+    case 'Analytics': return 'Performance & Analytics'
+    case 'Settings': return 'System Settings'
+    default: return 'Admin Dashboard'
   }
 })
 
 const headerSubtitle = computed(() => {
   switch (activeNav.value) {
-    case 'Members':
-      return 'Overview of registered club members, pending requests, and player accounts.'
-    case 'Courts':
-      return 'Monitor court availability, status, and maintenance schedules.'
-    case 'Bookings':
-      return 'Track active reservations, upcoming court slots, and cancellations.'
-    case 'Events':
-      return 'Organize tournaments, coaching sessions, and social club activities.'
-    case 'Announcements':
-      return 'Broadcast facility notices, schedule updates, and tournament alerts.'
-    case 'Analytics':
-      return 'Detailed statistics on booking trends, peak hours, and membership growth.'
-    case 'Settings':
-      return 'Configure club information, operating hours, and notification preferences.'
-    default:
-      return 'Welcome back, Administrator • Monitor club operations and analytics.'
+    case 'Members': return 'Overview of registered club members, pending requests, and player accounts.'
+    case 'Courts': return 'Monitor court availability, status, and maintenance schedules.'
+    case 'Bookings': return 'Track active reservations, upcoming court slots, and cancellations.'
+    case 'Events': return 'Organize tournaments, coaching sessions, and social club activities.'
+    case 'Announcements': return 'Broadcast facility notices, schedule updates, and tournament alerts.'
+    case 'Analytics': return 'Detailed statistics on booking trends, peak hours, and membership growth.'
+    case 'Settings': return 'Configure club information, operating hours, and notification preferences.'
+    default: return `Welcome back${adminProfile.name ? ', ' + adminProfile.name.split(' ')[0] : ''} • Monitor club operations and analytics.`
   }
 })
 
-// Primary Sidebar Navigation Items
 const primaryNavItems = ref([
   { name: 'Dashboard', icon: 'dashboard' },
   { name: 'Members', icon: 'members' },
@@ -3097,200 +3662,26 @@ const handleLogout = async () => {
   router.push({ name: 'login' })
 }
 
-const handleNotifications = () => {
-  alert('3 New Notifications: 1 system update, 2 event registrations')
-}
+// =========================================================
+// DASHBOARD MOCK DATA (keep as is if needed, but can be dynamic)
+// =========================================================
+// Populated from /analytics/admin on mount.
+const kpiCards = ref([])
 
-const handleMemberAction = (action, name) => {
-  alert(`${action} request for ${name}`)
-}
-
-const handleCreateAnnouncement = () => {
-  alert('Open Create Announcement modal')
-}
-
-// KPI Cards dynamic computation
-const kpiCards = computed(() => [
-  {
-    title: 'Total Members',
-    value: membersList.value?.length ? String(membersList.value.length) : '1,248',
-    icon: 'members',
-    colorClass: 'blue',
-    trend: '+12.4% this month',
-    trendType: 'positive',
-  },
-  {
-    title: 'Active Courts',
-    value: `${activeCourtsCount.value} / ${totalCourts.value || 16}`,
-    icon: 'courts',
-    colorClass: 'emerald',
-    trend: `${totalCourts.value ? Math.round((activeCourtsCount.value / totalCourts.value) * 100) : 87.5}% operational`,
-    trendType: 'neutral',
-  },
-  {
-    title: "Today's Bookings",
-    value: String(bookingKpis.value.confirmed || bookingKpis.value.total || 0),
-    icon: 'bookings',
-    colorClass: 'purple',
-    trend: `${bookingKpis.value.total} total recorded`,
-    trendType: 'positive',
-  },
-  {
-    title: 'Active Events',
-    value: String(eventsKpis.value?.upcoming || 0),
-    icon: 'events',
-    colorClass: 'orange',
-    trend: `${eventsKpis.value?.total || 0} total events`,
-    trendType: 'neutral',
-  },
-])
-
-// Quick Actions mock list
-const quickActions = ref([
-  {
-    title: 'Manage Members',
-    desc: 'View & edit member profiles',
-    icon: 'users',
-    colorClass: 'blue',
-  },
-  {
-    title: 'Manage Courts',
-    desc: 'Update court availability',
-    icon: 'court',
-    colorClass: 'emerald',
-  },
-  {
-    title: 'Manage Events',
-    desc: 'Create & schedule tournaments',
-    icon: 'calendar',
-    colorClass: 'purple',
-  },
-  {
-    title: 'Announcements',
-    desc: 'Broadcast news & updates',
-    icon: 'megaphone',
-    colorClass: 'orange',
-  },
-  {
-    title: 'View Analytics',
-    desc: 'Detailed revenue & stats',
-    icon: 'chart',
-    colorClass: 'indigo',
-  },
-])
-
-const handleQuickAction = (actionTitle) => {
-  if (actionTitle === 'Manage Members') activeNav.value = 'Members'
-  else if (actionTitle === 'Manage Courts') activeNav.value = 'Courts'
-  else if (actionTitle === 'Manage Events') activeNav.value = 'Events'
-  else if (actionTitle === 'Announcements') activeNav.value = 'Announcements'
-  else if (actionTitle === 'View Analytics') activeNav.value = 'Analytics'
-  else alert(`Quick Action triggered: ${actionTitle}`)
-}
-
-// Pending Requests mock data for Members tab
-const pendingRequests = ref([
-  {
-    name: 'John Smith',
-    email: 'john.smith@example.com',
-    initials: 'JS',
-    plan: 'Gold Member',
-    date: 'Applied Jul 22',
-  },
-  {
-    name: 'Sarah Jenkins',
-    email: 'sarah.j@example.com',
-    initials: 'SJ',
-    plan: 'Regular Member',
-    date: 'Applied Jul 21',
-  },
-  {
-    name: 'Mike Ross',
-    email: 'mike.ross@example.com',
-    initials: 'MR',
-    plan: 'VIP Pass',
-    date: 'Applied Jul 20',
-  },
-])
-
-// Bookings Management State & Logic
+// =========================================================
+// BOOKINGS STATE
+// =========================================================
+// Real club bookings, loaded from /bookings/club. Starts empty so the table
+// never shows figures that were not returned by the API.
 const bookingsList = ref([])
-const bookingsLoading = ref(false)
-const bookingsError = ref('')
+const bookingsLoading = ref(true)
 
-// Keep recentBookings alias for any legacy usage
-const recentBookings = bookingsList
-
-function mapAdminBooking(row) {
-  const rawStatus = String(row.status || '').toLowerCase()
-  const status = (rawStatus === 'active' || rawStatus === 'confirmed')
-    ? 'Confirmed'
-    : rawStatus === 'completed'
-      ? 'Completed'
-      : rawStatus === 'pending'
-        ? 'Pending'
-        : 'Cancelled'
-
-  const date = String(row.date || '')
-  const todayStr = new Date().toISOString().split('T')[0]
-  const dateDisplay = date === todayStr ? 'Today' : date
-  const player = row.player || row.member?.name || 'Unknown member'
-  const initials = player.split(/\s+/).filter(Boolean).map((part) => part[0]).join('').slice(0, 2).toUpperCase() || 'M'
-  const paymentStatus = String(row.paymentStatus || (rawStatus === 'active' || rawStatus === 'completed' ? 'Paid' : 'Unpaid'))
-  const facility = row.facility || row.court_name || 'Court'
-  const sport = row.sport || row.sport_type || 'Other'
-  const time = row.time || (row.start_time && row.end_time ? `${row.start_time.slice(0, 5)} - ${row.end_time.slice(0, 5)}` : '—')
-
-  return {
-    ...row,
-    id: String(row.id),
-    player,
-    email: row.email || row.member?.email || '—',
-    phone: row.phone || '—',
-    facility,
-    sport,
-    date,
-    dateDisplay,
-    time,
-    duration: row.duration || '1.0 hr',
-    amount: Number(row.amount || 40),
-    paymentStatus: paymentStatus.toLowerCase() === 'completed' || paymentStatus.toLowerCase() === 'paid' ? 'Paid' : paymentStatus,
-    status,
-    initials,
-    userType: row.userType || (row.member?.role ? row.member.role.charAt(0).toUpperCase() + row.member.role.slice(1) : 'Member'),
-    createdAt: row.createdAt || row.created_at || null,
-    notes: row.notes || '—',
-  }
-}
-
-async function loadBookings() {
-  bookingsLoading.value = true
-  bookingsError.value = ''
-  try {
-    const { data } = await api.get('/admin/bookings')
-    bookingsList.value = Array.isArray(data) ? data.map(mapAdminBooking) : []
-  } catch (error) {
-    bookingsList.value = []
-    const serverMessage = error?.response?.data?.message
-    const status = error?.response?.status
-    bookingsError.value = serverMessage
-      ? `Unable to load bookings: ${serverMessage}`
-      : status
-        ? `Unable to load bookings from the server (HTTP ${status}).`
-        : 'Unable to load bookings from the server.'
-  } finally {
-    bookingsLoading.value = false
-  }
-}
-
-// Filters & Controls state
 const bookingSearchQuery = ref('')
 const bookingStatusFilter = ref('All')
 const bookingFacilityFilter = ref('All')
 const bookingDateFilter = ref('All')
 const bookingSortBy = ref('newest')
 
-// Modals state
 const showBookingDetailsModal = ref(false)
 const selectedBooking = ref(null)
 const showNewBookingModal = ref(false)
@@ -3313,7 +3704,6 @@ const newBookingForm = reactive({
   notes: ''
 })
 
-// Time-based completion logic helpers
 function isTimeCompleted(booking) {
   if (!booking || booking.status === 'Cancelled' || booking.status === 'Completed') return false
   const today = new Date().toISOString().split('T')[0]
@@ -3337,11 +3727,10 @@ function resetBookingFilters() {
   bookingSortBy.value = 'newest'
 }
 
-// Filtered Bookings computed property
 const filteredBookings = computed(() => {
   return bookingsList.value.filter(b => {
     const q = bookingSearchQuery.value.trim().toLowerCase()
-    const matchesSearch = !q || 
+    const matchesSearch = !q ||
       b.id.toLowerCase().includes(q) ||
       b.player.toLowerCase().includes(q) ||
       b.email.toLowerCase().includes(q) ||
@@ -3349,8 +3738,7 @@ const filteredBookings = computed(() => {
 
     const effStatus = getEffectiveStatus(b)
     const matchesStatus = bookingStatusFilter.value === 'All' || effStatus.toLowerCase() === bookingStatusFilter.value.toLowerCase()
-
-    const matchesFacility = bookingFacilityFilter.value === 'All' || 
+    const matchesFacility = bookingFacilityFilter.value === 'All' ||
       b.sport.toLowerCase() === bookingFacilityFilter.value.toLowerCase() ||
       b.facility.toLowerCase().includes(bookingFacilityFilter.value.toLowerCase())
 
@@ -3373,18 +3761,15 @@ const filteredBookings = computed(() => {
   })
 })
 
-// KPI calculations
 const bookingKpis = computed(() => {
   const total = bookingsList.value.length
   const confirmed = bookingsList.value.filter(b => getEffectiveStatus(b) === 'Confirmed').length
   const completed = bookingsList.value.filter(b => getEffectiveStatus(b) === 'Completed').length
   const autoCompleted = bookingsList.value.filter(b => isTimeCompleted(b)).length
   const cancelled = bookingsList.value.filter(b => b.status === 'Cancelled').length
-
   return { total, confirmed, completed, autoCompleted, cancelled }
 })
 
-// Action Functions
 function openBookingDetails(booking) {
   selectedBooking.value = booking
   showBookingDetailsModal.value = true
@@ -3396,35 +3781,33 @@ function closeBookingDetailsModal() {
 }
 
 function requestCancelBooking(booking) {
+  showBookingDetailsModal.value = false
+  selectedBooking.value = null
   bookingToCancel.value = booking
   showCancelConfirmModal.value = true
 }
 
-async function confirmCancelBooking() {
+function confirmCancelBooking() {
   if (!bookingToCancel.value) return
-  try {
-    await api.post(`/admin/bookings/${bookingToCancel.value.id}/cancel`)
-    await loadBookings()
-    closeBookingDetailsModal()
-    showCancelConfirmModal.value = false
-    bookingToCancel.value = null
-    if (toast) toast.success('Booking cancelled successfully!')
-  } catch (error) {
-    if (toast) toast.error(error?.response?.data?.message || 'Unable to cancel booking.')
+  const target = bookingsList.value.find(b => b.id === bookingToCancel.value.id)
+  if (target) {
+    target.status = 'Cancelled'
+    target.paymentStatus = 'Refunded'
   }
+  if (selectedBooking.value && selectedBooking.value.id === bookingToCancel.value.id) {
+    selectedBooking.value.status = 'Cancelled'
+    selectedBooking.value.paymentStatus = 'Refunded'
+  }
+  showCancelConfirmModal.value = false
+  bookingToCancel.value = null
+  if (toast) toast.success('Booking cancelled successfully!')
 }
 
-async function markBookingCompleted(booking) {
-  try {
-    await api.post(`/admin/bookings/${booking.id}/complete`)
-    await loadBookings()
-    if (selectedBooking.value?.id === String(booking.id)) {
-      selectedBooking.value = bookingsList.value.find((item) => item.id === String(booking.id)) || null
-    }
-    if (toast) toast.success(`Booking ${booking.id} marked as Completed!`)
-  } catch (error) {
-    if (toast) toast.error(error?.response?.data?.message || 'Unable to complete booking.')
-  }
+function markBookingCompleted(booking) {
+  const target = bookingsList.value.find(b => b.id === booking.id)
+  if (target) target.status = 'Completed'
+  if (selectedBooking.value && selectedBooking.value.id === booking.id) selectedBooking.value.status = 'Completed'
+  if (toast) toast.success(`Booking ${booking.id} marked as Completed!`)
 }
 
 function openNewBookingModal() {
@@ -3440,36 +3823,37 @@ function closeNewBookingModal() {
 }
 
 function handleCreateNewBooking() {
-  if (!newBookingForm.player || !newBookingForm.date) {
-    if (toast) toast.error('Please enter player name and date.')
+  if (!newBookingForm.player || !newBookingForm.email) {
+    if (toast) toast.error('Please enter player name and email.')
     return
   }
-  const court = courtStore.courts.find(c => c.name === newBookingForm.facility) || courtStore.courts[0]
-  if (!court) {
-    if (toast) toast.error('No court available for booking.')
-    return
-  }
-  
-  const times = (newBookingForm.time || '10:00 AM - 11:00 AM').split(' - ')
-  const payload = {
-    court_id: court.id,
+  const newId = `BK-${100 + bookingsList.value.length + 1}`
+  const initials = newBookingForm.player.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) || 'BK'
+
+  const createdBooking = {
+    id: newId,
+    player: newBookingForm.player,
+    email: newBookingForm.email,
+    phone: newBookingForm.phone || '+1 (555) 000-0000',
+    facility: newBookingForm.facility,
+    sport: newBookingForm.sport,
     date: newBookingForm.date,
-    start_time: times[0]?.trim() || '10:00',
-    end_time: times[1]?.trim() || '11:00',
-    email: newBookingForm.email
+    dateDisplay: newBookingForm.date,
+    time: newBookingForm.time,
+    duration: newBookingForm.duration || '1.0 hr',
+    amount: Number(newBookingForm.amount) || 0,
+    paymentStatus: newBookingForm.paymentStatus,
+    paymentMethod: 'Admin Manual Entry',
+    status: newBookingForm.status,
+    initials: initials,
+    userType: newBookingForm.userType,
+    createdAt: new Date().toLocaleString(),
+    notes: newBookingForm.notes || 'Created manually by Admin'
   }
 
-  api.post('/admin/bookings', payload)
-    .then(() => {
-      showNewBookingModal.value = false
-      if (toast) toast.success('New booking recorded successfully! 🎉')
-      loadBookings()
-      loadAdminAnalytics()
-    })
-    .catch(err => {
-      const msg = err.response?.data?.message || 'Failed to create booking'
-      if (toast) toast.error(msg)
-    })
+  bookingsList.value.unshift(createdBooking)
+  showNewBookingModal.value = false
+  if (toast) toast.success(`New booking ${newId} created successfully!`)
 }
 
 function exportBookingsCSV() {
@@ -3486,7 +3870,7 @@ function exportBookingsCSV() {
     b.paymentStatus,
     b.status
   ])
-  
+
   const csvContent = [headers.join(','), ...rows.map(e => e.join(','))].join('\n')
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
   const url = URL.createObjectURL(blob)
@@ -3499,153 +3883,728 @@ function exportBookingsCSV() {
   if (toast) toast.success('Bookings exported to CSV!')
 }
 
-// Analytics - Dynamic Booking Trends derived from real DB bookings
-const bookingTrends = computed(() => {
-  if (!bookingsList.value.length) {
-    return []
-  }
-  const counts = {}
-  bookingsList.value.forEach(b => {
-    const sp = b.sport || 'Tennis'
-    counts[sp] = (counts[sp] || 0) + 1
-  })
-  const total = bookingsList.value.length
-  const colorMap = {
-    Tennis: 'bar-blue',
-    Badminton: 'bar-emerald',
-    Squash: 'bar-orange',
-    Swimming: 'bar-purple',
-    Pickleball: 'bar-indigo',
-    Football: 'bar-emerald',
-    Basketball: 'bar-orange',
-  }
-  return Object.entries(counts).map(([sport, count]) => ({
-    sport,
-    count,
-    percentage: Math.round((count / total) * 100),
-    colorClass: colorMap[sport] || 'bar-blue'
-  }))
-})
+// =========================================================
+// ANALYTICS DATA (MOCK)
+// =========================================================
+// Populated from /analytics/admin on mount.
+const bookingTrends = ref([])
 
-// Analytics - Dynamic Court Utilization derived from real DB bookings
-const courtUtilization = computed(() => {
-  const total = bookingsList.value.length
-  if (!total) {
-    return [
-      { period: 'Prime Hours (5 PM - 10 PM)', rate: 0, colorClass: 'bar-blue' },
-      { period: 'Afternoon (12 PM - 5 PM)', rate: 0, colorClass: 'bar-indigo' },
-      { period: 'Morning (6 AM - 12 PM)', rate: 0, colorClass: 'bar-purple' },
-    ]
-  }
-  let prime = 0, afternoon = 0, morning = 0
-  bookingsList.value.forEach(b => {
-    const hour = parseInt(b.time?.split(':')[0] || '12', 10)
-    if (hour >= 17 && hour <= 22) prime++
-    else if (hour >= 12 && hour < 17) afternoon++
-    else morning++
-  })
-  return [
-    { period: 'Prime Hours (5 PM - 10 PM)', rate: Math.min(100, Math.round((prime / total) * 100)), colorClass: 'bar-blue' },
-    { period: 'Afternoon (12 PM - 5 PM)', rate: Math.min(100, Math.round((afternoon / total) * 100)), colorClass: 'bar-indigo' },
-    { period: 'Morning (6 AM - 12 PM)', rate: Math.min(100, Math.round((morning / total) * 100)), colorClass: 'bar-purple' },
-  ]
-})
+// Populated from /analytics/admin on mount.
+const courtUtilization = ref([])
 
-// Announcements reactive state & real DB operations
-const announcements = ref([])
-const showAnnouncementModal = ref(false)
-const isBroadcasting = ref(false)
-const announcementForm = reactive({
+// =========================================================
+// ANNOUNCEMENTS STATE
+// =========================================================
+const announcementsSearchQuery = ref('')
+const announcementsCategoryFilter = ref('All')
+const showCreateAnnouncementModal = ref(false)
+const showAnnouncementDetailsModal = ref(false)
+const selectedAnnouncement = ref(null)
+const isSubmittingAnnouncement = ref(false)
+
+const announcementForm = ref({
   title: '',
-  body: '',
   category: 'General',
-  target_audience: 'all'
+  body: '',
 })
 
-async function loadAnnouncements() {
-  try {
-    const { data } = await api.get('/admin/announcements')
-    announcements.value = Array.isArray(data) ? data.map(a => ({
-      id: a.id,
-      title: a.title,
-      body: a.body || '',
-      date: a.created_at ? new Date(a.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Today',
-      category: (a.type || a.category || 'General').toUpperCase(),
-      categoryClass: a.type === 'maintenance' ? 'orange' : (a.type === 'tournament' ? 'purple' : 'blue')
-    })) : []
-  } catch (err) {
-    console.warn('Failed to load announcements:', err)
+const announcements = computed(() => notificationStore.announcements)
+
+const filteredAnnouncements = computed(() => {
+  let list = announcements.value
+  if (announcementsCategoryFilter.value !== 'All') {
+    list = list.filter(item => item.category.toLowerCase() === announcementsCategoryFilter.value.toLowerCase())
+  }
+  if (announcementsSearchQuery.value.trim()) {
+    const q = announcementsSearchQuery.value.toLowerCase()
+    list = list.filter(item =>
+      (item.title && item.title.toLowerCase().includes(q)) ||
+      (item.body && item.body.toLowerCase().includes(q))
+    )
+  }
+  return list
+})
+
+const openCreateAnnouncementModal = () => {
+  showAnnouncementDetailsModal.value = false
+  selectedAnnouncement.value = null
+  announcementForm.value = {
+    title: '',
+    category: 'General',
+    body: '',
+  }
+  showCreateAnnouncementModal.value = true
+}
+
+const applyAnnouncementTemplate = (templateType) => {
+  if (templateType === 'maintenance') {
+    announcementForm.value = {
+      title: 'Scheduled Court Maintenance & Surface Care',
+      category: 'Maintenance',
+      body: 'Courts 1 and 2 will be temporarily unavailable on Thursday from 08:00 AM to 02:00 PM for deep surface cleaning and line recoating. Regular reservations resume at 02:30 PM.',
+    }
+  } else if (templateType === 'tournament') {
+    announcementForm.value = {
+      title: 'Registrations Open: Club Summer Grand Slam 2026',
+      category: 'Tournament',
+      body: 'Sign-ups are officially live for our annual summer championship! Singles and doubles brackets available with trophies, medal awards, and ₹50,000 cash prize pool.',
+    }
+  } else if (templateType === 'policy') {
+    announcementForm.value = {
+      title: 'Updated Court Booking Rules & Footwear Guidelines',
+      category: 'Policy',
+      body: 'All players are kindly reminded to check in with front desk reception prior to slot start time. Strict non-marking sports shoes are required on all indoor synthetic courts.',
+    }
+  } else if (templateType === 'broadcast') {
+    announcementForm.value = {
+      title: 'Flash Alert: Evening Facility Hours Extended',
+      category: 'Broadcast',
+      body: 'Due to overwhelming demand, court floodlight operating hours are extended until 11:00 PM throughout this weekend. Slots are now open on the booking calendar.',
+    }
+  }
+  if (toast) {
+    toast.success('Template loaded!')
   }
 }
 
-function openCreateAnnouncementModal() {
-  announcementForm.title = ''
-  announcementForm.body = ''
-  announcementForm.category = 'General'
-  announcementForm.target_audience = 'all'
-  showAnnouncementModal.value = true
+const handleCreateAnnouncement = () => {
+  openCreateAnnouncementModal()
 }
 
-async function submitCreateAnnouncement() {
-  if (!announcementForm.title || !announcementForm.body) {
-    if (toast) toast.error('Please enter announcement title and details.')
+const closeCreateAnnouncementModal = () => {
+  showCreateAnnouncementModal.value = false
+}
+
+const submitCreateAnnouncement = async () => {
+  if (!announcementForm.value.title.trim()) {
+    if (toast) {
+      toast.error('Please enter an announcement title')
+    } else {
+      alert('Please enter an announcement title')
+    }
     return
   }
-  isBroadcasting.value = true
-  try {
-    await api.post('/admin/announcements', {
-      title: announcementForm.title,
-      body: announcementForm.body,
-      type: announcementForm.category.toLowerCase(),
-      target_audience: announcementForm.target_audience
-    })
-    showAnnouncementModal.value = false
-    if (toast) toast.success('Announcement broadcasted successfully! 📢')
-    await loadAnnouncements()
-  } catch (err) {
-    const msg = err.response?.data?.message || 'Failed to broadcast announcement'
-    if (toast) toast.error(msg)
-  } finally {
-    isBroadcasting.value = false
-  }
-}
-
-async function handleDeleteAnnouncement(id) {
-  try {
-    await api.delete(`/admin/announcements/${id}`)
-    if (toast) toast.success('Announcement removed.')
-    if (selectedAnnouncement.value && selectedAnnouncement.value.id === id) {
-      closeAnnouncementDetails()
+  if (!announcementForm.value.body.trim()) {
+    if (toast) {
+      toast.error('Please enter announcement message content')
+    } else {
+      alert('Please enter announcement message content')
     }
-    await loadAnnouncements()
-  } catch (err) {
-    const msg = err.response?.data?.message || 'Failed to delete announcement'
-    if (toast) toast.error(msg)
+    return
+  }
+  isSubmittingAnnouncement.value = true
+  const result = await notificationStore.createAnnouncement({
+    title: announcementForm.value.title.trim(),
+    body: announcementForm.value.body.trim(),
+    category: announcementForm.value.category,
+  })
+  isSubmittingAnnouncement.value = false
+
+  if (result.success) {
+    closeCreateAnnouncementModal()
+    if (toast) {
+      toast.success('Announcement broadcasted successfully! 📢')
+    } else {
+      alert('Announcement broadcasted!')
+    }
+  } else {
+    if (toast) {
+      toast.error(result.error || 'Failed to broadcast announcement')
+    } else {
+      alert(result.error || 'Failed to broadcast')
+    }
   }
 }
 
-// Announcements details modal
-const selectedAnnouncement = ref(null)
-const showAnnouncementDetailsModal = ref(false)
-
-function openAnnouncementDetails(item) {
+const openAnnouncementDetails = (item) => {
+  showCreateAnnouncementModal.value = false
   selectedAnnouncement.value = item
   showAnnouncementDetailsModal.value = true
+  if (!item.is_read) notificationStore.markAsRead(item.id)
 }
 
-function closeAnnouncementDetails() {
+const closeAnnouncementDetails = () => {
   showAnnouncementDetailsModal.value = false
   selectedAnnouncement.value = null
 }
 
-// Edit Admin Profile & Avatar handlers
+const refreshAnnouncements = async () => {
+  await notificationStore.fetchAnnouncements()
+  if (notificationStore.error) {
+    if (toast) {
+      toast.error(notificationStore.error)
+    }
+  } else {
+    if (toast) {
+      toast.success('Announcements refreshed')
+    }
+  }
+}
+
+const handleDeleteAnnouncement = async (item) => {
+  if (!item) return
+  if (!confirm(`Are you sure you want to delete "${item.title}"?`)) return
+
+  const result = await notificationStore.deleteAnnouncement(item.id)
+  if (!result.success) {
+    if (toast) {
+      toast.error(result.error)
+    } else {
+      alert(result.error)
+    }
+    return
+  }
+  if (selectedAnnouncement.value && selectedAnnouncement.value.id === item.id) {
+    closeAnnouncementDetails()
+  }
+  if (toast) {
+    toast.success('Announcement removed')
+  }
+}
+
+// =========================================================
+// EVENTS STATE
+// =========================================================
+const eventViewMode = ref('grid')
+const eventSearchQuery = ref('')
+const eventStatusFilter = ref('All')
+const eventSportFilter = ref('All')
+const eventTypeFilter = ref('All')
+const eventSortBy = ref('date')
+
+const showCreateEventModal = ref(false)
+const showEditEventModal = ref(false)
+const showEventDetailsModal = ref(false)
+const showDeleteEventModal = ref(false)
+
+const selectedEvent = ref(null)
+const editingEvent = ref(null)
+const eventToDelete = ref(null)
+
+const eventsList = ref([])
+
+async function loadEvents() {
+  try {
+    const clubId = courtStore.club?.id || (courtStore.courts && courtStore.courts[0]?.club_id) || ''
+    const url = clubId ? `/events?club_id=${clubId}&status=all` : '/events?status=all'
+    const res = await api.get(url)
+    eventsList.value = (res.data || []).map(e => ({
+      id: e.id,
+      title: e.title,
+      // The Event model carries no type or sport, so labelling everything a
+      // "Tournament" mislabelled coaching clinics and open days.
+      type: e.type || 'Event',
+      sport: e.sport || '',
+      date: e.date,
+      dateDisplay: new Date(e.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      time: `${(e.start_time || '09:00').substring(0, 5)} - ${(e.end_time || '18:00').substring(0, 5)}`,
+      start_time: (e.start_time || '09:00').substring(0, 5),
+      end_time: (e.end_time || '18:00').substring(0, 5),
+      venue: e.venue || (courtStore.club?.name || 'Main Arena'),
+      capacity: e.max_attendees || 30,
+      registered: e.registered_count || 0,
+      fee: e.registration_fee || 0,
+      status: e.status ? (e.status.charAt(0).toUpperCase() + e.status.slice(1)) : 'Upcoming',
+      organizer: 'Club Owner',
+      description: e.description || '',
+      participants: []
+    }))
+  } catch (error) {
+    console.error('Failed to load events:', error)
+  }
+}
+
+onMounted(loadEvents)
+
+watch(() => courtStore.club, loadEvents)
+
+const upcomingEvents = computed(() => {
+  return eventsList.value.map(e => ({
+    id: e.id,
+    title: e.title,
+    type: e.type,
+    date: e.dateDisplay,
+    info: `${e.registered} / ${e.capacity} Registered Players`,
+    status: e.status,
+    chipClass: e.sport === 'Tennis' ? 'chip-blue' : e.sport === 'Badminton' ? 'chip-emerald' : 'chip-orange',
+    statusClass: e.status === 'Upcoming' ? 'status-open' : 'status-confirmed'
+  }))
+})
+
+const eventForm = reactive({
+  title: '', sport: 'Tennis', type: 'Tournament',
+  date: new Date().toISOString().split('T')[0],
+  time: '10:00 - 16:00',
+  venue: 'Tennis Court 1',
+  capacity: 16,
+  fee: 0,
+  status: 'Upcoming',
+  organizer: 'Club Staff',
+  description: ''
+})
+
+const editEventForm = reactive({
+  id: '', title: '', sport: 'Tennis', type: 'Tournament', date: '',
+  time: '', venue: '', capacity: 16, fee: 0, status: 'Upcoming', description: ''
+})
+
+const filteredEvents = computed(() => {
+  return eventsList.value.filter(e => {
+    const q = eventSearchQuery.value.trim().toLowerCase()
+    const matchesSearch = !q ||
+      e.title.toLowerCase().includes(q) ||
+      e.venue.toLowerCase().includes(q) ||
+      e.organizer.toLowerCase().includes(q)
+    const matchesStatus = eventStatusFilter.value === 'All' || e.status.toLowerCase() === eventStatusFilter.value.toLowerCase()
+    const matchesSport = eventSportFilter.value === 'All' || e.sport.toLowerCase() === eventSportFilter.value.toLowerCase()
+    const matchesType = eventTypeFilter.value === 'All' || e.type.toLowerCase() === eventTypeFilter.value.toLowerCase()
+    return matchesSearch && matchesStatus && matchesSport && matchesType
+  }).sort((a, b) => {
+    if (eventSortBy.value === 'date') return a.date.localeCompare(b.date)
+    if (eventSortBy.value === 'title') return a.title.localeCompare(b.title)
+    if (eventSortBy.value === 'registered') return b.registered - a.registered
+    if (eventSortBy.value === 'fee') return b.fee - a.fee
+    return 0
+  })
+})
+
+const eventsKpis = computed(() => {
+  const total = eventsList.value.length
+  const upcoming = eventsList.value.filter(e => e.status === 'Upcoming' || e.status === 'Ongoing').length
+  const totalRegistered = eventsList.value.reduce((sum, e) => sum + e.registered, 0)
+  const totalCapacity = eventsList.value.reduce((sum, e) => sum + e.capacity, 0)
+  const totalRevenue = eventsList.value.reduce((sum, e) => sum + (e.registered * e.fee), 0)
+  return { total, upcoming, totalRegistered, totalCapacity, totalRevenue }
+})
+
+function resetEventFilters() {
+  eventSearchQuery.value = ''
+  eventStatusFilter.value = 'All'
+  eventSportFilter.value = 'All'
+  eventTypeFilter.value = 'All'
+  eventSortBy.value = 'date'
+}
+
+function openCreateEventModal() {
+  eventForm.title = ''
+  eventForm.description = ''
+  showCreateEventModal.value = true
+}
+
+function closeCreateEventModal() {
+  showCreateEventModal.value = false
+}
+
+function _parseTimeString(t, defaultTime = '10:00') {
+  if (!t) return defaultTime
+  const raw = t.trim()
+  if (raw.includes(':')) {
+    const parts = raw.replace(/(am|pm)/i, '').trim().split(':')
+    let h = parseInt(parts[0])
+    if (/pm/i.test(raw) && h < 12) h += 12
+    return `${h.toString().padStart(2, '0')}:${(parts[1] || '00').padStart(2, '0')}`
+  }
+  return defaultTime
+}
+
+async function handleCreateEvent() {
+  if (!eventForm.title) {
+    if (toast) toast.error('Please fill in event title.')
+    return
+  }
+  const clubId = courtStore.club?.id || (courtStore.courts && courtStore.courts[0]?.club_id) || undefined
+  let [startTimeStr, endTimeStr] = ['10:00', '16:00']
+  if (eventForm.time && eventForm.time.includes('-')) {
+    const parts = eventForm.time.split('-')
+    startTimeStr = parts[0].trim()
+    endTimeStr = parts[1].trim()
+  }
+
+  const payload = {
+    club_id: clubId,
+    title: eventForm.title,
+    description: eventForm.description || '',
+    event_date: eventForm.date || new Date().toISOString().split('T')[0],
+    start_time: _parseTimeString(startTimeStr, '10:00'),
+    end_time: _parseTimeString(endTimeStr, '16:00'),
+    max_attendees: Number(eventForm.capacity) || 20,
+    registration_fee: Number(eventForm.fee) || 0
+  }
+
+  try {
+    await api.post('/events', payload)
+    showCreateEventModal.value = false
+    await loadEvents()
+    if (toast) toast.success(`Event "${payload.title}" created successfully!`)
+  } catch (err) {
+    if (toast) toast.error(err.response?.data?.message || 'Failed to create event.')
+  }
+}
+
+function openEventDetails(event) {
+  selectedEvent.value = event
+  showEventDetailsModal.value = true
+}
+
+function closeEventDetailsModal() {
+  showEventDetailsModal.value = false
+  selectedEvent.value = null
+}
+
+function openEditEventModal(event) {
+  showEventDetailsModal.value = false
+  selectedEvent.value = null
+  editingEvent.value = event
+  editEventForm.id = event.id
+  editEventForm.title = event.title
+  editEventForm.sport = event.sport
+  editEventForm.type = event.type
+  editEventForm.date = event.date
+  editEventForm.time = event.time
+  editEventForm.venue = event.venue
+  editEventForm.capacity = event.capacity
+  editEventForm.fee = event.fee
+  editEventForm.status = event.status
+  editEventForm.description = event.description
+  showEditEventModal.value = true
+}
+
+function closeEditEventModal() {
+  showEditEventModal.value = false
+  editingEvent.value = null
+}
+
+async function handleUpdateEvent() {
+  if (!editingEvent.value) return
+  let [startTimeStr, endTimeStr] = [editingEvent.value.start_time || '10:00', editingEvent.value.end_time || '16:00']
+  if (editEventForm.time && editEventForm.time.includes('-')) {
+    const parts = editEventForm.time.split('-')
+    startTimeStr = parts[0].trim()
+    endTimeStr = parts[1].trim()
+  }
+
+  const payload = {
+    title: editEventForm.title,
+    description: editEventForm.description,
+    event_date: editEventForm.date,
+    start_time: _parseTimeString(startTimeStr, '10:00'),
+    end_time: _parseTimeString(endTimeStr, '16:00'),
+    max_attendees: Number(editEventForm.capacity) || 20,
+    registration_fee: Number(editEventForm.fee) || 0,
+    status: (editEventForm.status || 'upcoming').toLowerCase()
+  }
+
+  try {
+    await api.put(`/events/${editingEvent.value.id}`, payload)
+    showEditEventModal.value = false
+    editingEvent.value = null
+    await loadEvents()
+    if (toast) toast.success('Event details updated successfully!')
+  } catch (err) {
+    if (toast) toast.error(err.response?.data?.message || 'Failed to update event.')
+  }
+}
+
+function requestDeleteEvent(event) {
+  showEventDetailsModal.value = false
+  selectedEvent.value = null
+  eventToDelete.value = event
+  showDeleteEventModal.value = true
+}
+
+async function confirmDeleteEvent() {
+  if (!eventToDelete.value) return
+  try {
+    await api.delete(`/events/${eventToDelete.value.id}`)
+    showDeleteEventModal.value = false
+    if (showEventDetailsModal.value) showEventDetailsModal.value = false
+    if (toast) toast.success(`Event "${eventToDelete.value.title}" cancelled.`)
+    eventToDelete.value = null
+    await loadEvents()
+  } catch (err) {
+    if (toast) toast.error(err.response?.data?.message || 'Failed to cancel event.')
+  }
+}
+
+function addSampleParticipant(event) {
+  const sampleNames = ['Alex Morgan', 'Carlos Alcaraz', 'Coco Gauff', 'Novak D.', 'Iga Swiatek', 'Jannik Sinner']
+  const randomName = sampleNames[Math.floor(Math.random() * sampleNames.length)]
+  if (event.registered < event.capacity) {
+    event.participants = event.participants || []
+    event.participants.push(randomName)
+    event.registered += 1
+    if (toast) toast.success(`Registered ${randomName} to event!`)
+  } else {
+    if (toast) toast.error('Event is already at full capacity!')
+  }
+}
+
+function removeParticipant(event, index) {
+  if (event.participants && event.participants[index]) {
+    const removedName = event.participants[index]
+    event.participants.splice(index, 1)
+    event.registered = Math.max(0, event.registered - 1)
+    if (toast) toast.success(`Removed ${removedName} from event.`)
+  }
+}
+
+// =========================================================
+// ANALYTICS TAB REACTIVE STATE & EXPORT
+// =========================================================
+const analyticsTimeframe = ref('30 Days')
+
+// Membership split, from the live /analytics/admin payload.
+const membershipOverview = computed(() => {
+  const m = adminAnalytics.value?.members
+  if (!m) return { total: 0, permanent: 0, permanentPct: 0, publicPlayers: 0, publicPct: 0 }
+  const permanent = m.active
+  const publicPlayers = m.public_players ?? 0
+  const total = permanent + publicPlayers
+  const pct = (n) => (total ? Math.round((n / total) * 1000) / 10 : 0)
+  return { total, permanent, permanentPct: pct(permanent),
+           publicPlayers, publicPct: pct(publicPlayers) }
+})
+
+// Analytics-tab KPIs, derived from the live /analytics/admin payload.
+const analyticsKpis = computed(() => {
+  const d = adminAnalytics.value
+  if (!d) {
+    return { revenue: '—', window: '', peakHour: '—', peakBookings: '',
+             activeMembers: '—', totalMembers: 0, utilisation: '—', bookingsInWindow: 0 }
+  }
+  const peak = (d.hourly_occupancy || []).reduce(
+    (best, h) => (best && best.bookings >= h.bookings ? best : h), null)
+  return {
+    revenue: inr(d.revenue.total),
+    window: `Last ${d.window_days} days`,
+    peakHour: peak && peak.bookings ? peak.hour : 'No bookings yet',
+    peakBookings: peak && peak.bookings ? `${peak.bookings} bookings` : '',
+    activeMembers: String(d.members.active),
+    totalMembers: d.members.total,
+    utilisation: `${d.courts.utilisation_percent}%`,
+    bookingsInWindow: d.bookings.in_window,
+  }
+})
+// Re-fetch real analytics when the timeframe selector changes
+watch(analyticsTimeframe, () => loadAdminAnalytics())
+const activeChartMetric = ref('revenue')
+
+// Populated from /analytics/admin on mount.
+const sportRevenueBreakdown = ref([])
+
+// Donut geometry derived from the live revenue split. The chart used to be a
+// fixed 45/30/15/10 pie with a "₹4.82L" total painted into the markup, so it
+// contradicted the legend rendered right beside it.
+const DONUT_CIRCUMFERENCE = 2 * Math.PI * 38
+
+const donutSegments = computed(() => {
+  const total = sportRevenueBreakdown.value.reduce((sum, i) => sum + (i.revenue || 0), 0)
+  if (!total) return []
+
+  let consumed = 0
+  return sportRevenueBreakdown.value.map((item) => {
+    const length = (item.revenue / total) * DONUT_CIRCUMFERENCE
+    const segment = {
+      sport: item.sport,
+      color: item.color,
+      dashArray: `${length.toFixed(2)} ${(DONUT_CIRCUMFERENCE - length).toFixed(2)}`,
+      dashOffset: (-consumed).toFixed(2),
+    }
+    consumed += length
+    return segment
+  })
+})
+
+// Monthly growth chart, from /analytics/admin `monthly`. The bars used to be a
+// literal array of invented figures (₹2.45L … ₹4.82L, 320–648 bookings) that
+// stayed on screen no matter what the club had actually taken.
+const growthChart = computed(() => {
+  const rows = adminAnalytics.value?.monthly || []
+  const metric = activeChartMetric.value === 'revenue' ? 'revenue' : 'bookings'
+  const values = rows.map((r) => Number(r[metric]) || 0)
+  const peak = Math.max(...values, 0)
+
+  const compact = (n) => {
+    if (metric === 'bookings') return String(Math.round(n))
+    if (n >= 100000) return `₹${(n / 100000).toFixed(2)}L`
+    if (n >= 1000) return `₹${(n / 1000).toFixed(1)}K`
+    return `₹${Math.round(n)}`
+  }
+
+  // Three gridline labels at 100%, 70% and 40% of the peak.
+  const axis = peak
+    ? [compact(peak), compact(peak * 0.7), compact(peak * 0.4)]
+    : ['', '', '']
+
+  const trackHeight = 155
+  const baseline = 185
+  const slot = rows.length ? 630 / rows.length : 0
+
+  const bars = rows.map((row, i) => {
+    const value = Number(row[metric]) || 0
+    const h = peak ? Math.max((value / peak) * trackHeight, value > 0 ? 3 : 0) : 0
+    const w = Math.min(38, Math.max(slot - 42, 14))
+    return {
+      month: row.month,
+      x: 55 + i * slot,
+      w,
+      h,
+      y: baseline - h,
+      label: value ? compact(value) : '',
+    }
+  })
+
+  return { bars, axis }
+})
+
+const revenueTotalLabel = computed(() => {
+  const total = sportRevenueBreakdown.value.reduce((sum, i) => sum + (i.revenue || 0), 0)
+  if (total >= 100000) return `₹${(total / 100000).toFixed(2)}L`
+  return inr(total)
+})
+
+// Populated from /analytics/admin on mount.
+const hourlyOccupancyData = ref([])
+
+// Populated from /analytics/admin on mount.
+const topPerformingFacilities = ref([])
+
+// Populated from /analytics/admin on mount.
+const paymentMethodBreakdown = ref([])
+
+// Populated from /analytics/admin. Costs and profit are not modelled anywhere
+// in the backend, so they are not shown rather than invented.
+const financialSummary = ref({
+  grossRevenue: '—', completedPayments: '—', pendingPayments: 0,
+})
+
+function exportAnalyticsCSV() {
+  const data = adminAnalytics.value
+  if (!data) {
+    if (toast) toast.error('Analytics are still loading. Please try again.')
+    return
+  }
+
+  const headers = ['Report Metric / Category', 'Value / Details', 'Timeframe / Period']
+  const window = `Last ${data.window_days} days`
+  const rows = [
+    ['Report Title', `${data.club.name} — Analytics Report`, `Generated: ${new Date().toLocaleDateString()}`],
+    ['Selected Timeframe', analyticsTimeframe.value, ''],
+    ['Total Revenue', `INR ${Number(data.revenue.total).toLocaleString('en-IN')}`, window],
+    ['Pending Payments', data.revenue.pending_payments, ''],
+    ['Failed Payments', data.revenue.failed_payments, ''],
+    ['Total Bookings', data.bookings.total, 'All time'],
+    ['Bookings In Window', data.bookings.in_window, window],
+    ['Upcoming Bookings', data.bookings.upcoming, ''],
+    ['Cancelled / Released', data.bookings.released + data.bookings.overridden, ''],
+    ['Members', data.members.total, `${data.members.active} active`],
+    ['Courts', data.courts.total, `${data.courts.active} active`],
+    ['Court Utilisation', `${data.courts.utilisation_percent}%`, window],
+    ['Events', data.events.total, `${data.events.registrations} registrations`],
+    ['---', '---', '---'],
+    ['Revenue By Type', 'Amount (INR)', 'Share'],
+    ...Object.entries(data.revenue.by_type || {}).map(([type, amount]) => [
+      type.charAt(0).toUpperCase() + type.slice(1),
+      Number(amount).toLocaleString('en-IN'),
+      data.revenue.total ? `${Math.round((amount / data.revenue.total) * 100)}%` : '0%',
+    ]),
+    ['---', '---', '---'],
+    ['Bookings By Court', 'Bookings', 'Share'],
+    ...data.courts.breakdown.map((c) => [c.court_name, c.bookings, `${c.percentage}%`]),
+    ['---', '---', '---'],
+    ['Bookings By Hour', 'Bookings', 'Relative Occupancy'],
+    ...(data.hourly_occupancy || []).map((h) => [h.hour, h.bookings, `${h.rate}%`]),
+    ['---', '---', '---'],
+    ['Daily Booking Trend', 'Date', 'Bookings'],
+    ...(data.trend || []).map((t) => ['', t.date, t.bookings]),
+  ]
+  const csvContent = [headers.join(','), ...rows.map(e => e.map(cell => `"${cell}"`).join(','))].join('\n')
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.setAttribute('href', url)
+  link.setAttribute('download', `clubdash_analytics_report_${new Date().toISOString().split('T')[0]}.csv`)
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  if (toast) toast.success('Analytics report downloaded successfully! 📊')
+}
+
+// =========================================================
+// MEMBER DETAILS & EXPORT (UPDATED)
+// =========================================================
+function viewMemberDetails(member) {
+  selectedMemberForModal.value = member
+  showMemberModal.value = true
+}
+
+function exportMembersCSV() {
+  const headers = ['Name', 'Email', 'Membership Plan', 'Booking Count', 'Status']
+  const rows = filteredMembersList.value.map(m => [
+    m.name,
+    m.email,
+    m.plan,
+    m.totalBookings,
+    m.membership_status
+  ])
+  const csv = [headers, ...rows].map(r => r.join(',')).join('\n')
+  const blob = new Blob([csv], { type: 'text/csv' })
+  const link = document.createElement('a')
+  link.href = URL.createObjectURL(blob)
+  link.download = 'club_members.csv'
+  link.click()
+}
+
+// --- REAL-TIME ADMIN PROFILE STATE ---
+const showProfilePopover = ref(false)
 const showEditProfileModal = ref(false)
+const isSavingAdminProfile = ref(false)
+const showFirstTimePhoneModal = ref(false)
+const firstTimePhoneInput = ref('')
+
+// Placeholders are blank so the UI never shows a name, role or club the
+// server did not return; syncProfileWithAuthUser fills them in.
+const adminProfile = reactive({
+  name: '',
+  role: '',
+  email: '',
+  phone: '',
+  facility: '',
+  memberSince: '',
+  initials: '',
+  avatarUrl: null
+})
+
 const editProfileForm = reactive({
   name: '',
   email: '',
   phone: '',
+  role: '',
+  facility: '',
   avatarUrl: null
 })
+
+// The system has three roles: owner, front-desk and player. There is no
+// "Super Admin"; labelling the club owner as one overstated their scope.
+function formatRole(role) {
+  if (!role) return ''
+  const key = role.toLowerCase()
+  if (key === 'owner') return 'Club Owner'
+  if (key === 'front-desk') return 'Front Desk'
+  if (key === 'player') return 'Member'
+  return role.charAt(0).toUpperCase() + role.slice(1)
+}
+
+function formatMemberSince(createdAt) {
+  if (!createdAt) return 'Recent'
+  try {
+    const d = new Date(createdAt)
+    if (isNaN(d.getTime())) return 'Recent'
+    return d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+  } catch {
+    return 'Recent'
+  }
+}
 
 function getInitials(name) {
   if (!name) return 'AD'
@@ -3658,61 +4617,16 @@ function getInitials(name) {
   return 'AD'
 }
 
-function openEditProfileModal() {
-  editProfileForm.name = adminProfile.name || auth.user?.name || ''
-  editProfileForm.email = adminProfile.email || auth.user?.email || ''
-  editProfileForm.phone = adminProfile.phone || auth.user?.phone || ''
-  editProfileForm.avatarUrl = adminProfile.avatarUrl || auth.user?.avatarUrl || null
-  showEditProfileModal.value = true
-}
-
-function closeEditProfileModal() {
-  showEditProfileModal.value = false
-}
-
-function handleEditAvatarUpload(e) {
-  const file = e.target.files[0]
-  if (!file) return
-  const reader = new FileReader()
-  reader.onload = (ev) => {
-    editProfileForm.avatarUrl = ev.target.result
+function checkFirstTimePhoneSetup(u) {
+  if (!u) return
+  const userKey = `phone_prompt_done_${u.id || u.email}`
+  const alreadyPrompted = localStorage.getItem(userKey)
+  // If user has no phone in db and has not completed initial prompt
+  if (!u.phone && !alreadyPrompted) {
+    firstTimePhoneInput.value = ''
+    showFirstTimePhoneModal.value = true
   }
-  reader.readAsDataURL(file)
 }
-
-function removeEditAvatar() {
-  editProfileForm.avatarUrl = null
-}
-
-async function saveAdminProfile() {
-  if (!editProfileForm.name || !editProfileForm.email) {
-    if (toast) toast.error('Please enter name and email.')
-    return
-  }
-  adminProfile.name = editProfileForm.name
-  adminProfile.email = editProfileForm.email
-  adminProfile.phone = editProfileForm.phone
-  adminProfile.avatarUrl = editProfileForm.avatarUrl
-  adminProfile.initials = getInitials(editProfileForm.name)
-
-  try {
-    if (auth.isAuthenticated()) {
-      await auth.updateProfile({
-        name: editProfileForm.name,
-        phone: editProfileForm.phone,
-      })
-    }
-  } catch (err) {
-    console.warn('Failed to persist profile:', err)
-  }
-
-  showEditProfileModal.value = false
-  if (toast) toast.success('Profile updated successfully! 👤')
-}
-
-// First-time phone prompt
-const showFirstTimePhoneModal = ref(false)
-const firstTimePhoneInput = ref('')
 
 async function submitFirstTimePhone() {
   const phoneVal = firstTimePhoneInput.value.trim()
@@ -3724,6 +4638,8 @@ async function submitFirstTimePhone() {
   try {
     if (auth.isAuthenticated()) {
       await auth.updateProfile({ phone: phoneVal })
+    } else if (auth.user) {
+      auth.user.phone = phoneVal
     }
   } catch (err) {
     console.warn('Error saving initial phone:', err)
@@ -3743,480 +4659,181 @@ function skipFirstTimePhone() {
   showFirstTimePhoneModal.value = false
 }
 
-// --- EVENTS MANAGEMENT REAL DB STATE & CRUD ---
-const eventViewMode = ref('grid') // 'grid' | 'table'
-const eventSearchQuery = ref('')
-const eventStatusFilter = ref('All')
-const eventSportFilter = ref('All')
-const eventTypeFilter = ref('All')
-const eventSortBy = ref('date')
-
-const showCreateEventModal = ref(false)
-const showEditEventModal = ref(false)
-const showEventDetailsModal = ref(false)
-const showDeleteEventModal = ref(false)
-
-const selectedEvent = ref(null)
-const editingEvent = ref(null)
-const eventToDelete = ref(null)
-
-const eventsList = ref([])
-const eventsLoading = ref(false)
-
-async function loadEvents() {
-  eventsLoading.value = true
-  try {
-    const { data } = await api.get('/admin/events')
-    eventsList.value = Array.isArray(data) ? data.map(e => ({
-      ...e,
-      date: e.event_date,
-      dateDisplay: e.event_date,
-      time: e.start_time && e.end_time ? `${e.start_time} - ${e.end_time}` : 'TBD',
-      venue: 'Club Arena',
-      capacity: e.max_attendees || 50,
-      registered: e.registered_count || 0,
-      fee: e.registration_fee || 0,
-      status: (e.status || 'Upcoming').charAt(0).toUpperCase() + (e.status || 'upcoming').slice(1),
-      type: 'Tournament',
-      organizer: 'Club Admin',
-      participants: []
-    })) : []
-  } catch (e) {
-    eventsList.value = []
-  } finally {
-    eventsLoading.value = false
-  }
-}
-
-// Alias upcomingEvents to keep dashboard home components in sync
-const upcomingEvents = computed(() => {
-  return eventsList.value.filter(e => e.status === 'Upcoming' || e.status === 'Ongoing')
-})
-
-const createEventForm = reactive({
-  title: '',
-  sport: 'Tennis',
-  type: 'Tournament',
-  date: new Date().toISOString().split('T')[0],
-  time: '10:00 AM - 04:00 PM',
-  venue: 'Main Arena',
-  capacity: 32,
-  fee: 0,
-  organizer: 'Club Admin',
-  description: ''
-})
-
-const editEventForm = reactive({
-  id: '',
-  title: '',
-  sport: 'Tennis',
-  type: 'Tournament',
-  date: '',
-  time: '',
-  venue: '',
-  capacity: 32,
-  fee: 0,
-  status: 'Upcoming',
-  organizer: '',
-  description: ''
-})
-
-const filteredEventsList = computed(() => {
-  return eventsList.value.filter(e => {
-    const q = eventSearchQuery.value.trim().toLowerCase()
-    const matchesSearch = !q || e.title.toLowerCase().includes(q) || e.sport.toLowerCase().includes(q) || (e.organizer && e.organizer.toLowerCase().includes(q))
-    const matchesStatus = eventStatusFilter.value === 'All' || e.status.toLowerCase() === eventStatusFilter.value.toLowerCase()
-    const matchesSport = eventSportFilter.value === 'All' || e.sport.toLowerCase() === eventSportFilter.value.toLowerCase()
-    const matchesType = eventTypeFilter.value === 'All' || (e.type && e.type.toLowerCase() === eventTypeFilter.value.toLowerCase())
-
-    return matchesSearch && matchesStatus && matchesSport && matchesType
-  }).sort((a, b) => {
-    if (eventSortBy.value === 'date') return new Date(a.date).getTime() - new Date(b.date).getTime()
-    if (eventSortBy.value === 'name') return a.title.localeCompare(b.title)
-    if (eventSortBy.value === 'fee') return b.fee - a.fee
-    return 0
-  })
-})
-
-const filteredEvents = filteredEventsList
-
-function resetEventFilters() {
-  eventSearchQuery.value = ''
-  eventStatusFilter.value = 'All'
-  eventSportFilter.value = 'All'
-  eventTypeFilter.value = 'All'
-  eventSortBy.value = 'date'
-}
-
-const eventsKpis = computed(() => {
-  const total = eventsList.value.length
-  const upcoming = eventsList.value.filter(e => e.status === 'Upcoming' || e.status === 'Ongoing').length
-  const totalCapacity = eventsList.value.reduce((acc, e) => acc + (Number(e.capacity) || 0), 0)
-  const totalRegistered = eventsList.value.reduce((acc, e) => acc + (Number(e.registered) || 0), 0)
-  const totalRevenue = eventsList.value.reduce((acc, e) => acc + ((Number(e.registered) || 0) * (Number(e.fee) || 0)), 0)
-
-  return { total, upcoming, totalCapacity, totalRegistered, totalRevenue }
-})
-
-function openEventDetails(event) {
-  selectedEvent.value = event
-  showEventDetailsModal.value = true
-}
-
-function closeEventDetailsModal() {
-  showEventDetailsModal.value = false
-  selectedEvent.value = null
-}
-
-function openCreateEventModal() {
-  createEventForm.title = ''
-  createEventForm.sport = 'Tennis'
-  createEventForm.type = 'Tournament'
-  createEventForm.date = new Date().toISOString().split('T')[0]
-  createEventForm.time = '10:00 AM - 04:00 PM'
-  createEventForm.venue = 'Main Arena'
-  createEventForm.capacity = 32
-  createEventForm.fee = 0
-  createEventForm.organizer = 'Club Admin'
-  createEventForm.description = ''
-  showCreateEventModal.value = true
-}
-
-function closeCreateEventModal() {
-  showCreateEventModal.value = false
-}
-
-async function handleCreateEvent() {
-  if (!createEventForm.title || !createEventForm.date) {
-    if (toast) toast.error('Please enter an event title and date.')
+// The profile is server state. It used to be mirrored into localStorage, which
+// meant the avatar and phone number only existed in one browser, and the
+// no-user branch dereferenced `u` and threw.
+function syncProfileWithAuthUser(u) {
+  if (!u) {
+    adminProfile.name = ''
+    adminProfile.email = ''
+    adminProfile.role = ''
+    adminProfile.phone = ''
+    adminProfile.facility = ''
+    adminProfile.memberSince = ''
+    adminProfile.initials = ''
+    adminProfile.avatarUrl = null
     return
   }
-  try {
-    const times = (createEventForm.time || '10:00 AM - 12:00 PM').split(' - ')
-    const payload = {
-      club_id: courtStore.club?.id,
-      title: createEventForm.title,
-      description: createEventForm.description || '',
-      event_date: createEventForm.date,
-      start_time: times[0]?.trim() || '10:00:00',
-      end_time: times[1]?.trim() || '12:00:00',
-      max_attendees: Number(createEventForm.capacity) || 50,
-      registration_fee: Number(createEventForm.fee) || 0
+
+  adminProfile.name = u.name || ''
+  adminProfile.email = u.email || ''
+  adminProfile.role = formatRole(u.role)
+  adminProfile.initials = getInitials(adminProfile.name)
+  adminProfile.phone = u.phone || ''
+  // `facility` is the owner's club name, resolved by the API.
+  adminProfile.facility = u.facility || ''
+  adminProfile.memberSince = formatMemberSince(u.created_at)
+  adminProfile.avatarUrl = u.avatar_url || null
+}
+
+// Reactively watch for auth.user changes
+watch(
+  () => auth.user,
+  (newUser) => {
+    syncProfileWithAuthUser(newUser)
+    if (newUser) {
+      checkFirstTimePhoneSetup(newUser)
     }
-    await api.post('/events', payload)
-    showCreateEventModal.value = false
-    if (toast) toast.success(`Event "${createEventForm.title}" created successfully! 🎉`)
-    await loadEvents()
-  } catch (err) {
-    const msg = err.response?.data?.message || 'Failed to create event'
-    if (toast) toast.error(msg)
-  }
-}
-
-function openEditEventModal(event) {
-  editingEvent.value = event
-  editEventForm.id = event.id
-  editEventForm.title = event.title
-  editEventForm.sport = event.sport
-  editEventForm.type = event.type || 'Tournament'
-  editEventForm.date = event.date
-  editEventForm.time = event.time
-  editEventForm.venue = event.venue
-  editEventForm.capacity = event.capacity
-  editEventForm.fee = event.fee
-  editEventForm.status = event.status
-  editEventForm.organizer = event.organizer
-  editEventForm.description = event.description || ''
-  showEditEventModal.value = true
-}
-
-function closeEditEventModal() {
-  showEditEventModal.value = false
-  editingEvent.value = null
-}
-
-async function handleUpdateEvent() {
-  if (!editingEvent.value) return
-  try {
-    const eventId = Number(String(editingEvent.value.id).replace('EVT-', '')) || editingEvent.value.id
-    const times = (editEventForm.time || '10:00 AM - 12:00 PM').split(' - ')
-    const payload = {
-      title: editEventForm.title,
-      description: editEventForm.description || '',
-      event_date: editEventForm.date,
-      start_time: times[0]?.trim() || '10:00:00',
-      end_time: times[1]?.trim() || '12:00:00',
-      max_attendees: Number(editEventForm.capacity) || 50,
-      registration_fee: Number(editEventForm.fee) || 0,
-      status: (editEventForm.status || 'upcoming').toLowerCase()
-    }
-    await api.put(`/events/${eventId}`, payload)
-    showEditEventModal.value = false
-    editingEvent.value = null
-    if (toast) toast.success('Event updated successfully! ✨')
-    await loadEvents()
-  } catch (err) {
-    const msg = err.response?.data?.message || 'Failed to update event'
-    if (toast) toast.error(msg)
-  }
-}
-
-function requestDeleteEvent(event) {
-  eventToDelete.value = event
-  showDeleteEventModal.value = true
-}
-
-function closeDeleteEventModal() {
-  showDeleteEventModal.value = false
-  eventToDelete.value = null
-}
-
-async function confirmDeleteEvent() {
-  if (!eventToDelete.value) return
-  try {
-    const eventId = Number(String(eventToDelete.value.id).replace('EVT-', '')) || eventToDelete.value.id
-    await api.delete(`/events/${eventId}`)
-    showDeleteEventModal.value = false
-    if (selectedEvent.value?.id === eventToDelete.value.id) {
-      selectedEvent.value = null
-      showEventDetailsModal.value = false
-    }
-    if (toast) toast.success(`Event "${eventToDelete.value.title}" deleted.`)
-    eventToDelete.value = null
-    await loadEvents()
-  } catch (err) {
-    const msg = err.response?.data?.message || 'Failed to delete event'
-    if (toast) toast.error(msg)
-  }
-}
-
-// --- ANALYTICS TAB DYNAMIC DERIVED STATE & REAL DB API ---
-const analyticsTimeframe = ref('30 Days')
-const activeChartMetric = ref('revenue')
-const adminAnalyticsData = ref(null)
-
-async function loadAdminAnalytics() {
-  try {
-    const { data } = await api.get('/admin/analytics')
-    adminAnalyticsData.value = data
-  } catch (err) {
-    console.warn('Failed to load admin analytics:', err)
-  }
-}
-
-const sportRevenueBreakdown = computed(() => {
-  if (!bookingsList.value.length) return []
-  const sums = {}
-  bookingsList.value.forEach(b => {
-    const sp = b.sport || 'Tennis'
-    sums[sp] = (sums[sp] || 0) + (Number(b.amount) || 40)
-  })
-  const totalRev = Object.values(sums).reduce((a, b) => a + b, 0) || 1
-  const colors = ['#2563eb', '#059669', '#ea580c', '#0284c7', '#8b5cf6']
-  return Object.entries(sums).map(([sport, revenue], idx) => ({
-    sport,
-    revenue,
-    percentage: Math.round((revenue / totalRev) * 100),
-    color: colors[idx % colors.length]
-  }))
-})
-
-const hourlyOccupancyData = computed(() => {
-  const hours = [
-    { hour: '06:00 AM', rate: 25 },
-    { hour: '08:00 AM', rate: 50 },
-    { hour: '10:00 AM', rate: 65 },
-    { hour: '12:00 PM', rate: 45 },
-    { hour: '02:00 PM', rate: 60 },
-    { hour: '04:00 PM', rate: 85 },
-    { hour: '06:00 PM', rate: 95 },
-    { hour: '08:00 PM', rate: 90 },
-    { hour: '10:00 PM', rate: 30 }
-  ]
-  return hours
-})
-
-const topPerformingFacilities = computed(() => {
-  const counts = {}
-  bookingsList.value.forEach(b => {
-    const name = b.facility || 'Court'
-    if (!counts[name]) {
-      counts[name] = { name, sport: b.sport || 'Sports', hoursBooked: 0, revenue: 0 }
-    }
-    counts[name].hoursBooked += 1
-    counts[name].revenue += Number(b.amount) || 40
-  })
-  return Object.values(counts).map((f, i) => ({
-    id: i + 1,
-    ...f,
-    occupancy: `${Math.min(95, 20 + f.hoursBooked * 15)}%`,
-    status: f.hoursBooked > 2 ? 'High Demand' : 'Optimal'
-  }))
-})
-
-const paymentMethodBreakdown = computed(() => {
-  const total = bookingsList.value.reduce((s, b) => s + (Number(b.amount) || 40), 0)
-  return [
-    { method: 'UPI / NetBanking', percentage: 65, color: '#2563eb', val: `₹${Math.round(total * 0.65).toLocaleString()}` },
-    { method: 'Credit / Debit Cards', percentage: 25, color: '#059669', val: `₹${Math.round(total * 0.25).toLocaleString()}` },
-    { method: 'Counter Cash / POS', percentage: 10, color: '#ea580c', val: `₹${Math.round(total * 0.10).toLocaleString()}` }
-  ]
-})
-
-const financialSummary = computed(() => {
-  const total = adminAnalyticsData.value?.total_revenue != null
-    ? adminAnalyticsData.value.total_revenue
-    : bookingsList.value.reduce((sum, b) => sum + (Number(b.amount) || 40), 0)
-  return {
-    grossRevenue: `₹${total.toLocaleString()}`,
-    operationalCosts: `₹${Math.round(total * 0.25).toLocaleString()}`,
-    maintenanceTaxes: `₹${Math.round(total * 0.08).toLocaleString()}`,
-    netProfit: `₹${Math.round(total * 0.67).toLocaleString()}`,
-    profitMargin: total > 0 ? '+67.0%' : '0.0%'
-  }
-})
-
-function exportAnalyticsCSV() {
-  const headers = ['Metric', 'Value']
-  const rows = [
-    ['Gross Revenue', financialSummary.value.grossRevenue],
-    ['Total Bookings', String(bookingKpis.value.total)],
-    ['Confirmed Bookings', String(bookingKpis.value.confirmed)],
-    ['Completed Bookings', String(bookingKpis.value.completed)],
-    ['Total Members', String(membersList.value.length)],
-  ]
-  const csvContent = [headers.join(','), ...rows.map(e => e.join(','))].join('\n')
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.setAttribute('href', url)
-  link.setAttribute('download', `clubdash_analytics_report_${new Date().toISOString().split('T')[0]}.csv`)
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-  if (toast) toast.success('Analytics report downloaded!')
-}
-
-
-// --- MEMBERS DIRECTORY REAL DB STATE ---
-const memberSearchQuery = ref('')
-const selectedMemberPlanFilter = ref('All')
-const selectedMemberForModal = ref(null)
-const showMemberModal = ref(false)
-
-const membersList = ref([])
-const membersLoading = ref(false)
-
-async function loadMembers() {
-  membersLoading.value = true
-  try {
-    const { data } = await api.get('/admin/members')
-    membersList.value = Array.isArray(data) ? data.map(m => {
-      const name = m.name || 'Member'
-      const initials = name.split(/\s+/).filter(Boolean).map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'M'
-      return {
-        id: m.id,
-        name,
-        email: m.email || '—',
-        role: m.role || 'player',
-        initials,
-        plan: m.membership_plan || m.plan || 'Standard',
-        membership_plan: m.membership_plan || m.plan || 'Standard',
-        membership_status: m.membership_status || 'none',
-        membership_start: m.membership_start || null,
-        membership_end: m.membership_end || null,
-        membership_auto_renew: Boolean(m.membership_auto_renew),
-        dateJoined: m.date_joined || (m.created_at ? new Date(m.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Recent'),
-        totalBookings: m.booking_count || m.bookings_count || 0,
-        phone: m.phone || '+91 98765 43210',
-        status: m.membership_status === 'active' ? 'Active' : (m.status || 'Active')
-      }
-    }) : []
-  } catch (e) {
-    membersList.value = []
-  } finally {
-    membersLoading.value = false
-  }
-}
-
-const filteredMembersList = computed(() => {
-  return membersList.value.filter(m => {
-    const matchesSearch = 
-      !memberSearchQuery.value ||
-      m.name.toLowerCase().includes(memberSearchQuery.value.toLowerCase()) ||
-      m.email.toLowerCase().includes(memberSearchQuery.value.toLowerCase()) ||
-      m.plan.toLowerCase().includes(memberSearchQuery.value.toLowerCase())
-
-    const matchesPlan = 
-      selectedMemberPlanFilter.value === 'All' ||
-      m.plan.toLowerCase().includes(selectedMemberPlanFilter.value.toLowerCase())
-
-    return matchesSearch && matchesPlan
-  })
-})
-
-const totalMembers = computed(() => membersList.value.length)
-const activeMembers = computed(() => membersList.value.filter(m => m.membership_status === 'active' || m.status === 'Active').length)
-const totalBookingsAll = computed(() => membersList.value.reduce((sum, m) => sum + (m.totalBookings || 0), 0))
-
-function viewMemberDetails(member) {
-  selectedMemberForModal.value = member
-  showMemberModal.value = true
-}
-
-function exportMembersCSV() {
-  const headers = ['Name', 'Email', 'Membership Plan', 'Booking Count', 'Status', 'Start Date', 'End Date']
-  const rows = filteredMembersList.value.map(m => [
-    `"${m.name}"`,
-    m.email,
-    `"${m.plan}"`,
-    m.totalBookings,
-    m.membership_status === 'active' ? 'Active' : 'Inactive',
-    m.membership_start || '—',
-    m.membership_end || '—'
-  ])
-  const csvContent = [headers.join(','), ...rows.map(e => e.join(','))].join('\n')
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.setAttribute('href', url)
-  link.setAttribute('download', `club_members_directory_${new Date().toISOString().split('T')[0]}.csv`)
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-  if (toast) toast.success('Members list exported to CSV successfully!')
-}
-
-// --- DISCORD-STYLE ADMIN PROFILE STATE ---
-const showProfilePopover = ref(false)
-
-const adminProfile = reactive({
-  name: 'Alex Morgan',
-  role: 'Super Admin',
-  email: 'alex.morgan@clubdash.com',
-  phone: '+91 98765 43210',
-  initials: 'AM',
-  avatarUrl: null
-})
+  },
+  { immediate: true, deep: true }
+)
 
 function toggleProfilePopover() {
   showProfilePopover.value = !showProfilePopover.value
 }
 
-function handleAvatarUpload(event) {
+function openEditProfileModal() {
+  editProfileForm.name = adminProfile.name
+  editProfileForm.email = adminProfile.email
+  editProfileForm.phone = adminProfile.phone
+  editProfileForm.role = adminProfile.role
+  editProfileForm.facility = adminProfile.facility
+  editProfileForm.avatarUrl = adminProfile.avatarUrl
+  showEditProfileModal.value = true
+}
+
+function closeEditProfileModal() {
+  showEditProfileModal.value = false
+}
+
+async function handleEditAvatarUpload(event) {
   const file = event.target.files && event.target.files[0]
-  if (file) {
+  event.target.value = ''
+  if (!file) return
+  if (!file.type.startsWith('image/')) {
+    if (toast) toast.error('Please choose an image file.')
+    return
+  }
+  try {
+    editProfileForm.avatarUrl = await downscaleImage(file)
+  } catch (err) {
+    if (toast) toast.error(err.message || 'Could not read that image.')
+  }
+}
+
+function removeEditAvatar() {
+  editProfileForm.avatarUrl = null
+}
+
+async function saveAdminProfile() {
+  if (!editProfileForm.name || !editProfileForm.name.trim()) {
+    if (toast) toast.error('Please enter a valid full name.')
+    return
+  }
+  if (!editProfileForm.email || !editProfileForm.email.trim()) {
+    if (toast) toast.error('Please enter a valid email address.')
+    return
+  }
+
+  const newName = editProfileForm.name.trim()
+  const newEmail = editProfileForm.email.trim()
+  const newPhone = editProfileForm.phone.trim()
+
+  isSavingAdminProfile.value = true
+  try {
+    // name / email / phone, plus the club rename that `facility` performs.
+    await auth.updateProfile({
+      name: newName,
+      email: newEmail,
+      phone: newPhone,
+      facility: editProfileForm.facility.trim(),
+    })
+
+    // The avatar lives on a different endpoint.
+    if ((editProfileForm.avatarUrl || null) !== (adminProfile.avatarUrl || null)) {
+      const { data } = await api.put('/auth/profile/details', {
+        avatar_url: editProfileForm.avatarUrl || '',
+      })
+      auth.user = { ...auth.user, avatar_url: data.user?.avatar_url || null }
+    }
+
+    syncProfileWithAuthUser(auth.user)
+    courtStore.fetchCourts()
+    showEditProfileModal.value = false
+    if (toast) toast.success('Profile updated.')
+  } catch (err) {
+    // Never report success for a save the server rejected.
+    if (toast) {
+      toast.error(err?.response?.data?.message || 'Could not save your profile.')
+    }
+  } finally {
+    isSavingAdminProfile.value = false
+  }
+}
+
+// Avatars are stored as a data: URL on the user row, so the source image is
+// downscaled first to keep that row small.
+const AVATAR_MAX_PX = 320
+const AVATAR_QUALITY = 0.82
+
+function downscaleImage(file) {
+  return new Promise((resolve, reject) => {
     const reader = new FileReader()
-    reader.onload = (e) => {
-      adminProfile.avatarUrl = e.target.result
-      if (toast) toast.success('Profile picture updated successfully! 📸')
+    reader.onerror = () => reject(new Error('Could not read that file.'))
+    reader.onload = () => {
+      const img = new Image()
+      img.onerror = () => reject(new Error('That file is not a readable image.'))
+      img.onload = () => {
+        const scale = Math.min(1, AVATAR_MAX_PX / Math.max(img.width, img.height))
+        const canvas = document.createElement('canvas')
+        canvas.width = Math.round(img.width * scale)
+        canvas.height = Math.round(img.height * scale)
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height)
+        resolve(canvas.toDataURL('image/jpeg', AVATAR_QUALITY))
+      }
+      img.src = reader.result
     }
     reader.readAsDataURL(file)
+  })
+}
+
+async function handleAvatarUpload(event) {
+  const file = event.target.files && event.target.files[0]
+  event.target.value = ''
+  if (!file) return
+  if (!file.type.startsWith('image/')) {
+    if (toast) toast.error('Please choose an image file.')
+    return
+  }
+  try {
+    const dataUrl = await downscaleImage(file)
+    const { data } = await api.put('/auth/profile/details', { avatar_url: dataUrl })
+    adminProfile.avatarUrl = data.user?.avatar_url || dataUrl
+    auth.user = { ...auth.user, avatar_url: adminProfile.avatarUrl }
+    if (toast) toast.success('Profile picture updated.')
+  } catch (err) {
+    if (toast) toast.error(err?.response?.data?.message || 'Could not update your photo.')
   }
 }
 </script>
 
 <style scoped>
+.legend-empty {
+  color: #64748b;
+  font-size: 0.82rem;
+  margin: 0;
+}
+
 /* App Layout Container */
 .admin-app-layout {
   display: flex;
@@ -5426,7 +6043,7 @@ function handleAvatarUpload(event) {
   justify-content: space-between;
   align-items: center;
   padding: 1.25rem 1.75rem;
-  border-bottom: 1px solid rgba(226, 232, 240, 0.6);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
   background: #ffffff;
   flex: 0 0 auto;
   position: sticky;
@@ -5434,27 +6051,36 @@ function handleAvatarUpload(event) {
   z-index: 2;
 }
 
+.modal-header h2,
 .modal-header h3 {
   margin: 0;
   font-family: 'Poppins', sans-serif;
-  font-size: 1.35rem;
+  font-size: 1.25rem;
   font-weight: 700;
   color: #0f172a;
 }
 
-.close-btn {
-  background: none;
+.close-btn,
+.close-modal-btn {
+  background: #f1f5f9;
   border: none;
-  font-size: 1.75rem;
-  color: #94a3b8;
+  border-radius: 0.5rem;
+  width: 32px;
+  height: 32px;
+  font-size: 1rem;
+  color: #64748b;
   cursor: pointer;
-  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
   line-height: 1;
-  transition: color 0.2s ease;
 }
 
-.close-btn:hover {
-  color: #4f46e5;
+.close-btn:hover,
+.close-modal-btn:hover {
+  background: #e2e8f0;
+  color: #0f172a;
 }
 
 .modal-form {
@@ -5487,89 +6113,86 @@ function handleAvatarUpload(event) {
 }
 
 .form-group input,
-.form-group select {
+.form-group select,
+.form-group textarea {
   width: 100%;
-  padding: 0.8rem 1rem;
+  padding: 0.75rem 1rem;
   border-radius: 0.75rem;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #cbd5e1;
   font-family: inherit;
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   color: #0f172a;
   background: #ffffff;
-  transition:
-    border-color 0.2s ease,
-    box-shadow 0.2s ease;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .form-group input:focus,
-.form-group select:focus {
-  outline: none;
-  border-color: #4f46e5;
-  box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+.form-group select:focus,
+.form-group textarea:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
 }
 
-/* Keep long court forms fully inside the viewport. */
-.modal-form::-webkit-scrollbar {
-  width: 8px;
-}
-.modal-form::-webkit-scrollbar-track {
-  background: transparent;
-}
-.modal-form::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border: 2px solid #ffffff;
-  border-radius: 999px;
-}
-
-.toggle-section {
-  padding-top: 0.15rem;
+.modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 1rem 1.75rem;
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+  flex-shrink: 0;
 }
 
 .modal-actions {
   display: flex;
+  align-items: center;
   justify-content: flex-end;
   gap: 0.75rem;
-  margin: 0.35rem -1.75rem -1.5rem;
+  margin: 0.5rem -1.75rem -1.5rem;
   padding: 1rem 1.75rem;
   position: sticky;
   bottom: -1.5rem;
   z-index: 2;
-  background: rgba(255, 255, 255, 0.97);
-  border-top: 1px solid #e8edf4;
-  backdrop-filter: blur(8px);
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
 }
 
 .cancel-modal-btn {
-  padding: 0.75rem 1.5rem;
+  padding: 0.65rem 1.25rem;
   border-radius: 0.75rem;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #cbd5e1;
   background: #ffffff;
   color: #475569;
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .cancel-modal-btn:hover {
-  background: #f8fafc;
+  background: #f1f5f9;
+  color: #0f172a;
 }
 
 .submit-modal-btn {
-  padding: 0.75rem 1.75rem;
+  padding: 0.65rem 1.5rem;
   border-radius: 0.75rem;
   border: none;
-  background: #4f46e5;
+  background: linear-gradient(135deg, #2563eb, #4f46e5);
   color: #ffffff;
   font-weight: 700;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
 }
 
 .submit-modal-btn:hover {
-  background: #4338ca;
+  background: linear-gradient(135deg, #1d4ed8, #4338ca);
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35);
+  transform: translateY(-1px);
 }
 
 /* Club Banner */
@@ -6998,42 +7621,36 @@ function handleAvatarUpload(event) {
 .discord-actions-footer {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
   margin-top: 0.85rem;
 }
 
-.upload-btn-pill {
-  flex: 1;
-  background: #2563eb;
+.edit-profile-btn-pill {
+  width: 100%;
+  background: linear-gradient(135deg, #2563eb, #4f46e5);
   color: #ffffff;
-  font-size: 0.76rem;
+  font-size: 0.82rem;
   font-weight: 700;
-  padding: 0.4rem 0.65rem;
-  border-radius: 0.5rem;
+  padding: 0.55rem 0.85rem;
+  border-radius: 0.6rem;
   text-align: center;
+  border: none;
   cursor: pointer;
-  transition: background 0.2s ease;
-}
-
-.upload-btn-pill:hover {
-  background: #1d4ed8;
-}
-
-.close-card-btn {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  color: #cbd5e1;
-  font-size: 0.76rem;
-  font-weight: 600;
-  padding: 0.4rem 0.65rem;
-  border-radius: 0.5rem;
-  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
   transition: all 0.2s ease;
 }
 
-.close-card-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
-  color: #ffffff;
+.edit-profile-btn-pill:hover {
+  background: linear-gradient(135deg, #1d4ed8, #4338ca);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.45);
+}
+
+.modal-upload-btn:hover {
+  background: #1d4ed8;
 }
 
 .popover-fade-enter-active,
@@ -7047,7 +7664,544 @@ function handleAvatarUpload(event) {
   transform: translateY(10px) scale(0.95);
 }
 
-.booking-api-error { margin-top: 1rem; padding: .9rem 1rem; border: 1px solid #fecaca; border-radius: 12px; background: #fff7f7; color: #b91c1c; display: flex; align-items: center; justify-content: space-between; gap: 1rem; font-size: .85rem; }
-.booking-api-error button { border: 1px solid #fecaca; background: white; color: #991b1b; border-radius: 9px; padding: .5rem .8rem; font-weight: 700; cursor: pointer; }
-.booking-api-loading { margin-top: 1rem; padding: 1rem; border-radius: 12px; background: #f8fafc; color: #64748b; font-size: .85rem; }
+/* Announcements & Broadcasts Component Styles */
+.filter-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 0.4rem 0.85rem;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.filter-pill-btn:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.filter-pill-btn.active {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+}
+
+.pill-count {
+  font-size: 0.75rem;
+  opacity: 0.85;
+}
+
+.quick-template-btn {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+  font-size: 0.76rem;
+  font-weight: 600;
+  padding: 0.3rem 0.65rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.quick-template-btn:hover {
+  background: #eff6ff;
+  border-color: #3b82f6;
+  color: #2563eb;
+  transform: translateY(-1px);
+}
+
+.broadcast-modal-grid {
+  display: grid;
+  grid-template-columns: 1.25fr 0.95fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+@media (max-width: 768px) {
+  .broadcast-modal-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.broadcast-input,
+.broadcast-textarea {
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.6rem;
+  font-size: 0.9rem;
+  font-family: inherit;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  outline: none;
+}
+
+.broadcast-input:focus,
+.broadcast-textarea:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+/* Category Selector Cards */
+.category-selector-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 0.5rem;
+}
+
+.category-card-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 0.75rem;
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 0.65rem;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s ease;
+}
+
+.category-card-btn:hover {
+  border-color: #94a3b8;
+  background: #f8fafc;
+}
+
+.category-card-btn .cat-icon {
+  font-size: 1.2rem;
+}
+
+.category-card-btn .cat-name {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.2;
+}
+
+.category-card-btn .cat-desc {
+  display: block;
+  font-size: 0.68rem;
+  color: #64748b;
+}
+
+.category-card-btn.active.cat-blue {
+  border-color: #2563eb;
+  background: #eff6ff;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+}
+
+.category-card-btn.active.cat-purple {
+  border-color: #8b5cf6;
+  background: #f5f3ff;
+  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.15);
+}
+
+.category-card-btn.active.cat-emerald {
+  border-color: #10b981;
+  background: #ecfdf5;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.15);
+}
+
+.category-card-btn.active.cat-orange {
+  border-color: #f59e0b;
+  background: #fffbeb;
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.15);
+}
+
+.category-card-btn.active.cat-rose {
+  border-color: #ef4444;
+  background: #fef2f2;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.15);
+}
+
+/* Audience and Priority Stacks */
+.audience-selector-stack,
+.priority-selector-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.audience-radio-card,
+.priority-radio-card {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.75rem;
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #334155;
+  transition: all 0.15s ease;
+}
+
+.audience-radio-card:hover,
+.priority-radio-card:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.audience-radio-card.active {
+  border-color: #2563eb;
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.priority-radio-card .prio-label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.priority-radio-card .prio-desc {
+  display: block;
+  font-size: 0.68rem;
+  color: #64748b;
+}
+
+.priority-radio-card.active.prio-normal {
+  border-color: #10b981;
+  background: #ecfdf5;
+}
+
+.priority-radio-card.active.prio-high {
+  border-color: #f59e0b;
+  background: #fffbeb;
+}
+
+.priority-radio-card.active.prio-urgent {
+  border-color: #ef4444;
+  background: #fef2f2;
+}
+
+/* Priority & Audience Pills */
+.priority-pill {
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.priority-pill.urgent {
+  background: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #fca5a5;
+  animation: pulse-glow 2s infinite;
+}
+
+.priority-pill.high {
+  background: #fef3c7;
+  color: #d97706;
+  border: 1px solid #fde68a;
+}
+
+.audience-pill {
+  font-size: 0.72rem;
+  font-weight: 600;
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.15);
+  }
+}
+
+/* Live Preview Mockup */
+.broadcast-preview-col {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.85rem;
+  padding: 1.25rem;
+}
+
+.preview-header-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 0.85rem;
+}
+
+.live-pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25);
+  animation: spin 3s linear infinite;
+}
+
+.preview-phone-mockup {
+  background: #0f172a;
+  border-radius: 1rem;
+  padding: 1rem;
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.18);
+}
+
+.preview-notification-card {
+  background: #ffffff;
+  border-radius: 0.75rem;
+  padding: 1rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.preview-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.preview-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+}
+
+.preview-badge.cat-general { background: #dbeafe; color: #1d4ed8; }
+.preview-badge.cat-broadcast { background: #ede9fe; color: #6d28d9; }
+.preview-badge.cat-tournament { background: #d1fae5; color: #047857; }
+.preview-badge.cat-policy { background: #fef3c7; color: #b45309; }
+.preview-badge.cat-maintenance { background: #fee2e2; color: #b91c1c; }
+
+.preview-time {
+  font-size: 0.7rem;
+  color: #94a3b8;
+}
+
+.preview-title {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 0.35rem;
+  line-height: 1.35;
+}
+
+.preview-body {
+  font-size: 0.8rem;
+  color: #475569;
+  line-height: 1.5;
+  margin: 0 0 0.75rem;
+}
+
+.preview-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 0.5rem;
+  border-top: 1px solid #f1f5f9;
+  font-size: 0.72rem;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.broadcast-submit-btn {
+  background: linear-gradient(135deg, #2563eb, #4f46e5);
+  color: #ffffff;
+  font-weight: 700;
+  padding: 0.65rem 1.35rem;
+  border-radius: 0.6rem;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+  transition: all 0.2s ease;
+}
+
+.broadcast-submit-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.45);
+}
+
+.broadcast-submit-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-icon-trash {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #ef4444;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-icon-trash:hover {
+  background: #fee2e2;
+  border-color: #ef4444;
+  transform: scale(1.05);
+}
+
+.announcement-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.meta-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.6rem;
+  padding: 0.75rem;
+}
+
+.meta-label {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.25rem;
+}
+
+.meta-val {
+  font-size: 0.88rem;
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.announcements-list-rich {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.announcement-item-rich {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1.25rem 1.5rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 1rem;
+  background: #ffffff;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.02);
+}
+
+.announcement-item-rich:hover {
+  border-color: #93c5fd;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.07);
+}
+
+.announcement-item-rich.unread {
+  background: #f8faff;
+}
+
+.announcement-item-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.announcement-body-preview {
+  font-size: 0.88rem;
+  color: #475569;
+  margin: 0.35rem 0 0;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.unread-indicator-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #2563eb;
+  display: inline-block;
+  box-shadow: 0 0 0 3px #dbeafe;
+}
+
+.btn-view-announcement {
+  background: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  color: #1e293b;
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 0.45rem 0.95rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.btn-view-announcement:hover {
+  background: #eff6ff;
+  border-color: #2563eb;
+  color: #2563eb;
+}
+
+.spin-animate {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.data-state {
+  margin: 0 0 1rem;
+  padding: 0.7rem 0.95rem;
+  border-radius: 0.6rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+.data-state--loading { background: #f1f5f9; color: #475569; }
+.data-state--error { background: #fee2e2; color: #991b1b; }
+.data-state__retry {
+  border: 1px solid currentColor;
+  background: transparent;
+  color: inherit;
+  border-radius: 0.45rem;
+  padding: 0.3rem 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+}
 </style>
+

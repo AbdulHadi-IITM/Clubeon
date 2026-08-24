@@ -11,7 +11,9 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = 'b0e318cfb76a'
-down_revision = 'f05db257887e'
+# Chained after the sport_type migration so the history stays linear —
+# two heads branching off f05db257887e made `flask db upgrade` fail.
+down_revision = 'a91c4d7e2b10'
 branch_labels = None
 depends_on = None
 

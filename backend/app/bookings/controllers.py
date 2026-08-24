@@ -1,5 +1,6 @@
 from app.auth.decorators import role_required
 from flask import Blueprint, request, jsonify
+from app.extensions import db
 from app.bookings.services import BookingService
 from flask_jwt_extended import get_jwt_identity, jwt_required, get_jwt
 
@@ -37,8 +38,32 @@ def get_my_bookings():
     user_id = int(get_jwt_identity())
     bookings = BookingService.get_my_bookings(user_id)
 
+    from app.payments.models import Payment
+    from flask import current_app
+    from app.memberships.models import Membership
+
+    base_fee = float(current_app.config.get("BOOKING_FEE", 500.0))
+    membership = Membership.query.filter_by(user_id=user_id, status='active').first()
+    discount = membership.plan.discount_percentage if membership and membership.plan else 0
+    calculated_amount = round(base_fee * (1 - discount / 100.0), 2)
+
+    booking_ids = [b.id for b in bookings]
+    payments = {}
+    if booking_ids:
+        from app.payments.services import PaymentService
+        for p in Payment.query.filter(
+            Payment.payment_type == 'booking',
+            Payment.reference_id.in_(booking_ids),
+            Payment.user_id == user_id
+        ).all():
+            if p.status == 'pending' and p.gateway_transaction_id:
+                PaymentService._reconcile_with_stripe(p)
+                db.session.refresh(p)
+            payments[p.reference_id] = p
+
     result = []
     for b in bookings:
+        p = payments.get(b.id)
         result.append({
             "id": b.id,
             "court_id": b.court_id,
@@ -47,7 +72,10 @@ def get_my_bookings():
             "end_time": str(b.end_time),
             "status": b.status,
             "court_name": b.court.name,
-            "club_name": b.court.club.name
+            "club_name": b.court.club.name,
+            "sport_type": b.court.sport_type,
+            "amount": float(p.amount) if p else float(calculated_amount),
+            "payment_status": p.status if p else "pending"
         })
     return jsonify(result), 200
 
@@ -103,21 +131,39 @@ def get_club_bookings():
     if error:
         return jsonify(error), 403 if error['code'] == 'FORBIDDEN' else 400
 
+    # Payment state per booking, in one query rather than one per row.
+    from app.payments.models import Payment
+
+    booking_ids = [b.id for b in bookings]
+    payment_by_booking = {}
+    if booking_ids:
+        for p in Payment.query.filter(
+            Payment.payment_type == 'booking',
+            Payment.reference_id.in_(booking_ids),
+        ).order_by(Payment.created_at.asc()).all():
+            # A later payment supersedes an earlier failed attempt.
+            payment_by_booking[p.reference_id] = p
+
     result = []
     for b in bookings:
+        payment = payment_by_booking.get(b.id)
         result.append({
             "id": b.id,
             "user_id": b.user_id,
             "member_name": b.user.name if b.user else None,
             "member_email": b.user.email if b.user else None,
+            "member_phone": (b.user.phone or None) if b.user else None,
             "court_id": b.court_id,
             "court_name": b.court.name if b.court else None,
+            "sport_type": b.court.sport_type if b.court else None,
             "club_name": club.name,
             "date": str(b.booking_date),
             "start_time": str(b.start_time),
             "end_time": str(b.end_time),
             "status": b.status,
             "created_at": str(b.created_at) if b.created_at else None,
+            "payment_status": payment.status if payment else "unpaid",
+            "payment_amount": payment.amount if payment else None,
         })
 
     return jsonify({"club": {"id": club.id, "name": club.name},

@@ -281,3 +281,38 @@ def test_owner_cannot_see_other_clubs_bookings(client, app, db_session, make_pla
 
     _login(client, app, owner_a)
     assert client.get(CLUB_BOOKINGS).json["count"] == 0
+
+
+# ---------------------------------------------------------------------------
+# Tenant isolation
+# ---------------------------------------------------------------------------
+def test_admin_revenue_excludes_other_clubs(client, auth_headers, sample_club,
+                                            db_session, make_player):
+    """
+    An owner's revenue KPI must cover their own club only. It used to sum every
+    completed Payment on the platform.
+    """
+    from app.clubs.models import Club, Court
+    from app.payments.models import Payment
+
+    # A second, unrelated club with its own paid booking.
+    other_owner = make_player(email="other_owner@test.com", role="owner")
+    other_club = Club(name="Rival Club", address="9 Far Rd", owner_id=other_owner.id,
+                      open_time="06:00", close_time="22:00", slot_duration_minutes=60)
+    db_session.add(other_club)
+    db_session.commit()
+    other_court = Court(club_id=other_club.id, name="Rival Court", is_active=True)
+    db_session.add(other_court)
+    db_session.commit()
+
+    stranger = make_player(email="stranger@test.com")
+    db_session.add(Payment(user_id=stranger.id, amount=5000.0, currency='INR',
+                           payment_type='membership', reference_id=1,
+                           status='completed', gateway_transaction_id='pi_other'))
+    db_session.commit()
+
+    client.set_cookie('access_token_cookie', auth_headers(sample_club.owner))
+    response = client.get('/api/v1/analytics/admin')
+
+    assert response.status_code == 200
+    assert response.json['revenue']['total'] == 0.0

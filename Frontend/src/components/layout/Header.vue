@@ -24,11 +24,11 @@
           Live workspace
         </div>
 
-        <!-- Notification Bell with Dropdown -->
+          <!-- Notification Bell with Dropdown -->
         <div class="relative">
           <button
             type="button"
-            @click="showNotifications = !showNotifications"
+            @click="toggleNotifications"
             class="relative grid h-10 w-10 place-items-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700"
             aria-label="Notifications"
           >
@@ -123,7 +123,7 @@
   </header>
 </template>
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useNotificationStore } from '@/stores/notifications'
@@ -140,9 +140,36 @@ const subtitle = computed(() => route.meta.subtitle || 'Portal')
 const notificationsList = computed(() => notificationStore.announcements)
 const unreadCount = computed(() => notificationStore.unreadCount)
 
+function toggleNotifications() {
+  showNotifications.value = !showNotifications.value
+  if (showNotifications.value) {
+    notificationStore.fetchNotifications()
+  }
+}
+
+let pollInterval = null
+
 onMounted(() => {
   notificationStore.fetchNotifications()
+  pollInterval = setInterval(() => {
+    notificationStore.fetchNotifications()
+  }, 15000)
 })
+
+onUnmounted(() => {
+  if (pollInterval) {
+    clearInterval(pollInterval)
+    pollInterval = null
+  }
+})
+
+watch(
+  () => route.fullPath,
+  () => {
+    showNotifications.value = false
+    notificationStore.fetchNotifications()
+  },
+)
 
 async function logout() {
   try {

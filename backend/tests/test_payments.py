@@ -24,19 +24,17 @@ def test_get_my_payments(client, auth_headers, db_session, make_player):
     assert response.json[0]['amount'] == 150.0
     assert response.json[0]['status'] == 'completed'
 
-def test_webhook(client, db_session):
-    payload = {
+def test_unauthenticated_mock_webhook_is_gone(client):
+    """
+    The old POST /payments/webhook took an unsigned JSON body and marked any
+    payment completed, so anyone could grant themselves a paid membership.
+    Settlement now goes through the signature-verified Stripe webhook only.
+    """
+    response = client.post('/api/v1/payments/webhook', json={
         "transaction_id": "mock_txn_456",
         "status": "completed",
         "reference_id": 99,
-        "payment_type": "event"
-    }
-    
-    response = client.post('/api/v1/payments/webhook', json=payload)
-    assert response.status_code == 200
-    assert response.json['message'] == 'Webhook processed successfully'
-    
-    payment = Payment.query.filter_by(reference_id=99, payment_type="event").first()
-    assert payment is not None
-    assert payment.status == 'completed'
-    assert payment.gateway_transaction_id == 'mock_txn_456'
+        "payment_type": "event",
+    })
+    assert response.status_code == 404
+    assert Payment.query.filter_by(reference_id=99, payment_type="event").first() is None

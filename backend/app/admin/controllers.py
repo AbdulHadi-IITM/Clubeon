@@ -237,6 +237,7 @@ def delete_announcement(announcement_id):
     owner_id = int(get_jwt_identity())
     success, error = AdminService.delete_announcement(owner_id, announcement_id)
     if error:
-        return jsonify(error), 400
+        status = {'NOT_FOUND': 404, 'FORBIDDEN': 403}.get(error['code'], 400)
+        return jsonify(error), status
     return jsonify({"message": "Announcement deleted successfully"}), 200
 

@@ -2,11 +2,7 @@
   <nav class="landing-nav" :class="{ scrolled: isScrolled }">
     <div class="nav-inner">
       <div class="nav-brand">
-        <div class="brand-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-          </svg>
-        </div>
+        <BrandMark :size="36" />
         <span class="brand-text">Club<span class="brand-accent">Dash</span></span>
       </div>
       <div class="nav-links">
@@ -39,6 +35,7 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
+import BrandMark from '@/components/BrandMark.vue'
 
 const isScrolled = ref(false)
 const mobileOpen = ref(false)

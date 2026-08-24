@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.auth.services import AuthService
 from app.auth.profile_service import ProfileService
@@ -51,7 +51,7 @@ def login():
         'access_token_cookie',
         access_token,
         max_age=24*60*60,  # 24 hours
-        secure=False,  # Set to True in production with HTTPS
+        secure=current_app.config.get('JWT_COOKIE_SECURE', False),
         httponly=True,  # Prevents JavaScript access
         samesite='Lax',  # CSRF protection
         path='/'
@@ -101,7 +101,7 @@ def register():
         'access_token_cookie',
         access_token,
         max_age=24*60*60,
-        secure=False,  # Set to True in production with HTTPS
+        secure=current_app.config.get('JWT_COOKIE_SECURE', False),
         httponly=True,
         samesite='Lax',
         path='/'
@@ -146,7 +146,7 @@ def logout():
         'access_token_cookie',
         '',
         max_age=0,
-        secure=False,
+        secure=current_app.config.get('JWT_COOKIE_SECURE', False),
         httponly=True,
         samesite='Lax',
         path='/'

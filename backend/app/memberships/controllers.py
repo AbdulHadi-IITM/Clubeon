@@ -42,6 +42,7 @@ def subscribe():
             status_code = 400
             if error.get('code') == 'CONFLICT': status_code = 409
             elif error.get('code') == 'NOT_FOUND': status_code = 404
+            elif error.get('code') == 'PAYMENT_REQUIRED': status_code = 402
             return jsonify(error), status_code
             
         return jsonify({
@@ -67,6 +68,7 @@ def get_my_memberships():
             "plan_duration_months": m.plan.duration_months,
             "plan_price": m.plan.price,
             "plan_discount_percentage": m.plan.discount_percentage,
+            "plan_benefits": m.plan.benefits,
             "status": m.status,
             "start_date": str(m.start_date),
             "end_date": str(m.end_date),

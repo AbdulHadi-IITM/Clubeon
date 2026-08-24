@@ -9,12 +9,12 @@
 
       <div class="branding-content">
         <router-link :to="{ name: 'landing' }" class="logo">
-          <span class="logo-icon">⚡</span>
+          <BrandMark :size="34" tone="light" />
           <span class="logo-text">ClubDash</span>
         </router-link>
 
         <div class="branding-middle">
-          <p class="panel-eyebrow">Apex Performance</p>
+          <p class="panel-eyebrow">ClubDash</p>
           <h2 class="panel-heading" style="color: #ffffff !important;">Elevate Your Game.</h2>
           <p class="panel-description">
             The ultimate destination for data-driven athletic performance.
@@ -22,13 +22,13 @@
 
           <div class="panel-stats">
             <div class="stat-item">
-              <span class="stat-number">100+</span>
-              <span class="stat-label">Sports Clubs</span>
+              <span class="stat-number">Live</span>
+              <span class="stat-label">Court availability</span>
             </div>
             <div class="stat-divider"></div>
             <div class="stat-item">
-              <span class="stat-number">20K+</span>
-              <span class="stat-label">Bookings</span>
+              <span class="stat-number">Instant</span>
+              <span class="stat-label">Booking confirmation</span>
             </div>
           </div>
         </div>
@@ -402,9 +402,11 @@
           </form>
         </div>
 
+        <!-- The Terms and Privacy Policy links pointed at "#": the signup flow
+             asked users to agree to documents that do not exist. Restore this
+             line once those pages are written and routed. -->
         <div class="terms-footer">
-          By continuing, you agree to the ClubDash
-          <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.
+          Your details are used only to run your club bookings.
         </div>
       </div>
     </div>
@@ -416,6 +418,7 @@ import { ref, reactive, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import loginBackground from '@/assets/login_background.png'
+import BrandMark from '@/components/BrandMark.vue'
 
 const roleOptions = [
   { label: 'Player', value: 'player' },
@@ -447,6 +450,23 @@ const redirectAfterAuth = (user) => {
   if (!auth.isAuthenticated()) {
     router.push({ name: 'login' })
     return
+  }
+
+  const redirect = router.currentRoute.value.query.redirect
+  if (redirect && typeof redirect === 'string' && redirect.startsWith('/')) {
+    const isOwnerOnly = redirect.startsWith('/admin')
+    const isStaffOnly = redirect.startsWith('/staff')
+    const isMemberOnly = redirect.startsWith('/member')
+
+    const allowed =
+      (!isOwnerOnly || user?.role === 'owner') &&
+      (!isStaffOnly || user?.role === 'front-desk') &&
+      (!isMemberOnly || user?.role === 'player')
+
+    if (allowed) {
+      router.push(redirect)
+      return
+    }
   }
 
   switch (user?.role) {

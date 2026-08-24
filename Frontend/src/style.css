@@ -102,6 +102,155 @@
   &:focus { border-color:#718fff; box-shadow:0 0 0 4px rgba(82,103,232,.11); }
 }
 
+/* =========================================================================
+   Portal shell primitives
+
+   One definition each, shared by every member and staff screen. These were
+   previously re-declared inside nine different `<style scoped>` blocks with
+   two different values (panels were 0.92/18px on some screens and 0.94/20px
+   on others), and six staff views used the class names without defining them
+   at all — scoped styles do not cross components, so those pages rendered
+   with no card styling.
+   ========================================================================= */
+.member-page,
+.staff-page {
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+.page-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.kicker {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.title {
+  font-family: "Plus Jakarta Sans", Inter, sans-serif;
+  font-size: 30px;
+  line-height: 1.15;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  color: var(--text);
+  margin-top: 4px;
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.panel {
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid #dfe7f1;
+  border-radius: 20px;
+  box-shadow: 0 12px 35px rgba(51, 65, 85, 0.06);
+}
+
+.stat {
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  padding: 18px;
+}
+
+.stat-value {
+  margin-top: 8px;
+  font-size: 30px;
+  line-height: 1.1;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--text);
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 7px 11px;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: capitalize;
+}
+.pill-ok { background: var(--surface-mint); color: #0b7a63; }
+.pill-warn { background: var(--surface-amber); color: #8a5a08; }
+.pill-bad { background: var(--surface-rose); color: #a3323f; }
+.pill-info { background: var(--surface-blue); color: #3745ad; }
+.pill-mute { background: var(--surface-soft); color: var(--muted); }
+
+.btn {
+  border-radius: 11px;
+  padding: 10px 14px;
+  font-size: 12px;
+  font-weight: 800;
+  transition: 0.2s;
+  cursor: pointer;
+}
+.btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.btn-primary2 {
+  background: linear-gradient(135deg, #5267e8, #4354d1);
+  color: #fff;
+  border: 1px solid #4354d1;
+  box-shadow: 0 8px 18px rgba(79, 70, 229, 0.18);
+}
+.btn-primary2:hover:not(:disabled) { transform: translateY(-1px); }
+.btn-soft {
+  background: #f8fafc;
+  color: #475569;
+  border: 1px solid #dfe7f1;
+}
+.btn-soft:hover:not(:disabled) { background: #edf3ff; border-color: #b9c9f8; color: #3745ad; }
+.btn-danger {
+  background: #dc2626;
+  color: #fff;
+  border: 1px solid #dc2626;
+  box-shadow: 0 8px 18px rgba(220, 38, 38, 0.16);
+}
+
+.field2 {
+  width: 100%;
+  border: 1px solid #dbe4ef;
+  border-radius: 11px;
+  background: #f8fafc;
+  padding: 10px 12px;
+  color: var(--text);
+  outline: none;
+  transition: 0.2s;
+}
+.field2:focus {
+  border-color: #818cf8;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+/* Shared list/empty/error states, so every screen reports the same way. */
+.state-note {
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 14px;
+}
+.state-error {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: var(--surface-rose);
+  border: 1px solid #f3c9cd;
+  color: #a3323f;
+  font-size: 13px;
+}
+
 /* Compatibility layer for existing member/staff templates. Keeps behavior intact while changing visual language. */
 body .bg-gray-950 { background-color:transparent !important; }
 body .bg-gray-900, body .bg-gray-900\/50 { background-color:rgba(255,255,255,.96) !important; }
@@ -109,6 +258,20 @@ body .bg-black\/70 { background-color:rgba(21,29,46,.42) !important; backdrop-fi
 body .bg-white\/\[0\.02\],body .bg-white\/\[0\.025\],body .bg-white\/\[0\.03\],body .bg-white\/\[0\.04\],body .bg-white\/\[0\.05\],body .bg-white\/\[0\.06\] { background-color:#f6f8fc !important; }
 body .hover\:bg-white\/\[0\.04\]:hover,body .hover\:bg-white\/\[0\.05\]:hover { background-color:#edf3ff !important; }
 body .text-white,body .text-gray-100,body .text-gray-200 { color:#172033 !important; }
+
+/* ...but white stays white where the element carries its own dark or saturated
+   background, and inside a container marked .on-dark. Without these the rule
+   above painted every primary button, badge and the sidebar wordmark in
+   #172033 on indigo/red/navy — around 2:1 contrast. */
+body .on-dark .text-white,
+body .on-dark .text-gray-100,
+body .on-dark .text-gray-200,
+body .text-white.bg-indigo-500,
+body .text-white.bg-indigo-600,
+body .text-white.bg-emerald-500,
+body .text-white.bg-red-500,
+body .text-white.bg-slate-900,
+body .text-white[class*="bg-slate-900/"] { color:#fff !important; }
 body .text-gray-300 { color:#354158 !important; }
 body .text-gray-400 { color:#526078 !important; }
 body .text-gray-500 { color:#667085 !important; }

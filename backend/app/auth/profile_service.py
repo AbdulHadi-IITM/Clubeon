@@ -9,7 +9,7 @@ Email is deliberately NOT editable here — it is the login identity and changin
 it needs a verification flow. Role is never client-editable (privilege
 escalation).
 """
-from datetime import datetime
+from datetime import date, datetime
 
 from app.extensions import db
 from app.auth.models import User
@@ -18,6 +18,8 @@ from app.auth.models import User
 EDITABLE_FIELDS = {"name", "phone", "dob", "gender", "address", "avatar_url"}
 PREFERENCE_FIELDS = {"notify_email", "notify_sms", "notify_push", "profile_public"}
 ALLOWED_GENDERS = {"Male", "Female", "Other", "Prefer not to say"}
+# ~256KB of base64, i.e. a ~190KB image.
+MAX_AVATAR_CHARS = 262144
 
 
 def _clean_phone(value):
@@ -91,7 +93,7 @@ class ProfileService:
                 except ValueError:
                     return None, {"code": "VALIDATION_ERROR",
                                   "message": "dob must be in YYYY-MM-DD format."}
-                if parsed > datetime.utcnow().date():
+                if parsed > date.today():
                     return None, {"code": "VALIDATION_ERROR",
                                   "message": "Date of birth cannot be in the future."}
                 user.dob = parsed
@@ -112,7 +114,13 @@ class ProfileService:
             user.address = address
 
         if "avatar_url" in data:
-            user.avatar_url = (data["avatar_url"] or "").strip() or None
+            avatar = (data["avatar_url"] or "").strip() or None
+            # The client downscales before upload; this is the backstop that
+            # keeps a multi-megabyte data: URL out of the users table.
+            if avatar and len(avatar) > MAX_AVATAR_CHARS:
+                return None, {"code": "VALIDATION_ERROR",
+                              "message": "Image is too large. Please choose a smaller photo."}
+            user.avatar_url = avatar
 
         db.session.commit()
         return user.to_dict(include_preferences=True), None

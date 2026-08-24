@@ -1,4 +1,5 @@
 import os
+import sys
 
 from flask import Flask, send_from_directory
 from flask_cors import CORS
@@ -181,88 +182,17 @@ def create_app(config_class=Config):
             "service": "club-booking-api",
         }, 200
 
-    # Auto-create tables & enrich recommendation metadata
-    # Demo/bootstrap data. Skipped under TESTING: it calls db.create_all() and
-    # seeds a demo club owned by user id 1, which lands in the test database and
-    # makes the first user created by a test "already own a club".
-    if not app.config.get('TESTING'):
-        with app.app_context():
-            try:
-                from sqlalchemy import text, inspect
-                db.create_all()
+    # =========================================================
+    # CLI commands
+    # =========================================================
+    #
+    # Schema creation belongs to Alembic (`flask db upgrade`), and demo data
+    # belongs to an explicit `flask seed-demo`. Neither runs implicitly at
+    # startup: this used to call db.create_all() and insert a demo club on
+    # every boot, which wrote fixture rows into whatever database the app was
+    # pointed at — production included.
 
-                # Ensure new columns exist on existing tables in SQLite/Postgres
-                inspector = inspect(db.engine)
-                if inspector.has_table('clubs'):
-                    existing_club_cols = [c['name'] for c in inspector.get_columns('clubs')]
-                    if 'latitude' not in existing_club_cols:
-                        db.session.execute(text("ALTER TABLE clubs ADD COLUMN latitude FLOAT"))
-                    if 'longitude' not in existing_club_cols:
-                        db.session.execute(text("ALTER TABLE clubs ADD COLUMN longitude FLOAT"))
-                    if 'amenities' not in existing_club_cols:
-                        db.session.execute(text("ALTER TABLE clubs ADD COLUMN amenities JSON"))
-                    if 'tags' not in existing_club_cols:
-                        db.session.execute(text("ALTER TABLE clubs ADD COLUMN tags JSON"))
-
-                if inspector.has_table('courts'):
-                    existing_court_cols = [c['name'] for c in inspector.get_columns('courts')]
-                    if 'amenities' not in existing_court_cols:
-                        db.session.execute(text("ALTER TABLE courts ADD COLUMN amenities JSON"))
-                    if 'tags' not in existing_court_cols:
-                        db.session.execute(text("ALTER TABLE courts ADD COLUMN tags JSON"))
-
-                db.session.commit()
-
-                from app.clubs.models import Club, Court
-                club1 = Club.query.get(1)
-                if club1:
-                    if club1.latitude is None:
-                        club1.latitude = 12.9716
-                        club1.longitude = 77.5946
-                        club1.amenities = ["parking", "cafe", "locker-room", "pro-shop", "wifi"]
-                        club1.tags = ["family-friendly", "indoor", "air-conditioned"]
-                    for court in club1.courts:
-                        if not court.amenities:
-                            court.amenities = ["indoor", "wooden-flooring", "led-lighting", "parking"]
-                        if not court.tags:
-                            court.tags = ["kid-friendly", "all-weather"]
-
-                # Ensure an AquaFit Swimming center exists for chlorine-free / kid-friendly queries
-                aqua = Club.query.filter(Club.name.ilike("%AquaFit%")).first()
-                if not aqua:
-                    aqua = Club(
-                        name="AquaFit Olympic & Wellness Club",
-                        address="12 Lake View Rd, Indiranagar",
-                        owner_id=club1.owner_id if club1 else 1,
-                        open_time="06:00",
-                        close_time="22:00",
-                        latitude=12.9784,
-                        longitude=77.6408,
-                        amenities=["chlorine-free", "heated", "parking", "cafe", "showers", "sauna"],
-                        tags=["kid-friendly", "family-friendly", "women-only-hours", "wellness"]
-                    )
-                    db.session.add(aqua)
-                    db.session.flush()
-                    pool1 = Court(
-                        club_id=aqua.id,
-                        name="Olympic Lap Pool (50m)",
-                        sport_type="swimming",
-                        is_active=True,
-                        amenities=["chlorine-free", "heated", "salt-water", "lane-dividers"],
-                        tags=["kid-friendly", "pro-training"]
-                    )
-                    pool2 = Court(
-                        club_id=aqua.id,
-                        name="Learners & Kids Splash Pool",
-                        sport_type="swimming",
-                        is_active=True,
-                        amenities=["chlorine-free", "heated", "shallow-depth", "lifeguard-on-duty"],
-                        tags=["kid-friendly", "family-friendly"]
-                    )
-                    db.session.add_all([pool1, pool2])
-
-                db.session.commit()
-            except Exception:
-                db.session.rollback()
+    from app.cli import register_cli
+    register_cli(app)
 
     return app

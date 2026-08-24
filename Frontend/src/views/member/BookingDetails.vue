@@ -33,16 +33,32 @@
         </div>
 
         <div class="mt-7 grid gap-4 sm:grid-cols-2">
-          <Info label="Date" :value="formatDate(booking.bookingDate || booking.date)" />
-          <Info
-            label="Time"
-            :value="`${formatTime(booking.startTime || booking.start_time)} – ${formatTime(booking.endTime || booking.end_time)}`"
-          />
-          <Info label="Booking ID" :value="`#${booking.id}`" />
-          <Info
-            label="Amount"
-            :value="formatCurrency(booking.amount ?? booking.price ?? booking.total_amount)"
-          />
+          <div class="rounded-2xl border border-slate-200 bg-white p-4">
+            <p class="text-[11px] font-bold uppercase tracking-[.1em] text-slate-400">Date</p>
+            <p class="mt-2 text-sm font-bold text-slate-800">{{ formatDate(booking.bookingDate || booking.booking_date || booking.date) }}</p>
+          </div>
+          <div class="rounded-2xl border border-slate-200 bg-white p-4">
+            <p class="text-[11px] font-bold uppercase tracking-[.1em] text-slate-400">Time</p>
+            <p class="mt-2 text-sm font-bold text-slate-800">
+              {{ formatTime(booking.startTime || booking.start_time) }} – {{ formatTime(booking.endTime || booking.end_time) }}
+            </p>
+          </div>
+          <div class="rounded-2xl border border-slate-200 bg-white p-4">
+            <p class="text-[11px] font-bold uppercase tracking-[.1em] text-slate-400">Booking ID</p>
+            <p class="mt-2 text-sm font-bold text-slate-800">#{{ booking.id }}</p>
+          </div>
+          <div class="rounded-2xl border border-slate-200 bg-white p-4">
+            <p class="text-[11px] font-bold uppercase tracking-[.1em] text-slate-400">Court Fee</p>
+            <p class="mt-2 text-sm font-bold text-slate-800">
+              {{ formatCurrency(booking.amount ?? booking.price ?? booking.total_amount) }}
+            </p>
+          </div>
+          <div class="rounded-2xl border border-slate-200 bg-white p-4 sm:col-span-2">
+            <p class="text-[11px] font-bold uppercase tracking-[.1em] text-slate-400">Payment Status</p>
+            <p class="mt-2 text-sm font-bold" :class="booking.payment_status === 'completed' ? 'text-emerald-600' : 'text-amber-600'">
+              {{ booking.payment_status === 'completed' ? 'Paid (Stripe)' : 'Payment Pending' }}
+            </p>
+          </div>
         </div>
 
         <div class="mt-7 rounded-2xl border border-slate-200 bg-slate-50 p-5">
@@ -63,12 +79,30 @@
         <p class="kicker">Actions</p>
         <h3 class="mt-2 text-lg font-extrabold text-slate-900">Manage booking</h3>
         <p class="mt-2 text-sm leading-6 text-slate-500">
-          Release this booking only if you no longer need the reserved slot.
+          {{
+            booking.status === 'active' && booking.payment_status !== 'completed'
+              ? 'Complete your payment via Stripe to confirm your reservation, or release this slot.'
+              : 'Release this booking only if you no longer need the reserved slot.'
+          }}
         </p>
 
         <button
+          v-if="booking.status === 'active' && booking.payment_status !== 'completed'"
+          type="button"
+          class="btn btn-primary mt-6 w-full text-center"
+          @click="
+            router.push({
+              name: 'member-checkout',
+              query: { payment_type: 'booking', reference_id: String(booking.id) },
+            })
+          "
+        >
+          Pay with Stripe ({{ formatCurrency(booking.amount ?? 500) }})
+        </button>
+
+        <button
           v-if="booking.status === 'active'"
-          class="btn btn-danger mt-6 w-full"
+          class="btn btn-danger mt-3 w-full"
           :disabled="releasing"
           @click="releaseBooking"
         >
@@ -84,7 +118,7 @@
 </template>
 
 <script setup>
-import { onMounted, ref, h } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import api from '@/api/axios'
 
@@ -94,17 +128,6 @@ const booking = ref(null)
 const loading = ref(true)
 const error = ref('')
 const releasing = ref(false)
-
-function Info(props) {
-  return h('div', { class: 'rounded-2xl border border-slate-200 bg-white p-4' }, [
-    h(
-      'p',
-      { class: 'text-[11px] font-bold uppercase tracking-[.1em] text-slate-400' },
-      props.label,
-    ),
-    h('p', { class: 'mt-2 text-sm font-bold text-slate-800' }, props.value || '—'),
-  ])
-}
 
 function formatDate(value) {
   if (!value) return '—'
@@ -173,73 +196,3 @@ async function releaseBooking() {
 
 onMounted(load)
 </script>
-
-<style scoped>
-.member-page {
-  max-width: 1180px;
-  margin: 0 auto;
-}
-.page-head {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 24px;
-}
-.kicker {
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: #64748b;
-}
-.title {
-  font-size: 30px;
-  line-height: 1.15;
-  font-weight: 800;
-  letter-spacing: -0.04em;
-  color: #172033;
-  margin-top: 4px;
-}
-.muted {
-  color: #64748b;
-  margin-top: 8px;
-  font-size: 14px;
-}
-.panel {
-  background: rgba(255, 255, 255, 0.94);
-  border: 1px solid #dfe7f1;
-  border-radius: 20px;
-  box-shadow: 0 12px 35px rgba(51, 65, 85, 0.06);
-}
-.pill {
-  display: inline-flex;
-  align-items: center;
-  border-radius: 999px;
-  padding: 7px 11px;
-  font-size: 11px;
-  font-weight: 800;
-  text-transform: capitalize;
-}
-.btn {
-  border-radius: 11px;
-  padding: 10px 14px;
-  font-size: 12px;
-  font-weight: 800;
-  transition: 0.2s;
-}
-.btn-soft {
-  background: #f8fafc;
-  color: #475569;
-  border: 1px solid #dfe7f1;
-}
-.btn-danger {
-  background: #dc2626;
-  color: white;
-  box-shadow: 0 8px 18px rgba(220, 38, 38, 0.16);
-}
-.btn:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-</style>

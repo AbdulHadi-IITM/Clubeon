@@ -88,7 +88,7 @@ class AssistantService:
         current_time = now.strftime('%H:%M')
 
         # Determine allowed tools based on role
-        if role in ['front-desk', 'staff']:
+        if role in ['front-desk', 'staff', 'owner', 'admin']:
             allowed_tools = STAFF_TOOLS
             system_prompt = SYSTEM_PROMPT_STAFF.format(today_str=today_str, tomorrow_str=tomorrow_str, current_time=current_time)
         else:
@@ -116,51 +116,76 @@ class AssistantService:
                 "thread_messages": messages
             }, 200
 
-        @llm.call(Config.ASSISTANT_MODEL, tools=allowed_tools)
-        def run_agent(msgs: list):
+        models_to_try = [
+            Config.ASSISTANT_MODEL,
+            'google/gemini-3.5-flash-lite',
+            'google/gemini-3.1-flash-lite',
+            'google/gemini-3.5-flash',
+            'google/gemini-flash-latest'
+        ]
+        unique_models = []
+        for m in models_to_try:
+            if m and m not in unique_models:
+                unique_models.append(m)
 
-            mirascope_msgs = []
-            for m in msgs:
-                r = m.get("role", "user")
-                c = m.get("content", "")
-                if r == "system":
-                    mirascope_msgs.append(llm.messages.system(c))
-                elif r == "assistant":
-                    mirascope_msgs.append(llm.messages.assistant(c, model_id=None, provider_id=None))
+        last_error = None
+        for model_name in unique_models:
+            try:
+                @llm.call(model_name, tools=allowed_tools)
+                def run_agent(msgs: list):
+                    mirascope_msgs = []
+                    for m in msgs:
+                        r = m.get("role", "user")
+                        c = m.get("content", "")
+                        if r == "system":
+                            mirascope_msgs.append(llm.messages.system(c))
+                        elif r == "assistant":
+                            mirascope_msgs.append(llm.messages.assistant(c, model_id=None, provider_id=None))
+                        else:
+                            mirascope_msgs.append(llm.messages.user(c))
+                    return mirascope_msgs
+
+                response = run_agent(messages)
+                tools_used = []
+
+                while response.tool_calls:
+                    for tool_call in response.tool_calls:
+                        tool_name = getattr(tool_call, "name", None) or getattr(getattr(tool_call, "tool_type", None), "__name__", "tool")
+                        tools_used.append(str(tool_name))
+                    response = response.resume(response.execute_tools())
+
+                if hasattr(response, "content"):
+                    if isinstance(response.content, list):
+                        final_text = "".join(getattr(part, "text", str(part)) for part in response.content)
+                    else:
+                        final_text = str(response.content)
+                elif hasattr(response, "text"):
+                    final_text = response.text() if callable(response.text) else str(response.text)
                 else:
-                    mirascope_msgs.append(llm.messages.user(c))
-            return mirascope_msgs
+                    final_text = str(response)
 
-        try:
-            response = run_agent(messages)
-            tools_used = []
+                messages.append({"role": "assistant", "content": final_text})
 
-            while response.tool_calls:
-                for tool_call in response.tool_calls:
-                    tool_name = getattr(tool_call, "name", None) or getattr(getattr(tool_call, "tool_type", None), "__name__", "tool")
-                    tools_used.append(str(tool_name))
-                response = response.resume(response.execute_tools())
+                return {
+                    "assistant_message": final_text,
+                    "response_id": f"resp_{abs(hash(final_text))}",
+                    "tools_used": tools_used,
+                    "thread_messages": messages
+                }, 200
+            except Exception as e:
+                last_error = e
+                continue
 
-            if hasattr(response, "content"):
-                if isinstance(response.content, list):
-                    final_text = "".join(getattr(part, "text", str(part)) for part in response.content)
-                else:
-                    final_text = str(response.content)
-            elif hasattr(response, "text"):
-                final_text = response.text() if callable(response.text) else str(response.text)
-            else:
-                final_text = str(response)
-
-            messages.append({"role": "assistant", "content": final_text})
-
-            return {
-                "assistant_message": final_text,
-                "response_id": f"resp_{abs(hash(final_text))}",
-                "tools_used": tools_used,
-                "thread_messages": messages
-            }, 200
-            
-        except Exception as e:
-            traceback.print_exc()
-            return {"error": f"Internal AI error occurred: {str(e)}"}, 500
+        traceback.print_exc()
+        fallback_msg = (
+            f"I'm temporarily unable to reach the AI model service ({str(last_error)}). "
+            "Please check your Google Gemini API key or try again in a few moments."
+        )
+        messages.append({"role": "assistant", "content": fallback_msg})
+        return {
+            "assistant_message": fallback_msg,
+            "response_id": "resp_fallback",
+            "tools_used": [],
+            "thread_messages": messages
+        }, 200
 

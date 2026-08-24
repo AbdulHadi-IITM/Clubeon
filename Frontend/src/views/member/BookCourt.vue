@@ -318,7 +318,7 @@
     </template>
 
     <!-- =====================================================
-         SUCCESS MODAL
+         SUCCESS / PAYMENT MODAL
     ====================================================== -->
     <div
       v-if="successMessage"
@@ -344,16 +344,28 @@
           </svg>
         </div>
 
-        <h3 class="text-xl font-semibold text-white mt-4">Booking Confirmed</h3>
+        <h3 class="text-xl font-semibold text-gray-900 mt-4">Court Reserved!</h3>
 
-        <p class="text-sm text-gray-400 mt-2">
+        <p class="text-sm text-gray-600 mt-2">
           {{ successMessage }}
         </p>
 
-        <div class="grid grid-cols-2 gap-3 mt-6">
-          <button type="button" class="btn-secondary" @click="closeSuccess">Book Another</button>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-6">
+          <button type="button" class="btn-secondary" @click="goToBookings">
+            View My Bookings
+          </button>
 
-          <button type="button" class="btn-primary" @click="goToBookings">My Bookings</button>
+          <button
+            v-if="lastCreatedBookingId"
+            type="button"
+            class="btn-primary inline-flex items-center justify-center gap-2"
+            @click="proceedToPayment"
+          >
+            <span>Pay with Stripe</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+            </svg>
+          </button>
         </div>
       </div>
     </div>
@@ -450,6 +462,7 @@ const booking = ref(false)
 
 const error = ref('')
 const successMessage = ref('')
+const lastCreatedBookingId = ref(null)
 
 const currentTime = ref(new Date())
 let currentTimeInterval = null
@@ -979,6 +992,13 @@ async function bookCourt(court) {
 
     console.log('BOOKING CREATED:', createdBooking)
 
+    const bookingId =
+      createdBooking?.booking_id ??
+      createdBooking?.id ??
+      createdBooking?.data?.booking_id ??
+      createdBooking?.data?.id
+    lastCreatedBookingId.value = bookingId
+
     /*
      * Build success message using the
      * original availability times.
@@ -987,7 +1007,7 @@ async function bookCourt(court) {
       `${court.name} reserved for ` +
       `${formatTime(slot.start_time)} – ` +
       `${formatTime(slot.end_time)} on ` +
-      `${formatDate(bookingDate)}.`
+      `${formatDate(bookingDate)}. Complete your payment via Stripe to confirm your reservation.`
 
     /*
      * Clear selected slot.
@@ -1115,11 +1135,25 @@ function formatDate(date) {
 }
 
 // =========================================================
-// SUCCESS MODAL
+// SUCCESS MODAL & PAYMENT
 // =========================================================
 
 function closeSuccess() {
   successMessage.value = ''
+  lastCreatedBookingId.value = null
+}
+
+function proceedToPayment() {
+  if (!lastCreatedBookingId.value) return
+  const id = lastCreatedBookingId.value
+  closeSuccess()
+  router.push({
+    name: 'member-checkout',
+    query: {
+      payment_type: 'booking',
+      reference_id: String(id),
+    },
+  })
 }
 
 // =========================================================
@@ -1127,7 +1161,7 @@ function closeSuccess() {
 // =========================================================
 
 function goToBookings() {
-  successMessage.value = ''
+  closeSuccess()
 
   router.push({
     name: 'member-my-bookings',

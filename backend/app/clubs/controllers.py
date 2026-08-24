@@ -6,8 +6,15 @@ from app.clubs.services import ClubService, CourtService
 clubs_bp = Blueprint('clubs', __name__, url_prefix='/api/v1/clubs')
 
 @clubs_bp.route('', methods=['GET'])
-@jwt_required()
+@jwt_required(optional=True)
 def list_clubs():
+    """
+    Public club directory.
+
+    Anonymous access is deliberate: the landing page's court-availability view
+    and the club picker both need this before a visitor signs in, and the
+    payload is club metadata only — no personal data.
+    """
     search = request.args.get('search')
     clubs = ClubService.list_clubs(search)
     
@@ -52,8 +59,9 @@ def create_club():
     return jsonify({"message": "Club created successfully", "club": {"id": club.id, "name": club.name}}), 201
 
 @clubs_bp.route('/<int:club_id>/courts', methods=['GET'])
-@jwt_required()
+@jwt_required(optional=True)
 def get_courts(club_id):
+    """Public court list for a club. Court metadata only, no personal data."""
     courts, error = ClubService.get_courts(club_id)
     if error:
         return jsonify(error), 404

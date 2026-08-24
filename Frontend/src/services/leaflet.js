@@ -259,7 +259,7 @@ export async function fetchRoute(startLat, startLng, endLat, endLng, profile = '
           ? `${(stepDistMeters / 1000).toFixed(1)} km`
           : `${stepDistMeters} m`
 
-      let instruction = ''
+      let instruction
       const street = step.name ? ` onto ${step.name}` : ''
 
       switch (maneuver.type) {

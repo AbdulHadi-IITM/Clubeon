@@ -17,9 +17,8 @@ def chat():
 
     user_id = get_jwt_identity()
     user = User.query.get(int(user_id))
-
-    if user.role == 'owner':
-        return jsonify({"code": "FORBIDDEN", "message": "Owner not allowed in Phase 1"}), 403
+    if not user:
+        return jsonify({"code": "NOT_FOUND", "message": "User not found"}), 404
 
     thread_messages = session.get('assistant_thread_messages', None)
     user_lat = data.get('user_lat')

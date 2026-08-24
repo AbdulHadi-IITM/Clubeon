@@ -1,21 +1,10 @@
 <template>
   <aside
-    class="fixed inset-y-0 left-0 z-40 hidden w-[276px] flex-col overflow-hidden bg-[#151d2e] text-white shadow-[18px_0_50px_rgba(23,32,51,.08)] lg:flex"
+    class="on-dark fixed inset-y-0 left-0 z-40 hidden w-[276px] flex-col overflow-hidden bg-[#151d2e] text-white shadow-[18px_0_50px_rgba(23,32,51,.08)] lg:flex"
   >
     <div class="px-5 pb-5 pt-6">
       <router-link :to="homePath" class="flex items-center gap-3">
-        <div
-          class="grid h-11 w-11 place-items-center rounded-2xl bg-gradient-to-br from-indigo-400 to-indigo-600 text-white shadow-[0_10px_26px_rgba(82,103,232,.28)] ring-1 ring-white/10"
-        >
-          <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M13 3L4 14h7v7l9-11h-7V3z"
-            />
-          </svg>
-        </div>
+        <BrandMark :size="44" />
         <div>
           <div class="text-[19px] font-extrabold tracking-[-0.03em] text-white">
             Club<span class="text-indigo-300">Dash</span>
@@ -73,6 +62,7 @@ import { computed } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import NavItem from './NavItem.vue'
 import MobileNavItem from './MobileNavItem.vue'
+import BrandMark from '@/components/BrandMark.vue'
 const authStore = useAuthStore()
 const icons = {
   home: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6',

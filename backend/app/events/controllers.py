@@ -32,13 +32,23 @@ def get_events():
     club_id = request.args.get('club_id', type=int)
     status_filter = request.args.get('status', 'upcoming')
     
+    identity = get_jwt_identity()
+    user_id = int(identity) if identity is not None else None
+
+    if user_id and club_id is None:
+        from app.auth.models import User
+        from app.clubs.models import Club
+        user = User.query.get(user_id)
+        if user and user.role == 'owner':
+            owner_club = Club.query.filter_by(owner_id=user_id).first()
+            if not owner_club:
+                return jsonify([]), 200
+            club_id = owner_club.id
+
     if status_filter == 'all':
         events = EventService.get_all_events(club_id)
     else:
         events = EventService.get_events(club_id)
-
-    identity = get_jwt_identity()
-    user_id = int(identity) if identity is not None else None
     
     return jsonify([_serialize_event(e, user_id) for e in events]), 200
 
@@ -123,6 +133,7 @@ def register_event(event_id):
         status_code = 400
         if error['code'] == 'CONFLICT': status_code = 409
         elif error['code'] == 'NOT_FOUND': status_code = 404
+        elif error['code'] == 'PAYMENT_REQUIRED': status_code = 402
         return jsonify(error), status_code
         
     return jsonify({

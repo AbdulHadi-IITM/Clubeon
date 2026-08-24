@@ -2,41 +2,33 @@
   <footer class="landing-footer">
     <div class="footer-inner">
       <div class="footer-brand">
-        <div class="brand-icon small">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-          </svg>
-        </div>
-        <span class="brand-text small">Sports<span class="brand-accent">Club</span></span>
+        <BrandMark :size="36" />
+        <span class="brand-text small">Club<span class="brand-accent">Dash</span></span>
         <p class="footer-tagline">The modern way to manage your sports club.</p>
       </div>
       <div class="footer-links">
         <div class="footer-col">
           <h4>Product</h4>
           <a href="#features">Features</a>
+          <a href="#how-it-works">How it works</a>
           <a href="#pricing">Pricing</a>
-          <router-link to="/public">Court Availability</router-link>
         </div>
         <div class="footer-col">
-          <h4>Company</h4>
-          <a href="#">About</a>
-          <a href="#">Blog</a>
-          <a href="#">Contact</a>
-        </div>
-        <div class="footer-col">
-          <h4>Legal</h4>
-          <a href="#">Privacy Policy</a>
-          <a href="#">Terms of Service</a>
+          <h4>Get started</h4>
+          <router-link to="/public">Court availability</router-link>
+          <router-link to="/register">Create an account</router-link>
+          <router-link to="/login">Sign in</router-link>
         </div>
       </div>
     </div>
     <div class="footer-bottom">
-      <p>&copy; 2026 SportsClub. All rights reserved. Team No. 096</p>
+      <p>&copy; 2026 ClubDash. All rights reserved. Team No. 096</p>
     </div>
   </footer>
 </template>
 
 <script setup>
+import BrandMark from '@/components/BrandMark.vue'
 </script>
 
 <style scoped>

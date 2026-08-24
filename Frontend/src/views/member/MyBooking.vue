@@ -160,6 +160,18 @@
                   <span class="status-badge" :class="statusClass(booking)">
                     {{ statusLabel(booking) }}
                   </span>
+
+                  <span
+                    v-if="booking.status === 'active'"
+                    class="px-2.5 py-0.5 rounded-full text-[11px] font-bold"
+                    :class="
+                      booking.paymentStatus === 'completed'
+                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                        : 'bg-amber-50 text-amber-700 border border-amber-200'
+                    "
+                  >
+                    {{ booking.paymentStatus === 'completed' ? 'Paid' : 'Payment Pending' }}
+                  </span>
                 </div>
 
                 <p v-if="booking.clubName" class="text-xs text-slate-500 mt-1">
@@ -187,6 +199,12 @@
                   </div>
 
                   <div>
+                    <p class="text-[10px] uppercase tracking-wide text-gray-600">Court Fee</p>
+
+                    <p class="text-sm text-slate-700 mt-1">₹{{ booking.amount }}</p>
+                  </div>
+
+                  <div>
                     <p class="text-[10px] uppercase tracking-wide text-gray-600">Booking ID</p>
 
                     <p class="text-sm text-slate-700 mt-1">#{{ booking.id }}</p>
@@ -199,6 +217,20 @@
                  ACTIONS
             ============================================== -->
             <div class="flex flex-col sm:flex-row gap-2">
+              <button
+                v-if="booking.status === 'active' && booking.paymentStatus !== 'completed'"
+                type="button"
+                class="btn-primary text-xs px-3.5 py-2 rounded-xl font-bold flex items-center justify-center gap-1.5"
+                @click="
+                  router.push({
+                    name: 'member-checkout',
+                    query: { payment_type: 'booking', reference_id: String(booking.id) },
+                  })
+                "
+              >
+                <span>Pay with Stripe</span>
+              </button>
+
               <button
                 type="button"
                 class="detail-button"
@@ -414,6 +446,12 @@ function normalizeBooking(item) {
     endTime: item.end_time ?? item.end ?? '',
 
     status: String(item.status ?? 'active').toLowerCase(),
+
+    sport: item.sport_type ?? item.sport ?? court.sport_type ?? 'tennis',
+
+    amount: item.amount ?? item.price ?? 500,
+
+    paymentStatus: item.payment_status ?? 'pending',
 
     releasedAt: item.released_at ?? item.cancelled_at ?? null,
   }

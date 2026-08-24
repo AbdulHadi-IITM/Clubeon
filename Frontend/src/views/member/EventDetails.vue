@@ -300,43 +300,6 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.member-page {
-  max-width: 1180px;
-  margin: 0 auto;
-}
-.page-head {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 24px;
-}
-.kicker {
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: #64748b;
-}
-.title {
-  font-size: 30px;
-  line-height: 1.15;
-  font-weight: 800;
-  letter-spacing: -0.04em;
-  color: #172033;
-  margin-top: 4px;
-}
-.muted {
-  color: #64748b;
-  margin-top: 8px;
-  font-size: 14px;
-}
-.panel {
-  background: rgba(255, 255, 255, 0.94);
-  border: 1px solid #dfe7f1;
-  border-radius: 20px;
-  box-shadow: 0 12px 35px rgba(51, 65, 85, 0.06);
-}
 .event-banner {
   height: 170px;
   padding: 22px;
@@ -347,35 +310,10 @@ onMounted(async () => {
     radial-gradient(circle at 15% 20%, rgba(99, 102, 241, 0.9), transparent 45%),
     linear-gradient(135deg, #172554, #0f766e);
 }
-.pill {
-  display: inline-flex;
-  align-items: center;
-  border-radius: 999px;
-  padding: 7px 11px;
-  font-size: 11px;
-  font-weight: 800;
-  text-transform: capitalize;
-}
-.btn {
-  border-radius: 11px;
-  padding: 10px 14px;
-  font-size: 12px;
-  font-weight: 800;
-  transition: 0.2s;
-}
 .btn-primary {
   background: #4f46e5;
   color: white;
   box-shadow: 0 8px 18px rgba(79, 70, 229, 0.18);
-}
-.btn-soft {
-  background: #f8fafc;
-  color: #475569;
-  border: 1px solid #dfe7f1;
-}
-.btn:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
 }
 .animate-fade-in {
   animation: fadeIn 0.2s ease-out;

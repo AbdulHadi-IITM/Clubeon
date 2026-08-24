@@ -187,19 +187,28 @@ class EventService:
 
         # Check if already registered
         existing = EventRegistration.query.filter_by(event_id=event_id, user_id=user_id).first()
-        if existing:
-            if existing.status == 'registered':
-                return None, {"code": "CONFLICT", "message": "Already registered for this event"}
-            else:
-                existing.status = 'registered'
-                db.session.commit()
-                return existing, None
+        if existing and existing.status == 'registered':
+            return None, {"code": "CONFLICT", "message": "Already registered for this event"}
+
+        # A paid event is only registered once the fee has been settled.
+        # Re-registering after a cancellation goes through the same gate, so a
+        # cancelled seat cannot be reclaimed for free.
+        if (event.registration_fee or 0) > 0:
+            from app.payments.services import PaymentService
+            if not PaymentService.settle(user_id, 'event', event.id):
+                return None, {"code": "PAYMENT_REQUIRED",
+                              "message": "Payment for this event has not been completed."}
 
         # Check capacity
         if event.max_attendees:
             current_count = EventRegistration.query.filter_by(event_id=event_id, status='registered').count()
             if current_count >= event.max_attendees:
                 return None, {"code": "CONFLICT", "message": "Event is full"}
+
+        if existing:
+            existing.status = 'registered'
+            db.session.commit()
+            return existing, None
 
         registration = EventRegistration(
             event_id=event_id,

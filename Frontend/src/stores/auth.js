@@ -2,6 +2,8 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import api from '../api/axios'
 import { useCourtStore } from '@/stores/courts.js'
+import { useBookingStore } from '@/stores/bookings.js'
+import { useNotificationStore } from '@/stores/notifications.js'
 
 export const useAuthStore = defineStore('auth', () => {
   // Initialize user from cached localStorage if available to avoid flash of logged-out state
@@ -11,29 +13,42 @@ export const useAuthStore = defineStore('auth', () => {
   const loading = ref(false)
   const error = ref(null)
 
-  // Call on app startup to rehydrate user from HttpOnly cookie session
+  // Restoring is deduped on an in-flight promise. main.js and the router guard
+  // both call it during startup, and `initialized` is only set once the first
+  // call resolves, so without this both fired a /auth/me request. The second
+  // 401 arrived after the global `unauthorized` listener was installed and
+  // bounced anonymous visitors off the public landing page to /login.
+  let restorePromise = null
+
   async function restoreUser() {
     if (initialized.value) return user.value
+    if (restorePromise) return restorePromise
+
     loading.value = true
     error.value = null
-    try {
-      const res = await api.get('/auth/me') // backend reads cookie and returns user
-      user.value = res.data?.user ?? null
-      if (user.value) {
-        localStorage.setItem('clubdash_user', JSON.stringify(user.value))
-      } else {
-        localStorage.removeItem('clubdash_user')
+    restorePromise = (async () => {
+      try {
+        const res = await api.get('/auth/me') // backend reads cookie and returns user
+        user.value = res.data?.user ?? null
+        if (user.value) {
+          localStorage.setItem('clubdash_user', JSON.stringify(user.value))
+        } else {
+          localStorage.removeItem('clubdash_user')
+        }
+      } catch (err) {
+        if (err?.response?.status === 401) {
+          user.value = null
+          localStorage.removeItem('clubdash_user')
+        }
+      } finally {
+        initialized.value = true
+        loading.value = false
+        restorePromise = null
       }
-    } catch (err) {
-      if (err?.response?.status === 401) {
-        user.value = null
-        localStorage.removeItem('clubdash_user')
-      }
-    } finally {
-      initialized.value = true
-      loading.value = false
-    }
-    return user.value
+      return user.value
+    })()
+
+    return restorePromise
   }
 
   // Login: server must set HttpOnly cookie (session or similar) and optionally return user
@@ -81,14 +96,17 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       await api.post('/auth/logout')
     } catch {
-      // ignore
+      // The cookie is cleared locally either way.
     } finally {
       user.value = null
       localStorage.removeItem('clubdash_user')
       loading.value = false
-      // Reset all dependent stores
-      const courtStore = useCourtStore()
-      courtStore.reset() // <-- clear club and courts
+      // Clear every store that holds another user's data, so signing in as
+      // someone else on the same browser never shows the previous session's
+      // club, bookings or notifications.
+      useCourtStore().reset()
+      useBookingStore().reset()
+      useNotificationStore().reset()
     }
   }
 
@@ -113,12 +131,17 @@ export const useAuthStore = defineStore('auth', () => {
     return !!user.value
   }
 
-  // react to global 'unauthorized' events from axios interceptor
+  // React to global 'unauthorized' events from the axios interceptor.
   if (typeof window !== 'undefined') {
     window.addEventListener('unauthorized', () => {
       user.value = null
       localStorage.removeItem('clubdash_user')
     })
+  }
+
+  /** True when a session existed and the server has since rejected it. */
+  function hadSession() {
+    return initialized.value && !!localStorage.getItem('clubdash_user')
   }
 
   return {
@@ -132,5 +155,6 @@ export const useAuthStore = defineStore('auth', () => {
     logout,
     updateProfile,
     isAuthenticated,
+    hadSession,
   }
 })

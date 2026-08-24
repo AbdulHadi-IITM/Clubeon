@@ -307,37 +307,6 @@ onMounted(loadAll)
 </script>
 
 <style scoped>
-.member-page {
-  max-width: 1180px;
-  margin: 0 auto;
-}
-.page-head {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 28px;
-}
-.kicker {
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: #64748b;
-}
-.title {
-  font-size: 30px;
-  line-height: 1.15;
-  font-weight: 800;
-  letter-spacing: -0.04em;
-  color: #172033;
-  margin-top: 4px;
-}
-.muted {
-  color: #64748b;
-  margin-top: 8px;
-  font-size: 14px;
-}
 .section-head {
   margin-bottom: 15px;
 }
@@ -347,12 +316,6 @@ onMounted(loadAll)
   font-weight: 800;
   letter-spacing: -0.025em;
   color: #172033;
-}
-.panel {
-  background: rgba(255, 255, 255, 0.94);
-  border: 1px solid #dfe7f1;
-  border-radius: 20px;
-  box-shadow: 0 12px 35px rgba(51, 65, 85, 0.06);
 }
 .plan-card {
   position: relative;
@@ -384,12 +347,6 @@ onMounted(loadAll)
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
-.stat {
-  border: 1px solid #e2e8f0;
-  background: #f8fafc;
-  border-radius: 14px;
-  padding: 12px;
-}
 .stat span {
   display: block;
   font-size: 10px;
@@ -403,48 +360,16 @@ onMounted(loadAll)
   font-size: 13px;
   color: #334155;
 }
-.pill {
-  display: inline-flex;
-  align-items: center;
-  border-radius: 999px;
-  padding: 6px 9px;
-  font-size: 10px;
-  font-weight: 800;
-  text-transform: capitalize;
-}
 
 /* =========================================================
    FIXED `.btn` STYLES
    - `.btn` is now inline-flex (auto width) so the header button fits perfectly.
    - The full-width buttons (inside cards) use the `w-full` class.
    ========================================================= */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 11px;
-  padding: 10px 14px;
-  font-size: 12px;
-  font-weight: 800;
-  transition: 0.2s;
-}
 .btn-primary {
   background: #4f46e5;
   color: white;
   box-shadow: 0 8px 18px rgba(79, 70, 229, 0.18);
-}
-.btn-soft {
-  background: #f8fafc;
-  color: #475569;
-  border: 1px solid #dfe7f1;
-}
-.btn-danger {
-  background: #dc2626;
-  color: #fff;
-}
-.btn:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
 }
 
 /* ====== Duration Grid: Flex row ====== */

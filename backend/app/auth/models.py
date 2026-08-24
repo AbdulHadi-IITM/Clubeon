@@ -16,7 +16,10 @@ class User(db.Model):
     dob = db.Column(db.Date, nullable=True)
     gender = db.Column(db.String(20), nullable=True)
     address = db.Column(db.String(255), nullable=True)
-    avatar_url = db.Column(db.String(500), nullable=True)
+    # Text, not String(500): the profile screen stores a downscaled avatar as a
+    # data: URL, which does not fit in 500 characters. Size is capped in
+    # ProfileService.update_profile.
+    avatar_url = db.Column(db.Text, nullable=True)
 
     # --- Preferences (Settings -> Notifications / Privacy) ---
     notify_email = db.Column(db.Boolean, default=True, nullable=False)

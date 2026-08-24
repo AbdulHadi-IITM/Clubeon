@@ -35,10 +35,27 @@ class Config:
     BOOKING_FEE = float(os.environ.get('BOOKING_FEE', '500'))
 
     # AI Assistant Model (<provider>/<model_name> loaded from .env)
-    ASSISTANT_MODEL = os.environ.get('ASSISTANT_MODEL', 'google/gemini-2.0-flash-lite').strip()
+    ASSISTANT_MODEL = os.environ.get('ASSISTANT_MODEL', 'google/gemini-3.5-flash-lite').strip()
 
     # Sync Google / Gemini API keys if set under either name
     if os.environ.get('GOOGLE_API_KEY') and not os.environ.get('GEMINI_API_KEY'):
         os.environ['GEMINI_API_KEY'] = os.environ['GOOGLE_API_KEY']
     elif os.environ.get('GEMINI_API_KEY') and not os.environ.get('GOOGLE_API_KEY'):
         os.environ['GOOGLE_API_KEY'] = os.environ['GEMINI_API_KEY']
+
+# Fail fast in production rather than run on well-known development secrets:
+# anyone who knows the default JWT key can forge a session for any user.
+_DEV_SECRETS = {
+    'dev-key-32-bytes-minimum-for-security',
+    'jwt-dev-key-must-be-at-least-32-chars-long',
+    'change-me',
+}
+
+if os.environ.get('FLASK_ENV') == 'production':
+    _weak = [name for name in ('SECRET_KEY', 'JWT_SECRET_KEY')
+             if getattr(Config, name) in _DEV_SECRETS]
+    if _weak:
+        raise RuntimeError(
+            "Refusing to start in production with default development "
+            f"secrets: {', '.join(_weak)}. Set them to strong random values."
+        )
