@@ -1,6 +1,6 @@
-# ClubDash — Backend
+# Clubeon — Backend
 
-Flask modular monolith serving the ClubDash API at `/api/v1`. Interactive docs
+Flask modular monolith serving the Clubeon API at `/api/v1`. Interactive docs
 at `/api/docs`, liveness at `/health`.
 
 ## Running locally
@@ -48,7 +48,7 @@ dashboard has real figures to show:
 ```
 
 It is deterministic, so reseeding reproduces the same numbers. Every demo
-account lives on `@demo.clubdash.test` and signs in with `Demo@12345`:
+account lives on `@demo.clubeon.test` and signs in with `Demo@12345`:
 
 | Role       | Email                          |
 |------------|--------------------------------|
