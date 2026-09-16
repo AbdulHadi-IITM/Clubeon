@@ -12,7 +12,7 @@ from app.memberships.models import Membership, MembershipPlan
 from app.notifications.models import Notification
 from app.payments.models import Payment
 
-DEMO_DOMAIN = "@demo.clubdash.test"
+DEMO_DOMAIN = "@demo.clubeon.test"
 
 
 def _seed(app, **kwargs):

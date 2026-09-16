@@ -32,12 +32,14 @@ def get_my_bookings() -> str:
     result = []
     for b in bookings:
         result.append({
+            "booking_id": b.id,
             "date": str(b.booking_date),
             "start_time": str(b.start_time),
             "end_time": str(b.end_time),
             "status": b.status,
             "court": b.court.name,
-            "club": b.court.club.name
+            "sport": getattr(b.court, "sport_type", "Sport"),
+            "club": b.court.club.name if b.court.club else "Clubeon Arena"
         })
     return json.dumps(result)
 
@@ -48,6 +50,7 @@ def get_events(club_id: int = 1) -> str:
     result = []
     for e in events:
         result.append({
+            "event_id": e.id,
             "title": e.title,
             "date": str(e.event_date),
             "time": f"{e.start_time} - {e.end_time}",
@@ -58,14 +61,42 @@ def get_events(club_id: int = 1) -> str:
     return json.dumps(result)
 
 @llm.tool
-def get_availability(target_date_str: str = "") -> str:
-    """Get live court availability for a specific date (format YYYY-MM-DD). If not provided, defaults to today."""
+def get_availability(target_date_str: str = "", sport: str = "") -> str:
+    """Get live court availability for a specific date (format YYYY-MM-DD) and optional sport filter (e.g. 'badminton', 'tennis', 'football'). If not provided, defaults to today."""
     club_id = _get_current_club_id()
     dt_str = target_date_str if target_date_str else str(date.today())
     matrix = AvailabilityService.get_availability_matrix(club_id, dt_str)
-    if isinstance(matrix, tuple):
-        return json.dumps(matrix[1]) if matrix[1] else json.dumps(matrix[0])
-    return json.dumps(matrix)
+    raw_data = matrix[0] if isinstance(matrix, tuple) else matrix
+    
+    compact_courts = []
+    sport_filter = sport.strip().lower() if sport else ""
+    
+    for court in (raw_data or {}).get("courts", []):
+        c_sport = (court.get("sport_type") or "").lower()
+        c_name = (court.get("court_name") or "").lower()
+        if sport_filter and sport_filter not in c_sport and sport_filter not in c_name:
+            continue
+            
+        avail_slots = [
+            f"{s.get('start_time')} - {s.get('end_time')}"
+            for s in court.get("slots", [])
+            if s.get("status") == "available"
+        ]
+        
+        compact_courts.append({
+            "court_id": court.get("court_id") or court.get("id"),
+            "court_name": court.get("court_name"),
+            "sport": court.get("sport_type"),
+            "price_per_hour": court.get("price_per_hour", 500),
+            "available_count": len(avail_slots),
+            "available_slots": avail_slots[:8]  # Compact top 8 slots to minimize latency
+        })
+        
+    return json.dumps({
+        "date": dt_str,
+        "total_available_courts": len(compact_courts),
+        "courts": compact_courts
+    })
 
 @llm.tool
 def get_my_membership() -> str:
@@ -370,6 +401,7 @@ def _parse_human_time(time_str: str) -> tuple[str, str]:
     else:
         s_h, s_m = _parse_single_time(raw)
         e_h = (s_h + 1) % 24
+        e_m = s_m
         return f"{s_h:02d}:{s_m:02d}", f"{e_h:02d}:{e_m:02d}"
 
 @llm.tool
@@ -390,11 +422,76 @@ def prepare_court_booking(court_name: str = "", court_id: int = 0, target_date: 
             court_obj = Court.query.filter(Court.sport_type.ilike(f"%{court_name.strip()}%"), Court.is_active == True).first()
 
     if not court_obj:
-        court_obj = Court.query.filter_by(is_active=True).first()
+        active_courts = Court.query.filter_by(is_active=True).all()
+        sports = sorted(list(set(c.sport_type for c in active_courts if c.sport_type)))
+        return json.dumps({
+            "status": "unavailable",
+            "error": f"Please specify which sport or court you would like to book. Available sports: {', '.join(sports) if sports else 'Badminton, Tennis, Football, Basketball, Swimming'}.",
+            "requires_confirmation": False
+        })
 
-    c_id = court_obj.id if court_obj else 1
+    c_id = court_obj.id
+
+    if not start_time or not start_time.strip():
+        return json.dumps({
+            "status": "unavailable",
+            "error": f"Please specify your preferred time slot for {court_obj.name} (operating hours: 06:00 AM to 10:00 PM).",
+            "court_name": court_obj.name,
+            "requires_confirmation": False
+        })
+
     dt_str = _parse_human_date(target_date)
     st_str, et_str = _parse_human_time(start_time)
+
+    # Edge Case 1: Past Date Validation
+    today_date = date.today()
+    try:
+        parsed_d = datetime.strptime(dt_str, "%Y-%m-%d").date()
+    except Exception:
+        parsed_d = today_date
+
+    if parsed_d < today_date:
+        return json.dumps({
+            "status": "unavailable",
+            "error": f"Cannot book for a past date ({dt_str}). Today is {today_date.strftime('%Y-%m-%d (%A)')}. Please select today or a future date.",
+            "court_name": court_obj.name if court_obj else "Court",
+            "date": dt_str,
+            "requires_confirmation": False
+        })
+
+    # Edge Case 2: Operating Hours Validation (06:00 to 22:00)
+    try:
+        s_h = int(st_str.split(":")[0])
+    except Exception:
+        s_h = 6
+
+    if s_h < 6 or s_h >= 22:
+        return json.dumps({
+            "status": "unavailable",
+            "error": f"Requested slot {st_str} - {et_str} is outside operating hours. Clubeon facilities are open daily from 06:00 AM to 10:00 PM (22:00).",
+            "court_name": court_obj.name if court_obj else "Court",
+            "date": dt_str,
+            "operating_hours": "06:00 - 22:00",
+            "available_slots": ["06:00 - 07:00", "07:00 - 08:00", "17:00 - 18:00", "18:00 - 19:00", "19:00 - 20:00"],
+            "requires_confirmation": False
+        })
+
+    # Edge Case 3: Past Time on Today's Date
+    if parsed_d == today_date:
+        now_time = datetime.now().time()
+        try:
+            req_time = datetime.strptime(st_str, "%H:%M").time()
+        except Exception:
+            req_time = now_time
+
+        if req_time <= now_time:
+            return json.dumps({
+                "status": "unavailable",
+                "error": f"The slot {st_str} has already passed for today. Current local time is {now_time.strftime('%I:%M %p')}. Please select an upcoming slot today or book for tomorrow.",
+                "court_name": court_obj.name if court_obj else "Court",
+                "date": dt_str,
+                "requires_confirmation": False
+            })
 
     intent, error = BookingService.prepare_intent(
         user_id=user_id,
@@ -429,7 +526,7 @@ def prepare_court_booking(court_name: str = "", court_id: int = 0, target_date: 
             "court_name": court_obj.name if court_obj else "Court",
             "date": dt_str,
             "requested_time": f"{st_str} - {et_str}",
-            "available_slots": available_slots,
+            "available_slots": available_slots[:8],
             "requires_confirmation": False
         })
 
@@ -439,7 +536,7 @@ def prepare_court_booking(court_name: str = "", court_id: int = 0, target_date: 
         "intent_id": intent.id,
         "court_id": court.id,
         "court_name": court.name,
-        "club_name": court.club.name if court.club else "ClubDash Arena",
+        "club_name": court.club.name if court.club else "Clubeon Arena",
         "booking_date": str(intent.booking_date),
         "start_time": str(intent.start_time),
         "end_time": str(intent.end_time),
@@ -467,13 +564,21 @@ def confirm_court_booking(intent_id: str = "") -> str:
 
     booking, error = BookingService.confirm_intent(user_id=user_id, intent_id=intent_to_confirm)
     if error:
-        return json.dumps({"error": error.get("message", "Failed to confirm booking")})
+        err_code = error.get("code", "")
+        err_msg = error.get("message", "Failed to confirm booking")
+        if err_code == "EXPIRED" or "expired" in err_msg.lower():
+            return json.dumps({
+                "status": "expired",
+                "error": "Your 5-minute reservation hold has expired to protect court availability for other members. Would you like me to prepare a new hold for this slot if it is still available?",
+                "requires_new_draft": True
+            })
+        return json.dumps({"status": "error", "error": err_msg})
 
     return json.dumps({
         "status": "confirmed",
         "booking_id": booking.id,
         "court_name": booking.court.name,
-        "club_name": booking.court.club.name if booking.court.club else "ClubDash Arena",
+        "club_name": booking.court.club.name if booking.court.club else "Clubeon Arena",
         "booking_date": str(booking.booking_date),
         "start_time": str(booking.start_time),
         "end_time": str(booking.end_time),

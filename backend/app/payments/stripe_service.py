@@ -118,12 +118,32 @@ class StripeService:
         currency_code = currency.upper()
 
         # Already paid for? Don't let the user be charged twice.
-        already_paid = Payment.query.filter_by(
-            user_id=user_id, payment_type=payment_type,
-            reference_id=reference_id, status="completed").first()
-        if already_paid:
-            return None, {"code": "ALREADY_PAID",
-                          "message": "This item has already been paid for."}
+        if payment_type == "membership":
+            # For memberships, reference_id is the plan_id.
+            # Only prevent checkout if the user ALREADY has an active membership.
+            active_membership = Membership.query.filter_by(
+                user_id=user_id, status="active"
+            ).first()
+            if active_membership:
+                plan_name = active_membership.plan.name if active_membership.plan else "membership"
+                return None, {
+                    "code": "ALREADY_PAID",
+                    "message": f"You already have an active {plan_name} membership.",
+                }
+        elif payment_type == "booking":
+            already_paid = Payment.query.filter_by(
+                user_id=user_id, payment_type="booking",
+                reference_id=reference_id, status="completed").first()
+            if already_paid:
+                return None, {"code": "ALREADY_PAID",
+                              "message": "This booking has already been paid for."}
+        elif payment_type == "event":
+            already_paid = Payment.query.filter_by(
+                user_id=user_id, payment_type="event",
+                reference_id=reference_id, status="completed").first()
+            if already_paid:
+                return None, {"code": "ALREADY_PAID",
+                              "message": "This event has already been paid for."}
 
         # --- amount resolved server-side from the referenced entity ---
         amount, err = StripeService.resolve_amount(user_id, payment_type, reference_id)

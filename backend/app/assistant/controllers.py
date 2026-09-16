@@ -33,8 +33,11 @@ def chat():
     )
 
     if status == 200:
-        # Save state in session
-        session['assistant_thread_messages'] = result['thread_messages']
+        # Save trimmed state in session (last 10 messages) for low latency
+        msgs_to_save = result.get('thread_messages', [])
+        if len(msgs_to_save) > 10:
+            msgs_to_save = msgs_to_save[-10:]
+        session['assistant_thread_messages'] = msgs_to_save
 
         return jsonify({
             "assistant_message": result["assistant_message"],

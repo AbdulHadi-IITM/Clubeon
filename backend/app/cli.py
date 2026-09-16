@@ -46,7 +46,7 @@ def seed_plans():
 # ---------------------------------------------------------------------------
 # Every demo account uses this domain, which is what wipe-demo keys off. Real
 # accounts are never touched.
-DEMO_DOMAIN = "@demo.clubdash.test"
+DEMO_DOMAIN = "@demo.clubeon.test"
 DEMO_PASSWORD = "Demo@12345"
 DEMO_ADMIN_EMAIL = "admin@gmail.com"
 DEMO_STAFF_EMAIL = "staff@gmail.com"
@@ -150,7 +150,7 @@ def seed_demo(months, members, force):
 
     Everything lives in the database, so `flask wipe-demo` — or dropping the
     database — removes all of it. Demo accounts all use the
-    @demo.clubdash.test domain and log in with the same password.
+    @demo.clubeon.test domain and log in with the same password.
     """
     from app.auth.models import User
     from app.attendance.models import AttendanceRecord

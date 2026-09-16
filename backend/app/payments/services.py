@@ -26,6 +26,24 @@ class PaymentService:
 
     @staticmethod
     def find_completed(user_id, payment_type, reference_id):
+        if payment_type == "membership":
+            # For memberships, find the latest completed payment for this plan
+            # that was created AFTER the most recent cancelled membership
+            from app.memberships.models import Membership
+            latest_cancelled = Membership.query.filter_by(
+                user_id=user_id, status="cancelled"
+            ).order_by(Membership.created_at.desc()).first()
+
+            query = Payment.query.filter_by(
+                user_id=user_id,
+                payment_type=payment_type,
+                reference_id=reference_id,
+                status="completed",
+            )
+            if latest_cancelled and latest_cancelled.created_at:
+                query = query.filter(Payment.created_at >= latest_cancelled.created_at)
+            return query.order_by(Payment.created_at.desc()).first()
+
         return Payment.query.filter_by(
             user_id=user_id,
             payment_type=payment_type,

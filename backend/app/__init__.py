@@ -162,7 +162,7 @@ def create_app(config_class=Config):
         SWAGGER_URL,
         API_URL,
         config={
-            "app_name": "Club Booking SaaS Platform"
+            "app_name": "Clubeon Sports Platform"
         },
     )
 
@@ -179,7 +179,7 @@ def create_app(config_class=Config):
     def health_check():
         return {
             "status": "healthy",
-            "service": "club-booking-api",
+            "service": "clubeon-api",
         }, 200
 
     # =========================================================
