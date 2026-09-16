@@ -13,7 +13,7 @@
           <line x1="6" y1="6" x2="18" y2="18"></line>
         </svg>
       </div>
-      <span class="text" v-if="!isOpen">AI Concierge</span>
+      <span class="text" v-if="!isOpen">Clubeon AI</span>
       <span class="pulse-ring" v-if="!isOpen"></span>
     </button>
 
@@ -30,8 +30,8 @@
             <span class="online-indicator"></span>
           </div>
           <div>
-            <h3>ClubDash AI</h3>
-            <span class="header-subtitle">Concierge & Booking Assistant</span>
+            <h3>Clubeon AI</h3>
+            <span class="header-subtitle">Smart Assistant & Booking</span>
           </div>
         </div>
         <div class="header-actions">
@@ -64,38 +64,70 @@
           :key="index" 
           :class="['message', msg.role]"
         >
-          <div v-if="msg.tools_used && msg.tools_used.length" class="tool-badge">
-            <svg class="tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
-            </svg>
-            <span>Live Action: {{ msg.tools_used.join(', ') }}</span>
+          <div v-if="msg.role === 'assistant' && (msg.tools_used?.length || msg.latency)" class="msg-meta-bar">
+            <div v-if="msg.tools_used && msg.tools_used.length" class="tool-badge">
+              <svg class="tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+              </svg>
+              <span>Live Action: {{ msg.tools_used.join(', ') }}</span>
+            </div>
+            <span v-if="msg.latency" class="latency-pill" title="Response latency">⚡ {{ msg.latency }}</span>
           </div>
           <VMarkdownView v-if="msg.role === 'assistant'" :content="msg.content" class="message-content md-view" mode="light" />
           <div v-else class="message-content">{{ msg.content }}</div>
 
-          <!-- Quick Action Buttons for Booking Confirmation -->
-          <div v-if="isBookingDraftReady(msg)" class="booking-actions">
-            <button @click="sendMessage('Yes, please confirm and finalize this booking.')" class="action-btn confirm-btn" :disabled="isLoading">
-              <svg class="btn-svg" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-              </svg>
-              <span>Confirm & Book Now</span>
-            </button>
-            <button @click="sendMessage('No, please cancel this booking draft.')" class="action-btn cancel-btn" :disabled="isLoading">
-              <svg class="btn-svg" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
-              </svg>
-              <span>Cancel</span>
-            </button>
+          <!-- Rich Action Card for Booking Confirmation -->
+          <div v-if="isBookingDraftReady(msg)" class="draft-booking-card">
+            <div class="draft-card-header">
+              <div class="draft-badge">
+                <span class="draft-dot"></span>
+                <span>RESERVATION READY</span>
+              </div>
+              <span class="draft-expiry">⏱️ 10 min hold</span>
+            </div>
+            <p class="draft-note">Your court reservation hold is prepared. Lock in your preferred slot below:</p>
+            <div class="booking-actions">
+              <button @click="sendMessage('Yes, please confirm and finalize this booking.')" class="action-btn confirm-btn" :disabled="isLoading">
+                <svg class="btn-svg" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                </svg>
+                <span>Confirm & Reserve Court</span>
+              </button>
+              <button @click="sendMessage('No, please cancel this booking draft.')" class="action-btn cancel-btn" :disabled="isLoading">
+                <svg class="btn-svg" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                </svg>
+                <span>Cancel</span>
+              </button>
+            </div>
           </div>
         </div>
         
-        <div v-if="isLoading" class="message system loading">
-          <span class="typing-indicator"></span> Thinking...
+        <!-- Smooth 3-dot Typing Indicator -->
+        <div v-if="isLoading" class="message assistant loading-bubble">
+          <div class="bot-typing-dots">
+            <span class="dot"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+          </div>
+          <span class="typing-text">Clubeon AI is checking...</span>
         </div>
       </div>
 
-      <!-- Suggested Prompts -->
+      <!-- Quick Action Chips Bar (Persistent) -->
+      <div class="quick-chips-bar" v-if="quickChips.length > 0">
+        <button 
+          v-for="chip in quickChips" 
+          :key="chip"
+          @click="sendMessage(chip)"
+          class="quick-chip"
+          :disabled="isLoading"
+        >
+          {{ chip }}
+        </button>
+      </div>
+
+      <!-- Suggested Prompts (Initial Only) -->
       <div class="suggested-prompts" v-if="messages.length === 0">
         <button 
           v-for="prompt in suggestedPrompts" 
@@ -146,12 +178,12 @@ const isVisible = computed(() => {
 
 const welcomeMessage = computed(() => {
   if (authStore.user?.role === 'player') {
-    return "Hi! I'm your ClubDash assistant. I can help you find & recommend facilities (by sport, amenities, distance), check bookings, and see court availability.";
+    return "Hi! I'm Clubeon AI. I can help you find & recommend facilities (by sport, amenities, distance), check bookings, and book courts.";
   }
   if (authStore.user?.role === 'owner') {
-    return "Hello! I can assist with your club analytics, facility bookings, court schedules, attendance, and member reservations.";
+    return "Hello! I'm Clubeon AI. I can assist with your club analytics, facility bookings, court schedules, attendance, and member reservations.";
   }
-  return "Hello! I can assist with today's operational dashboard, staff bookings, attendance, court status, and facility discovery.";
+  return "Hello! I'm Clubeon AI. I can assist with today's operational dashboard, staff bookings, attendance, court status, and facility discovery.";
 });
 
 const suggestedPrompts = computed(() => {
@@ -176,6 +208,32 @@ const suggestedPrompts = computed(() => {
     "Find facilities with parking and cafe",
     "Show today's attendance summary",
     "Which courts are available today?"
+  ];
+});
+
+const quickChips = computed(() => {
+  if (authStore.user?.role === 'player') {
+    return [
+      '🏸 Book Badminton',
+      '📅 My Bookings',
+      '⚡ Available Today',
+      '📍 Nearest Club',
+      '💳 Membership Status',
+    ];
+  }
+  if (authStore.user?.role === 'owner') {
+    return [
+      '📊 Club Analytics',
+      "📋 Today's Bookings",
+      '✅ Attendance Status',
+      '⚡ Court Availability',
+    ];
+  }
+  return [
+    "📋 Today's Bookings",
+    '✅ Check In Member',
+    '⚡ Court Availability',
+    '🏸 Walk-in Booking',
   ];
 });
 
@@ -236,6 +294,7 @@ const sendMessage = async (text) => {
   isLoading.value = true;
   await scrollToBottom();
 
+  const tStart = performance.now();
   try {
     const payload = { 
       message: userText,
@@ -244,10 +303,13 @@ const sendMessage = async (text) => {
     };
     
     const response = await api.post('/assistant/chat', payload);
+    const elapsedSec = ((performance.now() - tStart) / 1000).toFixed(1);
+
     messages.value.push({ 
       role: 'assistant', 
       content: response.data.assistant_message,
-      tools_used: response.data.tools_used || []
+      tools_used: response.data.tools_used || [],
+      latency: `${elapsedSec}s`
     });
   } catch (error) {
     console.error('Chat error:', error);
@@ -680,6 +742,254 @@ const sendMessage = async (text) => {
 .action-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+/* Persistent Quick Chips Bar */
+.quick-chips-bar {
+  display: flex;
+  gap: 6px;
+  padding: 8px 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  background: #f8fafc;
+  border-top: 1px solid #f1f5f9;
+}
+.quick-chips-bar::-webkit-scrollbar {
+  display: none;
+}
+
+.quick-chip {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 11px;
+  border-radius: 9999px;
+  font-size: 11.5px;
+  font-weight: 600;
+  background: #ffffff;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+}
+
+.quick-chip:hover:not(:disabled) {
+  background: #eef2ff;
+  border-color: #c7d2fe;
+  color: #4338ca;
+  transform: translateY(-1px);
+}
+
+.quick-chip:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Smooth Typing Bubble & Bouncing Dots */
+.loading-bubble {
+  display: flex !important;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px !important;
+  background: #f1f5f9 !important;
+  border-radius: 12px !important;
+  width: fit-content;
+}
+
+.bot-typing-dots {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.bot-typing-dots .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #6366f1;
+  animation: waveBounce 1.4s infinite ease-in-out both;
+}
+
+.bot-typing-dots .dot:nth-child(1) {
+  animation-delay: -0.32s;
+}
+.bot-typing-dots .dot:nth-child(2) {
+  animation-delay: -0.16s;
+}
+.bot-typing-dots .dot:nth-child(3) {
+  animation-delay: 0s;
+}
+
+@keyframes waveBounce {
+  0%, 80%, 100% {
+    transform: scale(0.6);
+    opacity: 0.5;
+  }
+  40% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+}
+
+.typing-text {
+  font-size: 12px;
+  font-weight: 500;
+  color: #64748b;
+}
+
+/* Rich Booking Draft Ticket Card */
+.draft-booking-card {
+  margin-top: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%);
+  border: 1px solid #bbf7d0;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.08);
+}
+
+.draft-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.draft-badge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: #16a34a;
+}
+
+.draft-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #16a34a;
+}
+
+.draft-expiry {
+  font-size: 11px;
+  font-weight: 600;
+  color: #d97706;
+}
+
+.draft-note {
+  font-size: 12.5px;
+  color: #334155;
+  line-height: 1.4;
+  margin: 4px 0 8px 0;
+}
+
+/* Latency and Meta Bar */
+.msg-meta-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+
+.latency-pill {
+  display: inline-flex;
+  align-items: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: #059669;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: 999px;
+  padding: 2px 8px;
+  letter-spacing: 0.02em;
+}
+
+/* Enhanced Markdown Tables & Layout */
+.md-view :deep(table) {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 10px 0;
+  font-size: 12px;
+  background: #ffffff;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.md-view :deep(th) {
+  background: #f8fafc;
+  color: #1e293b;
+  font-weight: 700;
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1px solid #cbd5e1;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.md-view :deep(td) {
+  padding: 7px 10px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #334155;
+  vertical-align: middle;
+}
+
+.md-view :deep(tr:last-child td) {
+  border-bottom: none;
+}
+
+.md-view :deep(tr:hover td) {
+  background: #f8fafc;
+}
+
+.md-view :deep(blockquote) {
+  border-left: 3px solid #6366f1;
+  background: #f5f3ff;
+  padding: 6px 12px;
+  margin: 8px 0;
+  border-radius: 0 8px 8px 0;
+  color: #4338ca;
+  font-size: 12px;
+}
+
+.md-view :deep(code) {
+  background: #f1f5f9;
+  color: #0f172a;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11.5px;
+  font-family: monospace;
+}
+
+.md-view :deep(h3) {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 10px 0 6px 0;
+}
+
+.md-view :deep(h4) {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 8px 0 4px 0;
+}
+
+.md-view :deep(ul),
+.md-view :deep(ol) {
+  padding-left: 18px;
+  margin: 6px 0;
+}
+
+.md-view :deep(li) {
+  margin-bottom: 4px;
+  line-height: 1.45;
 }
 
 @media (max-width: 480px) {

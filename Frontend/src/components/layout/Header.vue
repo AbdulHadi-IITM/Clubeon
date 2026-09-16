@@ -5,7 +5,7 @@
         <div
           class="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[.11em] text-slate-400"
         >
-          <span class="text-indigo-500">ClubDash</span><span class="text-slate-300">/</span
+          <span class="text-indigo-500">Clubeon</span><span class="text-slate-300">/</span
           ><span>{{ subtitle }}</span>
         </div>
         <h1
@@ -15,15 +15,6 @@
         </h1>
       </div>
       <div class="flex items-center gap-2.5 relative">
-        <div
-          class="hidden items-center gap-2 rounded-xl border border-slate-200/80 bg-white/75 px-3 py-2 text-xs font-medium text-slate-500 shadow-sm md:flex"
-        >
-          <span
-            class="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_0_3px_rgba(16,185,129,.11)]"
-          ></span>
-          Live workspace
-        </div>
-
           <!-- Notification Bell with Dropdown -->
         <div class="relative">
           <button

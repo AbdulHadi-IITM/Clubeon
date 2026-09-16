@@ -95,6 +95,71 @@
     </div>
 
     <!-- =====================================================
+         ACTIVE 5-MINUTE SLOT HOLD BANNER
+    ====================================================== -->
+    <transition
+      enter-active-class="transition duration-300 ease-out"
+      enter-from-class="transform -translate-y-2 opacity-0"
+      enter-to-class="transform translate-y-0 opacity-100"
+      leave-active-class="transition duration-200 ease-in"
+      leave-from-class="transform translate-y-0 opacity-100"
+      leave-to-class="transform -translate-y-2 opacity-0"
+    >
+      <div
+        v-if="selectedSlot && holdSecondsRemaining > 0"
+        class="sticky top-4 z-30 flex flex-col sm:flex-row items-center justify-between gap-4 rounded-2xl border border-indigo-500/30 bg-gradient-to-r from-slate-900 via-[#151d2e] to-indigo-950/90 p-4 shadow-2xl backdrop-blur-xl text-white"
+      >
+        <div class="flex items-center gap-3.5 w-full sm:w-auto">
+          <div class="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-indigo-500/20 text-indigo-300 ring-1 ring-indigo-400/30">
+            <span class="text-xl">⏱️</span>
+            <span class="absolute -top-1 -right-1 flex h-3 w-3">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-3 w-3 bg-indigo-500"></span>
+            </span>
+          </div>
+          <div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="text-xs font-bold uppercase tracking-wider text-indigo-300">Temporary Hold Active</span>
+              <span class="rounded-full bg-indigo-500/20 px-2.5 py-0.5 text-[11px] font-semibold text-indigo-200 border border-indigo-400/20">
+                {{ selectedSlot.courtName }}
+              </span>
+            </div>
+            <p class="text-sm font-semibold text-slate-100 mt-0.5">
+              {{ formatTime(selectedSlot.start_time) }} – {{ formatTime(selectedSlot.end_time) }}
+              <span v-if="selectedCourtPrice" class="text-indigo-300 font-bold ml-2">· {{ selectedCourtPrice }}</span>
+            </p>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between w-full sm:w-auto gap-4 border-t sm:border-t-0 border-white/10 pt-3 sm:pt-0">
+          <div class="text-left sm:text-right">
+            <p class="text-[10px] uppercase tracking-wider text-slate-400 font-medium">Hold Expires In</p>
+            <p class="text-xl font-mono font-black" :class="holdSecondsRemaining < 60 ? 'text-rose-400 animate-pulse' : 'text-amber-300'">
+              {{ formattedHoldTimer }}
+            </p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              class="px-3 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-white/5 transition"
+              @click="cancelHold"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              class="btn-primary py-2 px-4 text-xs font-semibold whitespace-nowrap shadow-md"
+              :disabled="booking"
+              @click="confirmBookingFromHold"
+            >
+              {{ booking ? 'Booking...' : 'Confirm Now' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </transition>
+
+    <!-- =====================================================
          ERROR
     ====================================================== -->
     <div v-if="error" class="glass p-5 border border-red-500/20">
@@ -125,11 +190,7 @@
     <!-- =====================================================
          LOADING
     ====================================================== -->
-    <div v-if="loading" class="glass p-12 text-center">
-      <div class="loader mx-auto mb-4"></div>
-
-      <p class="text-sm text-gray-500">Checking court availability...</p>
-    </div>
+    <SkeletonLoader v-if="loading" type="slots" :count="3" />
 
     <!-- =====================================================
          NO CLUB SELECTED
@@ -229,6 +290,14 @@
                 <h3 class="font-semibold text-gray-200">
                   {{ court.name }}
                 </h3>
+                <div class="flex items-center gap-2 mt-1">
+                  <span v-if="court.price" class="text-xs font-semibold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded-full border border-indigo-500/20">
+                    ₹{{ court.price }} / hr
+                  </span>
+                  <span v-else class="text-xs text-gray-400 font-medium">
+                    Standard Rate
+                  </span>
+                </div>
               </div>
 
               <span
@@ -283,6 +352,25 @@
             <!-- No Slots -->
             <div v-else class="rounded-lg border border-white/5 bg-white/[0.02] p-5 text-center">
               <p class="text-xs text-gray-500">No slots available for the selected time period.</p>
+            </div>
+
+            <!-- Selected Slot Preview & Pricing -->
+            <div
+              v-if="selectedSlot && String(selectedSlot.courtId) === String(court.id)"
+              class="mt-4 p-3 rounded-xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-between text-xs"
+            >
+              <div>
+                <span class="text-slate-400 block text-[10px] uppercase tracking-wider font-semibold">Selected Slot</span>
+                <span class="font-bold text-white text-sm">
+                  {{ formatTime(selectedSlot.start_time) }} – {{ formatTime(selectedSlot.end_time) }}
+                </span>
+              </div>
+              <div class="text-right">
+                <span class="text-slate-400 block text-[10px] uppercase tracking-wider font-semibold">Rate</span>
+                <span class="font-extrabold text-indigo-300 text-sm">
+                  {{ court.price ? `₹${court.price}` : 'Free / Included' }}
+                </span>
+              </div>
             </div>
 
             <!-- =================================================
@@ -378,6 +466,7 @@ import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import api from '@/api/axios'
 import { useBookingStore } from '@/stores/bookings'
+import SkeletonLoader from '@/components/common/SkeletonLoader.vue'
 
 import tennisCourtImage from '@/assets/courts/tennis.webp'
 import badmintonCourtImage from '@/assets/courts/badminton.webp'
@@ -619,6 +708,7 @@ async function loadAvailability() {
   /*
    * Any refresh invalidates the old selected slot.
    */
+  cancelHold()
   selectedSlot.value = null
 
   if (!selectedClubId.value || !selectedDate.value) {
@@ -813,10 +903,10 @@ function selectPeriod(period) {
   selectedPeriod.value = period
 
   /*
-   * Clear old selected slot when changing filter.
-   * This prevents accidentally booking a hidden slot.
+   * Clear old selected slot and active hold
+   * when changing filter to prevent booking a hidden slot.
    */
-  selectedSlot.value = null
+  cancelHold()
 }
 
 // =========================================================
@@ -863,6 +953,57 @@ function slotStatusText(slot) {
 }
 
 // =========================================================
+// ACTIVE HOLD TIMER & PRICING PREVIEW
+// =========================================================
+
+const holdSecondsRemaining = ref(0)
+let holdTimerInterval = null
+
+const selectedCourtPrice = computed(() => {
+  if (!selectedSlot.value) return null
+  const c = courts.value.find((court) => String(court.id) === String(selectedSlot.value.courtId))
+  return c?.price ? `₹${c.price} / hr` : 'Standard Rate'
+})
+
+const formattedHoldTimer = computed(() => {
+  const m = Math.floor(holdSecondsRemaining.value / 60)
+  const s = holdSecondsRemaining.value % 60
+  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+})
+
+function startHoldTimer() {
+  if (holdTimerInterval) {
+    clearInterval(holdTimerInterval)
+  }
+  holdSecondsRemaining.value = 300 // 5-minute hold
+  holdTimerInterval = setInterval(() => {
+    if (holdSecondsRemaining.value > 1) {
+      holdSecondsRemaining.value--
+    } else {
+      cancelHold()
+      error.value = 'Your 5-minute reservation hold has expired. Please select a time slot again.'
+    }
+  }, 1000)
+}
+
+function cancelHold() {
+  if (holdTimerInterval) {
+    clearInterval(holdTimerInterval)
+    holdTimerInterval = null
+  }
+  holdSecondsRemaining.value = 0
+  selectedSlot.value = null
+}
+
+function confirmBookingFromHold() {
+  if (!selectedSlot.value) return
+  const targetCourt = courts.value.find((c) => String(c.id) === String(selectedSlot.value?.courtId))
+  if (targetCourt) {
+    bookCourt(targetCourt)
+  }
+}
+
+// =========================================================
 // SELECT SLOT
 // =========================================================
 
@@ -888,6 +1029,7 @@ function selectSlot(court, slot) {
 
     end_time: slot.end_time,
   }
+  startHoldTimer()
 }
 
 // =========================================================
@@ -1010,9 +1152,9 @@ async function bookCourt(court) {
       `${formatDate(bookingDate)}. Complete your payment via Stripe to confirm your reservation.`
 
     /*
-     * Clear selected slot.
+     * Clear selected slot and hold timer.
      */
-    selectedSlot.value = null
+    cancelHold()
 
     /*
      * Refresh availability.
@@ -1209,6 +1351,7 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
+  cancelHold()
   if (currentTimeInterval) {
     clearInterval(currentTimeInterval)
     currentTimeInterval = null

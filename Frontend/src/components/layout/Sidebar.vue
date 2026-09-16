@@ -7,7 +7,7 @@
         <BrandMark :size="44" />
         <div>
           <div class="text-[19px] font-extrabold tracking-[-0.03em] text-white">
-            Club<span class="text-indigo-300">Dash</span>
+            Club<span class="text-indigo-300">eon</span>
           </div>
           <div class="mt-0.5 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">
             {{ portalLabel }}
@@ -77,6 +77,9 @@ const icons = {
   courts: 'M5 5h14v14H5zM5 12h14M12 5v14',
   events: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z',
   card: 'M3 7a2 2 0 012-2h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7zm0 3h18m-13 4h3',
+  announcements: 'M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z',
+  analytics: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z',
+  settings: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065zM15 12a3 3 0 11-6 0 3 3 0 016 0z',
 }
 const memberNavigation = [
   { to: '/member/dashboard', icon: icons.home, label: 'Dashboard', mobileLabel: 'Home' },
@@ -104,13 +107,44 @@ const staffNavigation = [
   { to: '/staff/members', icon: icons.users, label: 'Members' },
   { to: '/staff/events', icon: icons.events, label: 'Events' },
 ]
+const ownerNavigation = [
+  { to: '/admin/dashboard', icon: icons.home, label: 'Dashboard', mobileLabel: 'Home' },
+  { to: '/admin/members', icon: icons.users, label: 'Members', mobileLabel: 'Members' },
+  { to: '/admin/courts', icon: icons.courts, label: 'Courts', mobileLabel: 'Courts' },
+  { to: '/admin/bookings', icon: icons.clipboard, label: 'Bookings', mobileLabel: 'Bookings' },
+  { to: '/admin/events', icon: icons.events, label: 'Events', mobileLabel: 'Events' },
+  { to: '/admin/announcements', icon: icons.announcements, label: 'Announcements', mobileLabel: 'Alerts' },
+  { to: '/admin/analytics', icon: icons.analytics, label: 'Analytics', mobileLabel: 'Analytics' },
+  { to: '/admin/settings', icon: icons.settings, label: 'Settings', mobileLabel: 'Settings' },
+]
+const isOwner = computed(() => authStore.user?.role === 'owner')
 const isStaff = computed(() => authStore.user?.role === 'front-desk')
-const navigation = computed(() => (isStaff.value ? staffNavigation : memberNavigation))
+const navigation = computed(() => {
+  if (isOwner.value) return ownerNavigation
+  if (isStaff.value) return staffNavigation
+  return memberNavigation
+})
 const mobileNavigation = computed(() => navigation.value)
-const homePath = computed(() => (isStaff.value ? '/staff/dashboard' : '/member/dashboard'))
-const profilePath = computed(() => (isStaff.value ? '/staff/profile' : '/member/profile'))
-const portalLabel = computed(() => (isStaff.value ? 'Front Desk Portal' : 'Member Portal'))
-const roleLabel = computed(() => (isStaff.value ? 'Front Desk' : 'Member'))
+const homePath = computed(() => {
+  if (isOwner.value) return '/admin/dashboard'
+  if (isStaff.value) return '/staff/dashboard'
+  return '/member/dashboard'
+})
+const profilePath = computed(() => {
+  if (isOwner.value) return '/admin/settings'
+  if (isStaff.value) return '/staff/profile'
+  return '/member/profile'
+})
+const portalLabel = computed(() => {
+  if (isOwner.value) return 'Owner Portal'
+  if (isStaff.value) return 'Front Desk Portal'
+  return 'Member Portal'
+})
+const roleLabel = computed(() => {
+  if (isOwner.value) return 'Club Owner'
+  if (isStaff.value) return 'Front Desk'
+  return 'Member'
+})
 const displayName = computed(() => {
   const u = authStore.user
   return u?.name || u?.full_name || u?.username || u?.email || roleLabel.value

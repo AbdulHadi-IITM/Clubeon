@@ -19,9 +19,15 @@
         <p class="text-sm text-slate-500">{{ bookings.length }} bookings</p>
         <button class="text-xs text-indigo-600" @click="load">Refresh</button>
       </div>
-      <div v-if="loading" class="p-10 text-center text-slate-500">Loading bookings...</div>
-      <div v-else-if="!bookings.length" class="p-10 text-center text-slate-500">
-        No bookings found.
+      <div v-if="loading" class="p-6">
+        <SkeletonLoader type="table" :count="5" />
+      </div>
+      <div v-else-if="!bookings.length" class="p-8">
+        <EmptyState
+          icon="calendar"
+          title="No bookings found"
+          description="There are no court reservations scheduled for this date. You can select another date or change clubs."
+        />
       </div>
       <div v-else class="overflow-x-auto">
         <table class="w-full text-left">
@@ -50,9 +56,7 @@
                 <p class="text-xs text-slate-500">{{ b.user_email }}</p>
               </td>
               <td class="p-4">
-                <span class="text-xs px-2 py-1 rounded-full bg-white/5 text-slate-700">{{
-                  b.status
-                }}</span>
+                <StatusBadge :status="b.status" />
               </td>
               <td class="p-4 flex items-center gap-3">
                 <router-link
@@ -84,6 +88,9 @@ import api from '@/api/axios'
 import ClubPicker from './components/ClubPicker.vue'
 import { today, time, errorMessage } from './_helpers'
 import { getSportImage } from '@/utils/sportImages'
+import SkeletonLoader from '@/components/common/SkeletonLoader.vue'
+import EmptyState from '@/components/common/EmptyState.vue'
+import StatusBadge from '@/components/common/StatusBadge.vue'
 const clubId = ref('')
 const selectedDate = ref(today())
 const bookings = ref([])

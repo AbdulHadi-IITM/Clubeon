@@ -1,15 +1,15 @@
 const LEAFLET_VERSION = '1.9.4'
-const LEAFLET_CSS_ID = 'clubdash-leaflet-css'
-const LEAFLET_SCRIPT_ID = 'clubdash-leaflet-script'
+const LEAFLET_CSS_ID = 'clubeon-leaflet-css'
+const LEAFLET_SCRIPT_ID = 'clubeon-leaflet-script'
 
 export function loadLeaflet() {
   if (window.L) return Promise.resolve(window.L)
 
-  if (window.__clubdashLeafletPromise) {
-    return window.__clubdashLeafletPromise
+  if (window.__clubeonLeafletPromise) {
+    return window.__clubeonLeafletPromise
   }
 
-  window.__clubdashLeafletPromise = new Promise((resolve, reject) => {
+  window.__clubeonLeafletPromise = new Promise((resolve, reject) => {
     if (!document.getElementById(LEAFLET_CSS_ID)) {
       const link = document.createElement('link')
       link.id = LEAFLET_CSS_ID
@@ -37,10 +37,10 @@ export function loadLeaflet() {
     document.head.appendChild(script)
   })
 
-  return window.__clubdashLeafletPromise
+  return window.__clubeonLeafletPromise
 }
 
-const CACHE_KEY = 'clubdash:club-geocodes:v1'
+const CACHE_KEY = 'clubeon:club-geocodes:v1'
 
 export const BANGALORE_FALLBACK_GEOCODES = {
   '10, Field Marshal Cariappa Rd, Shanthala Nagar, Ashok Nagar, Bengaluru, Karnataka 560025': {

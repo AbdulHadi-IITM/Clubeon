@@ -8,7 +8,7 @@
         <div
           class="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.16em] text-indigo-500"
         >
-          <span>ClubDash</span>
+          <span>Clubeon</span>
           <span class="text-slate-300">/</span>
           <span class="text-slate-400">Bengaluru Sports Network</span>
         </div>

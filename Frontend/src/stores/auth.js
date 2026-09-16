@@ -7,7 +7,9 @@ import { useNotificationStore } from '@/stores/notifications.js'
 
 export const useAuthStore = defineStore('auth', () => {
   // Initialize user from cached localStorage if available to avoid flash of logged-out state
-  const cachedUser = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('clubdash_user') || 'null') : null
+  const cachedUser = typeof window !== 'undefined'
+    ? JSON.parse(localStorage.getItem('clubeon_user') || localStorage.getItem('clubdash_user') || 'null')
+    : null
   const user = ref(cachedUser)
   const initialized = ref(false)
   const loading = ref(false)
@@ -31,14 +33,14 @@ export const useAuthStore = defineStore('auth', () => {
         const res = await api.get('/auth/me') // backend reads cookie and returns user
         user.value = res.data?.user ?? null
         if (user.value) {
-          localStorage.setItem('clubdash_user', JSON.stringify(user.value))
+          localStorage.setItem('clubeon_user', JSON.stringify(user.value))
         } else {
-          localStorage.removeItem('clubdash_user')
+          localStorage.removeItem('clubeon_user')
         }
       } catch (err) {
         if (err?.response?.status === 401) {
           user.value = null
-          localStorage.removeItem('clubdash_user')
+          localStorage.removeItem('clubeon_user')
         }
       } finally {
         initialized.value = true
@@ -59,7 +61,7 @@ export const useAuthStore = defineStore('auth', () => {
       const res = await api.post('/auth/login', credentials)
       user.value = res.data?.user ?? null
       if (user.value) {
-        localStorage.setItem('clubdash_user', JSON.stringify(user.value))
+        localStorage.setItem('clubeon_user', JSON.stringify(user.value))
       }
       initialized.value = true
       return user.value
@@ -79,7 +81,7 @@ export const useAuthStore = defineStore('auth', () => {
       const res = await api.post('/auth/register', payload)
       user.value = res.data?.user ?? null
       if (user.value) {
-        localStorage.setItem('clubdash_user', JSON.stringify(user.value))
+        localStorage.setItem('clubeon_user', JSON.stringify(user.value))
       }
       initialized.value = true
       return user.value
@@ -99,7 +101,7 @@ export const useAuthStore = defineStore('auth', () => {
       // The cookie is cleared locally either way.
     } finally {
       user.value = null
-      localStorage.removeItem('clubdash_user')
+      localStorage.removeItem('clubeon_user')
       loading.value = false
       // Clear every store that holds another user's data, so signing in as
       // someone else on the same browser never shows the previous session's
@@ -135,13 +137,13 @@ export const useAuthStore = defineStore('auth', () => {
   if (typeof window !== 'undefined') {
     window.addEventListener('unauthorized', () => {
       user.value = null
-      localStorage.removeItem('clubdash_user')
+      localStorage.removeItem('clubeon_user')
     })
   }
 
   /** True when a session existed and the server has since rejected it. */
   function hadSession() {
-    return initialized.value && !!localStorage.getItem('clubdash_user')
+    return initialized.value && !!localStorage.getItem('clubeon_user')
   }
 
   return {

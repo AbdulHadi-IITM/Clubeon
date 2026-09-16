@@ -1,326 +1,11 @@
 <template>
-  <div class="admin-app-layout">
-    <!-- Mobile Sidebar Backdrop -->
-    <div
-      v-if="isMobileSidebarOpen"
-      class="sidebar-backdrop"
-      @click="isMobileSidebarOpen = false"
-    ></div>
-
-    <!-- Fixed Left Sidebar -->
-    <aside class="admin-sidebar" :class="{ 'mobile-show': isMobileSidebarOpen }">
-      <!-- Sidebar Header / Logo -->
-      <div class="sidebar-header">
-        <router-link :to="{ name: 'landing' }" class="brand-logo" aria-label="ClubDash Home">
-          <BrandMark :size="34" />
-          <span class="logo-text">ClubDash</span>
-        </router-link>
-        <span class="admin-portal-badge">Owner</span>
-      </div>
-
-      <!-- Navigation Menu -->
-      <nav class="sidebar-menu" aria-label="Admin Sidebar Navigation">
-        <div class="menu-group">
-          <span class="menu-label">OVERVIEW</span>
-          <a
-            v-for="item in primaryNavItems"
-            :key="item.name"
-            href="#"
-            class="menu-item"
-            :class="{ active: activeNav === item.name }"
-            @click.prevent="setActiveNav(item.name)"
-          >
-            <div class="item-icon-wrapper">
-              <!-- SVG Icons -->
-              <svg
-                v-if="item.icon === 'dashboard'"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                stroke-width="2"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
-                />
-              </svg>
-              <svg
-                v-else-if="item.icon === 'members'"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                stroke-width="2"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
-                />
-              </svg>
-              <svg
-                v-else-if="item.icon === 'courts'"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                stroke-width="2"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-                />
-              </svg>
-              <svg
-                v-else-if="item.icon === 'bookings'"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                stroke-width="2"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                />
-              </svg>
-              <svg
-                v-else-if="item.icon === 'events'"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                stroke-width="2"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M5 3v4M19 3v4M3 11h18M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                />
-              </svg>
-              <svg
-                v-else-if="item.icon === 'announcements'"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                stroke-width="2"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"
-                />
-              </svg>
-              <svg
-                v-else-if="item.icon === 'analytics'"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                stroke-width="2"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                />
-              </svg>
-              <svg
-                v-else-if="item.icon === 'settings'"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                stroke-width="2"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-                />
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                />
-              </svg>
-            </div>
-            <span class="item-name">{{ item.name }}</span>
-            <span v-if="item.badge" class="item-badge">{{ item.badge }}</span>
-          </a>
-        </div>
-      </nav>
-
-      <!-- Sidebar Footer / Admin Profile with Discord-style Popover -->
-      <div class="sidebar-footer">
-        <!-- Discord-Style Floating Profile Popover Card -->
-        <transition name="popover-fade">
-          <div v-if="showProfilePopover" class="discord-profile-card" @click.stop>
-            <!-- Header Banner -->
-            <div class="discord-banner">
-              <button class="close-popover-btn" @click.stop="showProfilePopover = false">✕</button>
-            </div>
-
-            <!-- Avatar with Image Upload Overlay -->
-            <div class="discord-avatar-wrapper">
-              <div class="discord-avatar">
-                <img v-if="adminProfile.avatarUrl" :src="adminProfile.avatarUrl" alt="Admin Avatar" class="discord-avatar-img" />
-                <span v-else>{{ adminProfile.initials }}</span>
-                <!-- Image Upload Button overlay -->
-                <label class="avatar-upload-overlay" title="Upload new profile picture">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px; color: #ffffff;"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                  <input type="file" accept="image/*" @change="handleAvatarUpload" style="display: none;" />
-                </label>
-              </div>
-            </div>
-
-            <!-- Profile Info Body -->
-            <div class="discord-profile-body">
-              <div class="profile-title-block">
-                <h4 class="discord-name">{{ adminProfile.name }}</h4>
-                <span class="discord-role-badge">{{ adminProfile.role }}</span>
-              </div>
-
-              <div class="discord-divider"></div>
-
-              <!-- Admin Profile Details -->
-              <div class="discord-details-list">
-                <div class="detail-row">
-                  <span class="detail-label">Email</span>
-                  <span class="detail-val">{{ adminProfile.email || 'Not provided' }}</span>
-                </div>
-                <div class="detail-row">
-                  <span class="detail-label">Phone</span>
-                  <span class="detail-val" :style="{ color: adminProfile.phone ? '#f1f5f9' : '#94a3b8' }">
-                    {{ adminProfile.phone || 'Not provided' }}
-                  </span>
-                </div>
-                <div class="detail-row">
-                  <span class="detail-label">Club Facility</span>
-                  <span class="detail-val" style="color: #60a5fa; font-weight: 700;">
-                    {{ adminProfile.facility || 'No club yet' }}
-                  </span>
-                </div>
-                <div class="detail-row">
-                  <span class="detail-label">Member Since</span>
-                  <span class="detail-val">{{ adminProfile.memberSince || 'Recent' }}</span>
-                </div>
-              </div>
-
-              <!-- Action Footer -->
-              <div class="discord-actions-footer">
-                <button type="button" class="edit-profile-btn-pill" @click="openEditProfileModal">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" width="15" height="15">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                  </svg>
-                  <span>Edit Profile</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </transition>
-
-        <!-- Clickable Sidebar Profile Card -->
-        <div
-          class="sidebar-admin-profile clickable-profile"
-          @click.stop="toggleProfilePopover"
-          title="Click to view Discord-style Admin Profile"
-        >
-          <div class="user-avatar">
-            <img v-if="adminProfile.avatarUrl" :src="adminProfile.avatarUrl" alt="Admin Avatar" class="user-avatar-img" />
-            <span v-else>{{ adminProfile.initials }}</span>
-          </div>
-          <div class="user-meta">
-            <span class="user-name">{{ adminProfile.name }}</span>
-            <span class="user-role">{{ adminProfile.role }}</span>
-          </div>
-        </div>
-      </div>
-    </aside>
-
-    <!-- Main Application Wrapper -->
-    <div class="main-wrapper">
-      <!-- Top Header -->
-      <header class="admin-top-header">
-        <div class="header-left">
-          <button
-            class="mobile-menu-btn"
-            @click="isMobileSidebarOpen = !isMobileSidebarOpen"
-            aria-label="Toggle Sidebar"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              stroke-width="2"
-              width="22"
-              height="22"
-            >
-              <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
-          <div class="page-title-block">
-            <h1 class="header-title">{{ headerTitle }}</h1>
-            <p class="header-subtitle">{{ headerSubtitle }}</p>
-          </div>
-        </div>
-
-        <div class="header-right">
-          <!-- Live Date Chip -->
-          <div class="header-date-chip">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              stroke-width="2"
-              width="16"
-              height="16"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-              />
-            </svg>
-            <span>{{ currentDate }}</span>
-          </div>
-
-          <!-- Top Header Logout Button -->
-          <button class="top-header-logout-btn" @click="handleLogout" title="Logout of Admin Panel">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              stroke-width="2"
-              width="16"
-              height="16"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-              />
-            </svg>
-            <span>Logout</span>
-          </button>
-        </div>
-      </header>
-
-      <!-- Dashboard Main Scrollable Area -->
-      <main class="dashboard-body">
-        <div class="content-container">
-          <!-- TAB 1: DASHBOARD (MAIN OVERVIEW) -->
-          <div v-if="activeNav === 'Dashboard'" class="tab-pane">
-            <!-- Shared data-state banner: keeps the admin tabs consistent with
-                 the member/staff screens, which already surface load errors. -->
+  <div class="space-y-6">
+    <!-- Content Container -->
+    <div class="content-container space-y-6">
+      <!-- TAB 1: DASHBOARD (MAIN OVERVIEW) -->
+      <div v-if="activeNav === 'Dashboard'" class="tab-pane">
+        <!-- Shared data-state banner: keeps the admin tabs consistent with
+             the member/staff screens, which already surface load errors. -->
             <div v-if="analyticsLoading" class="data-state data-state--loading">
               Loading live data…
             </div>
@@ -2065,7 +1750,6 @@
             </section>
           </div>
         </div>
-      </main>
 
       <!-- ALL ADMIN POPUP MODALS -->
 
@@ -3027,7 +2711,7 @@
                   v-model="editProfileForm.email"
                   type="email"
                   required
-                  placeholder="e.g. alex.morgan@clubdash.com"
+                  placeholder="e.g. alex.morgan@clubeon.com"
                   class="form-control"
                   style="width: 100%; padding: 0.65rem 0.85rem; border: 1.5px solid #cbd5e1; border-radius: 0.6rem; font-size: 0.9rem;"
                 />
@@ -3101,7 +2785,7 @@
               <div style="width: 52px; height: 52px; border-radius: 16px; background: linear-gradient(135deg, #2563eb, #4f46e5); display: grid; place-items: center; font-size: 1.6rem; margin: 0 auto 0.75rem; box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);">
                 📱
               </div>
-              <h3 style="margin: 0 0 0.35rem; font-size: 1.25rem; font-weight: 800; color: #ffffff; letter-spacing: -0.02em;">Welcome to ClubDash</h3>
+              <h3 style="margin: 0 0 0.35rem; font-size: 1.25rem; font-weight: 800; color: #ffffff; letter-spacing: -0.02em;">Welcome to Clubeon</h3>
               <p style="margin: 0; font-size: 0.85rem; color: #94a3b8; line-height: 1.4;">
                 Please provide your contact phone number to complete your administrator setup.
               </p>
@@ -3146,12 +2830,11 @@
           </div>
         </div>
       </div>
-    </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, inject, watch, reactive } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useCourtStore } from '@/stores/courts'
 import { useNotificationStore } from '@/stores/notifications'
@@ -3159,16 +2842,34 @@ import api from '@/api/axios'
 import { getSportImage } from '@/utils/sportImages'
 import BrandMark from '@/components/BrandMark.vue'
 
+const props = defineProps({
+  initialTab: {
+    type: String,
+    default: 'Dashboard',
+  },
+})
+
+const route = useRoute()
+const router = useRouter()
 const toast = inject('toast')
 const courtStore = useCourtStore()
 const notificationStore = useNotificationStore()
 const showAddCourtModal = ref(false)
 const showEditCourtModal = ref(false)
 const currentEditCourt = ref(null)
-const router = useRouter()
 const auth = useAuthStore()
 const isMobileSidebarOpen = ref(false)
-const activeNav = ref('Dashboard')
+const activeNav = ref(props.initialTab || route.query.tab || 'Dashboard')
+
+watch(
+  () => props.initialTab,
+  (newTab) => {
+    if (newTab) {
+      activeNav.value = newTab
+    }
+  },
+  { immediate: true },
+)
 
 const currentDate = ref(
   new Date().toLocaleDateString('en-US', {
@@ -3652,9 +3353,25 @@ const primaryNavItems = ref([
   { name: 'Settings', icon: 'settings' },
 ])
 
-const setActiveNav = (navName) => {
+const setActiveNav = (navName, push = true) => {
   activeNav.value = navName
   isMobileSidebarOpen.value = false
+  if (push) {
+    const slugMap = {
+      'Dashboard': 'dashboard',
+      'Members': 'members',
+      'Courts': 'courts',
+      'Bookings': 'bookings',
+      'Events': 'events',
+      'Announcements': 'announcements',
+      'Analytics': 'analytics',
+      'Settings': 'settings',
+    }
+    const slug = slugMap[navName] || 'dashboard'
+    if (route.name !== `admin-${slug}`) {
+      router.push({ name: `admin-${slug}` })
+    }
+  }
 }
 
 const handleLogout = async () => {
@@ -3876,7 +3593,7 @@ function exportBookingsCSV() {
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
   link.setAttribute('href', url)
-  link.setAttribute('download', `clubdash_bookings_${new Date().toISOString().split('T')[0]}.csv`)
+  link.setAttribute('download', `clubeon_bookings_${new Date().toISOString().split('T')[0]}.csv`)
   document.body.appendChild(link)
   link.click()
   document.body.removeChild(link)
@@ -4523,7 +4240,7 @@ function exportAnalyticsCSV() {
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
   link.setAttribute('href', url)
-  link.setAttribute('download', `clubdash_analytics_report_${new Date().toISOString().split('T')[0]}.csv`)
+  link.setAttribute('download', `clubeon_analytics_report_${new Date().toISOString().split('T')[0]}.csv`)
   document.body.appendChild(link)
   link.click()
   document.body.removeChild(link)
@@ -5175,7 +4892,7 @@ async function handleAvatarUpload(event) {
 }
 
 .content-container {
-  max-width: 1200px;
+  max-width: 100%;
   margin: 0 auto;
 }
 

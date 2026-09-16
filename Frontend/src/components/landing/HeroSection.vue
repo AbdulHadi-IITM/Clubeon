@@ -53,7 +53,7 @@
 
 <script setup>
 import { ref } from 'vue'
-import landingVideo from '../assets/LandingVideo.mp4'
+import landingVideo from '@/assets/LandingVideo.mp4'
 
 const videoRef = ref(null)
 </script>

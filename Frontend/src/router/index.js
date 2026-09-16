@@ -12,7 +12,7 @@ import AuthView from '@/views/AuthView.vue'
 // Admin / Owner
 // ============================================================
 
-import AdminDashboardView from '@/views/AdminDashboardView.vue'
+import AdminDashboardView from '@/views/admin/AdminDashboardView.vue'
 
 // ============================================================
 // Shared Authenticated Layout
@@ -43,7 +43,7 @@ const router = createRouter({
       name: 'landing',
       component: LandingView,
       meta: {
-        title: 'ClubDash',
+        title: 'Clubeon',
       },
     },
 
@@ -313,20 +313,131 @@ const router = createRouter({
     },
 
     // ========================================================
-    // OWNER / ADMIN
+    // OWNER / ADMIN PORTAL
     // ========================================================
 
     {
       path: '/admin',
-      name: 'admin',
-      component: AdminDashboardView,
+      component: AppLayout,
 
       meta: {
         requiresAuth: true,
         requiresRole: 'owner',
-        title: 'Admin Dashboard',
-        subtitle: 'Owner Portal',
       },
+
+      children: [
+        {
+          path: '',
+          name: 'admin',
+          redirect: {
+            name: 'admin-dashboard',
+          },
+        },
+
+        {
+          path: 'dashboard',
+          name: 'admin-dashboard',
+          component: AdminDashboardView,
+          props: { initialTab: 'Dashboard' },
+          meta: {
+            requiresAuth: true,
+            requiresRole: 'owner',
+            title: 'Dashboard',
+            subtitle: 'Owner Portal',
+          },
+        },
+
+        {
+          path: 'members',
+          name: 'admin-members',
+          component: AdminDashboardView,
+          props: { initialTab: 'Members' },
+          meta: {
+            requiresAuth: true,
+            requiresRole: 'owner',
+            title: 'Members',
+            subtitle: 'Owner Portal',
+          },
+        },
+
+        {
+          path: 'courts',
+          name: 'admin-courts',
+          component: AdminDashboardView,
+          props: { initialTab: 'Courts' },
+          meta: {
+            requiresAuth: true,
+            requiresRole: 'owner',
+            title: 'Courts',
+            subtitle: 'Owner Portal',
+          },
+        },
+
+        {
+          path: 'bookings',
+          name: 'admin-bookings',
+          component: AdminDashboardView,
+          props: { initialTab: 'Bookings' },
+          meta: {
+            requiresAuth: true,
+            requiresRole: 'owner',
+            title: 'Bookings',
+            subtitle: 'Owner Portal',
+          },
+        },
+
+        {
+          path: 'events',
+          name: 'admin-events',
+          component: AdminDashboardView,
+          props: { initialTab: 'Events' },
+          meta: {
+            requiresAuth: true,
+            requiresRole: 'owner',
+            title: 'Events',
+            subtitle: 'Owner Portal',
+          },
+        },
+
+        {
+          path: 'announcements',
+          name: 'admin-announcements',
+          component: AdminDashboardView,
+          props: { initialTab: 'Announcements' },
+          meta: {
+            requiresAuth: true,
+            requiresRole: 'owner',
+            title: 'Announcements',
+            subtitle: 'Owner Portal',
+          },
+        },
+
+        {
+          path: 'analytics',
+          name: 'admin-analytics',
+          component: AdminDashboardView,
+          props: { initialTab: 'Analytics' },
+          meta: {
+            requiresAuth: true,
+            requiresRole: 'owner',
+            title: 'Analytics',
+            subtitle: 'Owner Portal',
+          },
+        },
+
+        {
+          path: 'settings',
+          name: 'admin-settings',
+          component: AdminDashboardView,
+          props: { initialTab: 'Settings' },
+          meta: {
+            requiresAuth: true,
+            requiresRole: 'owner',
+            title: 'Settings',
+            subtitle: 'Owner Portal',
+          },
+        },
+      ],
     },
 
     // ========================================================
@@ -469,10 +580,10 @@ router.beforeEach(async (to) => {
 router.afterEach((to) => {
   const title = to.meta?.title
 
-  // The landing route's own title is the brand, so don't render "ClubDash | ClubDash".
-  document.title = title && title !== 'ClubDash'
-    ? `${title} | ClubDash`
-    : 'ClubDash — Sports Club Management'
+  // The landing route's own title is the brand, so don't render "Clubeon | Clubeon".
+  document.title = title && title !== 'Clubeon'
+    ? `${title} | Clubeon`
+    : 'Clubeon — Sports Club Management'
 })
 
 export default router

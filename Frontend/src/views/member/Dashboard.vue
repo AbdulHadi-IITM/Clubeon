@@ -1,7 +1,7 @@
 <template>
   <div class="space-y-6">
     <div>
-      <p class="kicker">Member workspace</p>
+      <p class="kicker">Member portal</p>
       <h1 class="title mt-1">Welcome back, {{ firstName }}</h1>
       <p class="muted mt-2 text-sm">
         Your next reservation, activity and club events in one place.

@@ -3,7 +3,7 @@
     <div class="nav-inner">
       <div class="nav-brand">
         <BrandMark :size="36" />
-        <span class="brand-text">Club<span class="brand-accent">Dash</span></span>
+        <span class="brand-text">Club<span class="brand-accent">eon</span></span>
       </div>
       <div class="nav-links">
         <a href="#features" class="nav-link">Features</a>

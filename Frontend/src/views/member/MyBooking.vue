@@ -95,44 +95,19 @@
     <!-- =====================================================
          LOADING
     ====================================================== -->
-    <div v-if="loading" class="glass p-12 text-center">
-      <div class="loader mx-auto"></div>
-
-      <p class="text-sm text-slate-500 mt-4">Loading your bookings...</p>
-    </div>
+    <SkeletonLoader v-if="loading" type="list" :count="3" />
 
     <!-- =====================================================
          EMPTY STATE
     ====================================================== -->
-    <div v-else-if="filteredBookings.length === 0" class="glass p-12 text-center">
-      <div class="w-16 h-16 mx-auto rounded-2xl bg-primary-500/10 flex items-center justify-center">
-        <svg class="w-8 h-8 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="1.5"
-            d="M8 7V3m8 4V3M5 11h14M5 5h14v16H5z"
-          />
-        </svg>
-      </div>
-
-      <h3 class="text-lg font-semibold text-slate-800 mt-5">
-        {{ emptyTitle }}
-      </h3>
-
-      <p class="text-sm text-slate-500 max-w-sm mx-auto mt-2">
-        {{ emptyMessage }}
-      </p>
-
-      <button
-        v-if="activeTab !== 'past'"
-        type="button"
-        class="btn-primary mt-6"
-        @click="goToBookCourt"
-      >
-        Book a Court
-      </button>
-    </div>
+    <EmptyState
+      v-else-if="filteredBookings.length === 0"
+      icon="calendar"
+      :title="emptyTitle"
+      :description="emptyMessage"
+      :action-label="activeTab !== 'past' ? 'Book a Court' : ''"
+      @action="goToBookCourt"
+    />
 
     <!-- =====================================================
          BOOKINGS
@@ -349,6 +324,8 @@ import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
 import { useBookingStore } from '@/stores/bookings'
 import { getSportImage } from '@/utils/sportImages'
+import SkeletonLoader from '@/components/common/SkeletonLoader.vue'
+import EmptyState from '@/components/common/EmptyState.vue'
 
 const router = useRouter()
 const bookingStore = useBookingStore()

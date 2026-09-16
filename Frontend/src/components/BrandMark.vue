@@ -1,9 +1,9 @@
 <!--
-  The ClubDash logo mark.
+  The Clubeon logo mark.
 
-  Single source of truth for the glyph. Before this existed the landing nav,
-  auth screen, sidebar and admin header each inlined their own bolt path with
-  different geometry and gradients, so the logo changed shape between screens.
+  Single source of truth for the glyph. Modern athletic 'C' intertwined with
+  an infinite loop and court center point, representing Clubeon's continuous
+  member lifecycle and facility flow.
 
   `tone` picks the treatment rather than the colour, so the mark stays on-brand
   on both light and dark surfaces:
@@ -13,8 +13,10 @@
 -->
 <template>
   <span class="brand-mark" :class="`tone-${tone}`" :style="sizing" aria-hidden="true">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <path stroke-linecap="round" stroke-linejoin="round" d="M13 3L4 14h7v7l9-11h-7V3z" />
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M19 6.5C17.2 4.9 14.7 4 12 4C7.03 4 3 8.03 3 13C3 17.97 7.03 22 12 22C14.7 22 17.2 21.1 19 19.5" />
+      <path d="M16 12C16 9.79 14.21 8 12 8C9.79 8 8 9.79 8 12C8 14.21 9.79 16 12 16C13.8 16 15.3 14.8 15.8 13.2" />
+      <circle cx="12" cy="12" r="1.5" fill="currentColor" />
     </svg>
   </span>
 </template>

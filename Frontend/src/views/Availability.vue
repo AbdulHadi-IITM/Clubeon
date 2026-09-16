@@ -8,9 +8,9 @@
   <div class="availability-page">
     <header class="page-header">
       <div class="header-inner">
-        <router-link :to="{ name: 'landing' }" class="brand" aria-label="ClubDash home">
+        <router-link :to="{ name: 'landing' }" class="brand" aria-label="Clubeon home">
           <BrandMark :size="38" />
-          <span class="brand-text">Club<span class="brand-accent">Dash</span></span>
+          <span class="brand-text">Club<span class="brand-accent">eon</span></span>
         </router-link>
         <div class="header-actions">
           <router-link to="/login" class="btn-ghost">Sign in</router-link>

@@ -3,7 +3,7 @@
     <div class="footer-inner">
       <div class="footer-brand">
         <BrandMark :size="36" />
-        <span class="brand-text small">Club<span class="brand-accent">Dash</span></span>
+        <span class="brand-text small">Club<span class="brand-accent">eon</span></span>
         <p class="footer-tagline">The modern way to manage your sports club.</p>
       </div>
       <div class="footer-links">
@@ -22,7 +22,7 @@
       </div>
     </div>
     <div class="footer-bottom">
-      <p>&copy; 2026 ClubDash. All rights reserved. Team No. 096</p>
+      <p>&copy; 2026 Clubeon. All rights reserved. Team No. 096</p>
     </div>
   </footer>
 </template>

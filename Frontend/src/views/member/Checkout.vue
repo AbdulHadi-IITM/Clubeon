@@ -107,7 +107,7 @@
         </button>
 
         <p class="mt-4 text-center text-xs leading-5 text-slate-400">
-          Your card details are collected by Stripe and are never sent to ClubDash.
+          Your card details are collected by Stripe and are never sent to Clubeon.
         </p>
       </section>
     </div>
@@ -132,7 +132,7 @@ const successMessage = ref('')
 const amount = ref(0)
 const currencyCode = ref('inr')
 const autoRenew = ref(false)
-const summary = ref({ title: 'Payment', description: 'Secure payment for your ClubDash service.' })
+const summary = ref({ title: 'Payment', description: 'Secure payment for your Clubeon service.' })
 
 let stripe = null
 let elements = null
@@ -153,7 +153,7 @@ function currency(value) {
 function loadStripeJs() {
   if (window.Stripe) return Promise.resolve(window.Stripe)
   return new Promise((resolve, reject) => {
-    const existing = document.querySelector('script[data-clubdash-stripe]')
+    const existing = document.querySelector('script[data-clubeon-stripe]')
     if (existing) {
       existing.addEventListener('load', () => resolve(window.Stripe))
       existing.addEventListener('error', reject)
@@ -162,7 +162,7 @@ function loadStripeJs() {
     const script = document.createElement('script')
     script.src = 'https://js.stripe.com/v3/'
     script.async = true
-    script.dataset.clubdashStripe = 'true'
+    script.dataset.clubeonStripe = 'true'
     script.onload = () => resolve(window.Stripe)
     script.onerror = () => reject(new Error('Unable to load Stripe.js.'))
     document.head.appendChild(script)

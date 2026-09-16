@@ -172,11 +172,12 @@
             </div>
           </div>
 
-          <div v-if="!filteredExpected.length" class="py-12 text-center text-sm text-slate-500">
-            <div class="mb-2 text-3xl">📅</div>
-            <p class="font-semibold text-slate-700">No scheduled bookings on {{ formattedSelectedDate }}</p>
-            <p class="text-xs text-slate-400 mt-1">Use the calendar navigation above to check another day.</p>
-          </div>
+          <EmptyState
+            v-if="!filteredExpected.length"
+            icon="calendar"
+            title="No scheduled bookings"
+            :description="`No active court reservations found on ${formattedSelectedDate}. Use the calendar navigation above to check another day.`"
+          />
         </div>
       </section>
 
@@ -210,11 +211,12 @@
             </button>
           </div>
 
-          <div v-if="!current.length" class="py-12 text-center text-sm text-slate-500">
-            <div class="mb-2 text-3xl">🚪</div>
-            <p class="font-semibold text-slate-700">Nobody is currently checked in.</p>
-            <p class="text-xs text-slate-400 mt-1">Check in expected members from the schedule when they arrive.</p>
-          </div>
+          <EmptyState
+            v-if="!current.length"
+            icon="inbox"
+            title="Nobody is currently checked in"
+            description="Check in expected members from the schedule when they arrive on-site."
+          />
         </div>
       </section>
     </div>
@@ -225,6 +227,7 @@ import { computed, ref } from 'vue'
 import api from '@/api/axios'
 import ClubPicker from './components/ClubPicker.vue'
 import { today, time, errorMessage } from './_helpers'
+import EmptyState from '@/components/common/EmptyState.vue'
 
 const clubId = ref('')
 const expected = ref([])

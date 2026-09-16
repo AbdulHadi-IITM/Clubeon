@@ -10,11 +10,11 @@
       <div class="branding-content">
         <router-link :to="{ name: 'landing' }" class="logo">
           <BrandMark :size="34" tone="light" />
-          <span class="logo-text">ClubDash</span>
+          <span class="logo-text">Clubeon</span>
         </router-link>
 
         <div class="branding-middle">
-          <p class="panel-eyebrow">ClubDash</p>
+          <p class="panel-eyebrow">Clubeon</p>
           <h2 class="panel-heading" style="color: #ffffff !important;">Elevate Your Game.</h2>
           <p class="panel-description">
             The ultimate destination for data-driven athletic performance.
