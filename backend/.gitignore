@@ -11,6 +11,9 @@ __pycache__/
 venv/
 ENV/
 venv.bak/
+.env
+.env.*
+!.env.example
 
 # SQLite
 *.sqlite3
