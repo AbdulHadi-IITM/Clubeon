@@ -26,5 +26,16 @@ export default defineConfig([
 
   ...pluginOxlint.buildFromOxlintConfigFile('.oxlintrc.json'),
 
+  {
+    // Route views and layout chrome are referenced by the router or used once
+    // in a single parent, never as free-standing tags across templates, so a
+    // single-word filename cannot collide with an HTML element in practice.
+    name: 'app/single-word-view-names',
+    files: ['src/views/**/*.vue', 'src/components/layout/*.vue'],
+    rules: {
+      'vue/multi-word-component-names': 'off',
+    },
+  },
+
   skipFormatting,
 ])

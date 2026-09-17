@@ -102,3 +102,31 @@ def test_admin_view_attendance(client, auth_headers, sample_club, db_session, ma
     assert response.status_code == 200
     assert len(response.json) == 1
     assert response.json[0]['user_email'] == 'view@test.com'
+
+
+def test_staff_expected_attendance_future_date(client, auth_headers, sample_club, db_session, make_player):
+    staff = make_player(email="staff_attend@test.com", role="front-desk")
+    token = auth_headers(staff)
+    client.set_cookie('access_token_cookie', token)
+
+    player = make_player(email="future_player@test.com")
+    future_d = date(2026, 8, 25)
+    booking = Booking(
+        user_id=player.id,
+        court_id=sample_club.courts[0].id,
+        booking_date=future_d,
+        start_time=time(10, 0),
+        end_time=time(11, 0),
+        status='active'
+    )
+    db_session.add(booking)
+    db_session.commit()
+
+    response = client.get(f'/api/v1/staff/attendance/expected?club_id={sample_club.id}&date=2026-08-25')
+    assert response.status_code == 200
+    assert len(response.json) == 1
+    assert response.json[0]['user_name'] == player.name
+    assert response.json[0]['booking_date'] == '2026-08-25'
+    assert response.json[0]['attendance_status'] == 'expected'
+
+

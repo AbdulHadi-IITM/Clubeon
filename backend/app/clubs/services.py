@@ -63,13 +63,39 @@ class ClubService:
         db.session.commit()
         return club, None
 
+    @staticmethod
+    def update_metadata(owner_id, club_id, latitude=None, longitude=None, amenities=None, tags=None):
+        club = Club.query.get(club_id)
+        if not club or club.owner_id != owner_id:
+            return None, {"code": "FORBIDDEN", "message": "Not authorized"}
+        if latitude is not None: club.latitude = float(latitude) if latitude != '' else None
+        if longitude is not None: club.longitude = float(longitude) if longitude != '' else None
+        if amenities is not None: club.amenities = amenities if isinstance(amenities, list) else [amenities]
+        if tags is not None: club.tags = tags if isinstance(tags, list) else [tags]
+        db.session.commit()
+        return club, None
+
 class CourtService:
+    SUPPORTED_SPORTS = {
+        'tennis', 'badminton', 'basketball', 'golf', 'football',
+        'pickleball', 'padel', 'squash', 'volleyball', 'multi-purpose'
+    }
+
+    @staticmethod
+    def normalize_sport_type(value):
+        sport = str(value or 'multi-purpose').strip().lower()
+        return sport if sport in CourtService.SUPPORTED_SPORTS else None
+
     @staticmethod
     def get_courts_for_owner(owner_id):
         return Court.query.join(Club).filter(Club.owner_id == owner_id).all()
 
     @staticmethod
-    def create_court(owner_id, court_name, club_name=None, club_address=None):
+    def create_court(owner_id, court_name, club_name=None, club_address=None, sport_type='multi-purpose'):
+        sport_type = CourtService.normalize_sport_type(sport_type)
+        if not sport_type:
+            return None, {"code": "VALIDATION_ERROR", "message": "Unsupported sport type."}
+
         club = Club.query.filter_by(owner_id=owner_id).first()
         if not club:
             if not club_name or not club_address:
@@ -86,7 +112,7 @@ class CourtService:
             db.session.add(club)
             db.session.flush()
         try:
-            new_court = Court(name=court_name, club_id=club.id, is_active=True)
+            new_court = Court(name=court_name, club_id=club.id, sport_type=sport_type, is_active=True)
             db.session.add(new_court)
             db.session.commit()
             return new_court, None
@@ -112,12 +138,17 @@ class CourtService:
         return courts, club
 
     @staticmethod
-    def update_court(court_id, owner_id, court_name, is_active, open_time_override=None, close_time_override=None, slot_duration_override=None):
+    def update_court(court_id, owner_id, court_name, is_active, sport_type='multi-purpose', open_time_override=None, close_time_override=None, slot_duration_override=None):
         court = Court.query.join(Club).filter(Court.id == court_id, Club.owner_id == owner_id).first()
         if not court:
             return None, {"code": "NOT_FOUND", "message": "Court not found or you do not own it."}
 
+        sport_type = CourtService.normalize_sport_type(sport_type)
+        if not sport_type:
+            return None, {"code": "VALIDATION_ERROR", "message": "Unsupported sport type."}
+
         court.name = court_name
+        court.sport_type = sport_type
         court.is_active = is_active
 
         # Always set the override field – if input is None or empty, set to None (clear the override)

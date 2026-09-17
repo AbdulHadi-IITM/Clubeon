@@ -49,7 +49,7 @@
       <div class="cta-card">
         <div class="cta-glow"></div>
         <h2 class="cta-title">Ready to transform your sports club?</h2>
-        <p class="cta-desc">Join thousands of clubs already using SportsClub to streamline operations and grow their community.</p>
+        <p class="cta-desc">Join thousands of clubs already using Clubeon to streamline operations and grow their community.</p>
         <div class="cta-actions">
           <router-link to="/register" class="hero-btn-primary">
             Get Started Free
@@ -65,10 +65,10 @@
 </template>
 
 <script setup>
-import NavBar from '../components/NavBar.vue'
-import HeroSection from '../components/HeroSection.vue'
-import PricingSection from '../components/PricingSection.vue'
-import FooterSection from '../components/FooterSection.vue'
+import NavBar from '@/components/landing/NavBar.vue'
+import HeroSection from '@/components/landing/HeroSection.vue'
+import PricingSection from '@/components/landing/PricingSection.vue'
+import FooterSection from '@/components/landing/FooterSection.vue'
 
 const features = [
   { title: 'Smart Court Booking', desc: 'Real-time availability calendar with conflict prevention. Members get priority, casuals pay per use.', icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z', color: 'purple' },

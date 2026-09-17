@@ -98,9 +98,18 @@ export const useCourtStore = defineStore('courts', () => {
   }
 
   const activeCourts = computed(() => courts.value.filter((c) => c.is_active))
-  const sportsTypes = computed(() => {
-    return ['Badminton', 'Tennis', 'Squash', 'Basketball', 'Volleyball']
-  })
+  const sportsTypes = computed(() => [
+    { value: 'tennis', label: 'Tennis', icon: '🎾' },
+    { value: 'badminton', label: 'Badminton', icon: '🏸' },
+    { value: 'basketball', label: 'Basketball', icon: '🏀' },
+    { value: 'golf', label: 'Golf', icon: '⛳' },
+    { value: 'football', label: 'Football', icon: '⚽' },
+    { value: 'pickleball', label: 'Pickleball', icon: '🟡' },
+    { value: 'padel', label: 'Padel', icon: '🔵' },
+    { value: 'squash', label: 'Squash', icon: '🏸' },
+    { value: 'volleyball', label: 'Volleyball', icon: '🏐' },
+    { value: 'multi-purpose', label: 'Multi-purpose', icon: '🏟️' },
+  ])
 
   return {
     courts,

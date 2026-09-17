@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from app.extensions import db
 from app.attendance.models import AttendanceRecord
 from app.bookings.models import Booking
@@ -38,7 +38,7 @@ class AttendanceService:
             user_id=user_id,
             booking_id=booking_id,
             event_id=event_id,
-            check_in_at=datetime.utcnow()
+            check_in_at=datetime.now(timezone.utc).replace(tzinfo=None)
         )
         db.session.add(record)
         db.session.commit()
@@ -56,7 +56,7 @@ class AttendanceService:
         if record.check_out_at is not None:
             return False, {"code": "VALIDATION_ERROR", "message": "Already checked out"}
 
-        record.check_out_at = datetime.utcnow()
+        record.check_out_at = datetime.now(timezone.utc).replace(tzinfo=None)
         db.session.commit()
         return True, None
 

@@ -1,5 +1,5 @@
 # MAY2026-Team-096
-# Community Services Platform — Sports Club Edition: Developer's Guide
+# Clubeon — Community Services Platform: Developer's Guide
 
 This guide defines the engineering standards, workflow, and software methodology for contributing to our **Sports Facility Booking & Club Management System** — an academic Software Engineering project built as a **Community Services Platform** for the sports-club subdomain, following **Scrum/Agile**.
 
@@ -60,6 +60,58 @@ These map to the workflows in scope (membership management, event organization, 
 - `payments` — pay-as-you-go charges, membership dues, invoicing
 - `attendance` — check-in/check-out tracking for bookings and sessions
 - `notifications` — communication workflows (schedule changes, event/maintenance alerts)
+
+### Repository Directory Structure
+
+```text
+MAY2026-Team-096/
+├── backend/                  # Flask REST API backend
+│   ├── app/                  # Modular monolith application packages
+│   │   ├── admin/            # Owner / Admin analytics & management
+│   │   ├── analytics/        # Reporting, KPIs, court utilization
+│   │   ├── assistant/        # Clubeon AI concierge & Gemini agent
+│   │   ├── attendance/       # Check-in / check-out workflows
+│   │   ├── auth/             # Authentication & user profiles
+│   │   ├── availability/     # Court schedules & conflict-safe queries
+│   │   ├── bookings/         # Booking lifecycle & slot management
+│   │   ├── clubs/            # Club facility & court entities
+│   │   ├── events/           # Tournaments & community events
+│   │   ├── memberships/      # Membership plans & tier privileges
+│   │   ├── notifications/    # Alerts & automated reminders
+│   │   ├── payments/         # Stripe checkout & payment fulfillment
+│   │   └── staff/            # Front-desk operations & roster
+│   ├── docs/                 # Backend API documentation
+│   │   └── api-docs/         # OpenAPI YAML specs (Swagger UI)
+│   ├── migrations/           # Alembic database migrations
+│   ├── scripts/              # Scaffolding & data generation scripts
+│   └── tests/                # Pytest unit & integration test suites
+├── Frontend/                 # Vue 3 + Vite Single Page Application
+│   └── src/
+│       ├── api/              # Axios HTTP client configuration
+│       ├── assets/           # Media, court photography & sport icons
+│       ├── components/       # Reusable Vue components
+│       │   ├── assistant/    # Clubeon AI chat drawer
+│       │   ├── cards/        # Domain display cards (Booking, Event, Membership)
+│       │   ├── common/       # Status badges, loaders & empty states
+│       │   ├── landing/      # Public landing page sections & navigation
+│       │   └── layout/       # App layout, sidebars & headers
+│       ├── router/           # Vue Router role-guarded route definitions
+│       ├── services/         # Client services & map integrations
+│       ├── stores/           # Pinia reactive state stores
+│       ├── utils/            # Formatting & utility helpers
+│       └── views/            # Route views organized by persona
+│           ├── admin/        # Owner / Admin management views
+│           ├── member/       # Member / Player portal views
+│           ├── staff/        # Front-desk / Operations views
+│           ├── AuthView.vue  # Sign in & Registration
+│           ├── Availability.vue # Public court calendar
+│           ├── LandingView.vue  # Public marketing homepage
+│           └── ProfileView.vue  # User settings & profile
+└── docs/                     # Central project artifacts & documentation
+    ├── presentations/        # Pitch decks & project slideshows
+    ├── reports/              # Milestone deliverables & architecture reports
+    └── specifications/       # Feature specifications & technical blueprints
+```
 
 ---
 

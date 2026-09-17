@@ -16,6 +16,9 @@ class Event(db.Model):
     status = db.Column(db.String(20), default='upcoming')
     created_at = db.Column(db.DateTime, server_default=db.func.now())
 
+    attendances = db.relationship('AttendanceRecord', backref='event', lazy=True)
+    registrations = db.relationship('EventRegistration', backref='event', lazy=True)
+
 class EventRegistration(db.Model):
     __tablename__ = 'event_registrations'
 

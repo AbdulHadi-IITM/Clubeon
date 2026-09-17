@@ -3,6 +3,35 @@ from datetime import date, time, timedelta
 from app.bookings.models import Booking, CourtBlock
 from app.auth.models import User
 
+
+def test_list_bookings_success(client, auth_headers, sample_club, db_session, make_player):
+    owner = sample_club.owner
+    player = make_player(email="player_list_admin@test.com")
+    booking = Booking(
+        user_id=player.id,
+        court_id=sample_club.courts[0].id,
+        booking_date=date.today(),
+        start_time=time(14, 0),
+        end_time=time(15, 0),
+    )
+    db_session.add(booking)
+    db_session.commit()
+
+    token = auth_headers(owner)
+    client.set_cookie('access_token_cookie', token)
+    response = client.get('/api/v1/admin/bookings')
+
+    assert response.status_code == 200
+    assert len(response.json) == 1
+    assert response.json[0]['id'] == booking.id
+    assert response.json[0]['player'] == player.name
+
+
+import pytest
+from datetime import date, time, timedelta
+from app.bookings.models import Booking, CourtBlock
+from app.auth.models import User
+
 def test_override_booking_success(client, auth_headers, sample_club, db_session, make_player):
     # Create booking for a normal player
     player = make_player(email="player_admin@test.com")
@@ -92,3 +121,52 @@ def test_block_court_success(client, auth_headers, sample_club, db_session, make
     block = CourtBlock.query.get(response.json['block_id'])
     assert block is not None
     assert block.title == "Maintenance"
+
+def test_cancel_booking_success(client, auth_headers, sample_club, db_session, make_player):
+    player = make_player(email="cancel_player@test.com")
+    court_id = sample_club.courts[0].id
+    booking = Booking(
+        user_id=player.id,
+        court_id=court_id,
+        booking_date=date.today() + timedelta(days=3),
+        start_time=time(14, 0),
+        end_time=time(15, 0),
+        status='active'
+    )
+    db_session.add(booking)
+    db_session.commit()
+
+    owner = sample_club.owner
+    token = auth_headers(owner)
+    client.set_cookie('access_token_cookie', token)
+
+    response = client.post(f'/api/v1/admin/bookings/{booking.id}/cancel')
+    assert response.status_code == 200
+    assert response.json['message'] == 'Booking cancelled successfully'
+    db_session.refresh(booking)
+    assert booking.status == 'cancelled'
+
+def test_complete_booking_success(client, auth_headers, sample_club, db_session, make_player):
+    player = make_player(email="complete_player@test.com")
+    court_id = sample_club.courts[0].id
+    booking = Booking(
+        user_id=player.id,
+        court_id=court_id,
+        booking_date=date.today() + timedelta(days=3),
+        start_time=time(16, 0),
+        end_time=time(17, 0),
+        status='active'
+    )
+    db_session.add(booking)
+    db_session.commit()
+
+    owner = sample_club.owner
+    token = auth_headers(owner)
+    client.set_cookie('access_token_cookie', token)
+
+    response = client.post(f'/api/v1/admin/bookings/{booking.id}/complete')
+    assert response.status_code == 200
+    assert response.json['message'] == 'Booking marked as completed'
+    db_session.refresh(booking)
+    assert booking.status == 'completed'
+

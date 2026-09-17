@@ -7,29 +7,56 @@ def test_create_booking_success(client, auth_headers, sample_club, db_session):
     client.set_cookie('access_token_cookie', token)
     
     court_id = sample_club.courts[0].id
-    today = date.today().strftime("%Y-%m-%d")
-    
+    future_start = datetime.combine(
+        date.today() + timedelta(days=1),
+        time(12, 0),
+    )
+    future_end = future_start + timedelta(hours=1)
+
     payload = {
         "court_id": court_id,
-        "booking_date": today,
-        "start_time": "12:00",
-        "end_time": "13:00"
+        "booking_date": future_start.strftime("%Y-%m-%d"),
+        "start_time": future_start.strftime("%H:%M"),
+        "end_time": future_end.strftime("%H:%M"),
     }
     
     response = client.post('/api/v1/bookings', json=payload)
     assert response.status_code == 201
     assert 'booking_id' in response.json
 
+def test_create_booking_rejects_past_slot(client, auth_headers, sample_club, db_session):
+    token = auth_headers()
+    client.set_cookie('access_token_cookie', token)
+
+    court_id = sample_club.courts[0].id
+    past_date = date.today() - timedelta(days=1)
+    past_start = time(10, 0)
+    past_end = time(11, 0)
+
+    payload = {
+        "court_id": court_id,
+        "booking_date": past_date.strftime("%Y-%m-%d"),
+        "start_time": past_start.strftime("%H:%M"),
+        "end_time": past_end.strftime("%H:%M"),
+    }
+
+    response = client.post('/api/v1/bookings', json=payload)
+
+    assert response.status_code == 400
+    assert response.json['code'] == 'VALIDATION_ERROR'
+    assert 'already passed' in response.json['message']
+
+
 def test_create_booking_conflict(client, auth_headers, sample_club, db_session, make_player):
     # Setup an existing booking
     player1 = make_player(email="player1@test.com")
     court_id = sample_club.courts[0].id
-    today = date.today()
+    future_date = date.today() + timedelta(days=2)
     
     booking = Booking(
         user_id=player1.id,
         court_id=court_id,
-        booking_date=today,
+        booking_date=future_date,
         start_time=time(14, 0),
         end_time=time(15, 0)
     )
@@ -43,7 +70,7 @@ def test_create_booking_conflict(client, auth_headers, sample_club, db_session, 
     
     payload = {
         "court_id": court_id,
-        "booking_date": today.strftime("%Y-%m-%d"),
+        "booking_date": future_date.strftime("%Y-%m-%d"),
         "start_time": "14:30",
         "end_time": "15:30"
     }

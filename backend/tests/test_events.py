@@ -1,6 +1,7 @@
 import pytest
 from datetime import date, time
 from app.events.models import Event, EventRegistration
+from app.payments.models import Payment
 
 def test_create_event_success(client, auth_headers, sample_club, db_session):
     owner = sample_club.owner
@@ -126,3 +127,64 @@ def test_cancel_event_registration(client, auth_headers, sample_club, db_session
     
     db_session.refresh(reg)
     assert reg.status == 'cancelled'
+
+
+def _paid_event(db_session, sample_club, fee=250.0):
+    event = Event(
+        club_id=sample_club.id,
+        created_by=sample_club.owner_id,
+        title="Paid Tournament",
+        event_date=date(2026, 9, 1),
+        start_time=time(10, 0),
+        end_time=time(12, 0),
+        registration_fee=fee,
+    )
+    db_session.add(event)
+    db_session.commit()
+    return event
+
+
+def test_register_paid_event_requires_payment(client, auth_headers, sample_club,
+                                              db_session, make_player):
+    """A registration fee must actually be collected before a seat is given."""
+    event = _paid_event(db_session, sample_club)
+    user = make_player(email="paid_unpaid@test.com")
+    client.set_cookie('access_token_cookie', auth_headers(user))
+
+    response = client.post(f'/api/v1/events/{event.id}/register')
+    assert response.status_code == 402
+    assert response.json['code'] == 'PAYMENT_REQUIRED'
+    assert EventRegistration.query.filter_by(event_id=event.id).count() == 0
+
+
+def test_register_paid_event_succeeds_after_payment(client, auth_headers,
+                                                    sample_club, db_session,
+                                                    make_player):
+    event = _paid_event(db_session, sample_club)
+    user = make_player(email="paid_ok@test.com")
+    db_session.add(Payment(
+        user_id=user.id, amount=250.0, currency='INR', payment_type='event',
+        reference_id=event.id, status='completed',
+        gateway_transaction_id='pi_test_event',
+    ))
+    db_session.commit()
+
+    client.set_cookie('access_token_cookie', auth_headers(user))
+    response = client.post(f'/api/v1/events/{event.id}/register')
+    assert response.status_code == 200
+    assert EventRegistration.query.filter_by(
+        event_id=event.id, user_id=user.id, status='registered').count() == 1
+
+
+def test_rejoining_a_cancelled_paid_registration_still_needs_payment(
+        client, auth_headers, sample_club, db_session, make_player):
+    """A cancelled seat must not be reclaimable for free."""
+    event = _paid_event(db_session, sample_club)
+    user = make_player(email="paid_rejoin@test.com")
+    db_session.add(EventRegistration(event_id=event.id, user_id=user.id,
+                                     status='cancelled'))
+    db_session.commit()
+
+    client.set_cookie('access_token_cookie', auth_headers(user))
+    response = client.post(f'/api/v1/events/{event.id}/register')
+    assert response.status_code == 402

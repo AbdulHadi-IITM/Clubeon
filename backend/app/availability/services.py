@@ -2,6 +2,17 @@ from datetime import datetime, date, time, timedelta
 from app.clubs.models import Club, Court
 from app.bookings.models import Booking, CourtBlock
 
+def _parse_time(t_val, default_time_str):
+    if not t_val:
+        t_val = default_time_str
+    if isinstance(t_val, time):
+        return t_val
+    t_str = str(t_val).strip()[:5]
+    try:
+        return datetime.strptime(t_str, "%H:%M").time()
+    except Exception:
+        return datetime.strptime(default_time_str, "%H:%M").time()
+
 class AvailabilityService:
     @staticmethod
     def get_availability_matrix(club_id, target_date_str):
@@ -36,11 +47,13 @@ class AvailabilityService:
         result = {"date": str(target_date), "courts": []}
         
         for court in courts:
-            open_time_str = court.open_time_override or club.open_time
-            close_time_str = court.close_time_override or club.close_time
-            open_time = datetime.strptime(open_time_str, "%H:%M").time()
-            close_time = datetime.strptime(close_time_str, "%H:%M").time()
-            slot_duration = court.slot_duration_override or club.slot_duration_minutes
+            open_time_val = court.open_time_override or club.open_time or "06:00"
+            close_time_val = court.close_time_override or club.close_time or "22:00"
+            open_time = _parse_time(open_time_val, "06:00")
+            close_time = _parse_time(close_time_val, "22:00")
+            slot_duration = court.slot_duration_override or club.slot_duration_minutes or 60
+            if slot_duration <= 0:
+                slot_duration = 60
             
             # Generate slots
             slots = []
