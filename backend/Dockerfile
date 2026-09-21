@@ -24,5 +24,5 @@ COPY . .
 # Expose backend port
 EXPOSE 5001
 
-# Run the Flask application
-CMD ["python", "run.py"]
+# Run with Gunicorn production WSGI server
+CMD ["gunicorn", "--bind", "0.0.0.0:5001", "--workers", "4", "run:app"]

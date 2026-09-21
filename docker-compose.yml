@@ -5,10 +5,10 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${DB_USER:-clubeon}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-clubeon_secure_pass}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set}
       POSTGRES_DB: ${DB_NAME:-clubeon_db}
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -23,14 +23,15 @@ services:
       dockerfile: Dockerfile
     container_name: clubeon-backend
     restart: unless-stopped
+    command: sh -c "flask db upgrade && gunicorn --bind 0.0.0.0:5001 --workers 4 run:app"
     environment:
       FLASK_APP: run.py
-      FLASK_ENV: ${FLASK_ENV:-development}
+      FLASK_ENV: ${FLASK_ENV:-production}
       PORT: 5001
-      DATABASE_URL: postgresql://${DB_USER:-clubeon}:${DB_PASSWORD:-clubeon_secure_pass}@db:5432/${DB_NAME:-clubeon_db}
-      SECRET_KEY: ${SECRET_KEY:-clubeon-super-secret-key-min-32bytes-length-secure}
-      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-clubeon-jwt-secret-key-min-32bytes-length-secure}
-      CORS_ORIGINS: ${CORS_ORIGINS:-*}
+      DATABASE_URL: postgresql://${DB_USER:-clubeon}:${DB_PASSWORD:?DB_PASSWORD must be set}@db:5432/${DB_NAME:-clubeon_db}
+      SECRET_KEY: ${SECRET_KEY:?SECRET_KEY must be set}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:?JWT_SECRET_KEY must be set}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost,http://localhost:5173,http://localhost:80}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
     ports:
