@@ -1,5 +1,6 @@
 import os
 import sys
+from datetime import datetime, timezone
 
 from flask import Flask, send_from_directory
 from flask_cors import CORS
@@ -172,7 +173,7 @@ def create_app(config_class=Config):
     )
 
     # =========================================================
-    # Health Check
+    # Health & System Status
     # =========================================================
 
     @app.route("/health")
@@ -180,6 +181,39 @@ def create_app(config_class=Config):
         return {
             "status": "healthy",
             "service": "clubeon-api",
+        }, 200
+
+    @app.route("/api/health")
+    def api_health():
+        from sqlalchemy import text
+        db_status = "connected"
+        http_code = 200
+        try:
+            db.session.execute(text("SELECT 1"))
+        except Exception as e:
+            db_status = f"disconnected: {str(e)}"
+            http_code = 503
+
+        return {
+            "status": "healthy" if http_code == 200 else "degraded",
+            "service": "clubeon-api",
+            "environment": app.config.get("FLASK_ENV", "development"),
+            "database": db_status,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }, http_code
+
+    @app.route("/api/status")
+    def api_status():
+        return {
+            "service": "Clubeon Sports Management API",
+            "version": "1.0.0",
+            "features": {
+                "ai_assistant": bool(app.config.get("GOOGLE_API_KEY") or app.config.get("GEMINI_API_KEY")),
+                "stripe_payments": bool(app.config.get("STRIPE_SECRET_KEY")),
+                "swagger_docs": True,
+            },
+            "environment": app.config.get("FLASK_ENV", "development"),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }, 200
 
     # =========================================================
